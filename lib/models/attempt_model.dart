@@ -1,0 +1,139 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+class AttemptAnswerModel {
+  final String questionId;
+  final String selectedChoiceId;
+  final int timeTakenSeconds;
+  final DateTime? answeredAt;
+  final bool isCorrect;
+
+  AttemptAnswerModel({
+    required this.questionId,
+    required this.selectedChoiceId,
+    required this.timeTakenSeconds,
+    this.answeredAt,
+    required this.isCorrect,
+  });
+
+  factory AttemptAnswerModel.fromMap(Map<String, dynamic> map) {
+    return AttemptAnswerModel(
+      questionId: map['questionId'] ?? '',
+      selectedChoiceId: map['selectedChoiceId'] ?? '',
+      timeTakenSeconds: map['timeTakenSeconds'] ?? 0,
+      answeredAt: map['answeredAt'] != null ? (map['answeredAt'] as Timestamp).toDate() : null,
+      isCorrect: map['isCorrect'] ?? false,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'questionId': questionId,
+      'selectedChoiceId': selectedChoiceId,
+      'timeTakenSeconds': timeTakenSeconds,
+      'answeredAt': answeredAt != null ? Timestamp.fromDate(answeredAt!) : null,
+      'isCorrect': isCorrect,
+    };
+  }
+
+  AttemptAnswerModel copyWith({
+    String? questionId,
+    String? selectedChoiceId,
+    int? timeTakenSeconds,
+    DateTime? answeredAt,
+    bool? isCorrect,
+  }) {
+    return AttemptAnswerModel(
+      questionId: questionId ?? this.questionId,
+      selectedChoiceId: selectedChoiceId ?? this.selectedChoiceId,
+      timeTakenSeconds: timeTakenSeconds ?? this.timeTakenSeconds,
+      answeredAt: answeredAt ?? this.answeredAt,
+      isCorrect: isCorrect ?? this.isCorrect,
+    );
+  }
+}
+
+class AttemptModel {
+  final String id;
+  final String quizId;
+  final String userId;
+  final DateTime startedAt;
+  final DateTime? submittedAt;
+  final int score;
+  final int totalPoints;
+  final List<AttemptAnswerModel> answers;
+  final int totalViolations;
+
+  AttemptModel({
+    required this.id,
+    required this.quizId,
+    required this.userId,
+    required this.startedAt,
+    this.submittedAt,
+    required this.score,
+    required this.totalPoints,
+    this.answers = const [],
+    this.totalViolations = 0,
+  });
+
+  double get scorePercentage {
+    if (totalPoints == 0) return 0;
+    return (score / totalPoints) * 100;
+  }
+
+  factory AttemptModel.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    final answersList = (data['answers'] as List<dynamic>? ?? [])
+        .map((a) => AttemptAnswerModel.fromMap(a as Map<String, dynamic>))
+        .toList();
+
+    return AttemptModel(
+      id: doc.id,
+      quizId: data['quizId'] ?? '',
+      userId: data['userId'] ?? '',
+      startedAt: (data['startedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      submittedAt: (data['submittedAt'] as Timestamp?)?.toDate(),
+      score: data['score'] ?? 0,
+      totalPoints: data['totalPoints'] ?? 0,
+      answers: answersList,
+      totalViolations: data['totalViolations'] ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      'quizId': quizId,
+      'userId': userId,
+      'startedAt': Timestamp.fromDate(startedAt),
+      'submittedAt':
+          submittedAt != null ? Timestamp.fromDate(submittedAt!) : null,
+      'score': score,
+      'totalPoints': totalPoints,
+      'answers': answers.map((a) => a.toMap()).toList(),
+      'totalViolations': totalViolations,
+    };
+  }
+
+  AttemptModel copyWith({
+    String? id,
+    String? quizId,
+    String? userId,
+    DateTime? startedAt,
+    DateTime? submittedAt,
+    int? score,
+    int? totalPoints,
+    List<AttemptAnswerModel>? answers,
+    int? totalViolations,
+  }) {
+    return AttemptModel(
+      id: id ?? this.id,
+      quizId: quizId ?? this.quizId,
+      userId: userId ?? this.userId,
+      startedAt: startedAt ?? this.startedAt,
+      submittedAt: submittedAt ?? this.submittedAt,
+      score: score ?? this.score,
+      totalPoints: totalPoints ?? this.totalPoints,
+      answers: answers ?? this.answers,
+      totalViolations: totalViolations ?? this.totalViolations,
+    );
+  }
+}

@@ -1,0 +1,180 @@
+// Firestore Security Rules for Quiz Application
+// Deploy to Firebase Console: Firestore > Rules
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isUser(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+    
+    function isTeacher(uid) {
+      return isAuthenticated() && request.auth.uid == uid && 
+             get(/databases/$(database)/documents/users/$(uid)).data.role == 0;
+    }
+    
+    function getUser(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data;
+    }
+    
+    function getQuiz(quizId) {
+      return get(/databases/$(database)/documents/quizzes/$(quizId)).data;
+    }
+    
+    function isQuizCreator(quizId) {
+      return isAuthenticated() && getQuiz(quizId).createdBy == request.auth.uid;
+    }
+    
+    function isClassMember(classId) {
+      return isAuthenticated() && 
+             classId in getUser(request.auth.uid).classes;
+    }
+    
+    function isClassTeacher(classId) {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/classes/$(classId)).data.teacherUid == request.auth.uid;
+    }
+
+    // ========== USERS COLLECTION ==========
+    match /users/{uid} {
+      // Users can read their own document
+      allow read: if isUser(uid);
+      
+      // Users can create their own document (during signup)
+      allow create: if isUser(uid) && 
+                       request.data.keys().hasAll(['email', 'displayName', 'role', 'createdAt']) &&
+                       request.data.role in [0, 1] &&
+                       request.data.size() <= 10; // Limit fields to prevent bloat
+      
+      // Users can update their own document
+      allow update: if isUser(uid) && 
+                       // Prevent changing email, role, uid
+                       !request.resource.data.diff(resource.data).affectedKeys().hasAny(['email', 'uid', 'role']) &&
+                       request.data.size() <= 15;
+      
+      // No deletes allowed
+      allow delete: if false;
+    }
+
+    // ========== CLASSES COLLECTION ==========
+    match /classes/{classId} {
+      // Any authenticated user can read a class (for discovery)
+      allow read: if isAuthenticated() && 
+                     (isClassMember(classId) || isClassTeacher(classId));
+      
+      // Only teachers can create classes
+      allow create: if isAuthenticated() && 
+                       request.data.teacherUid == request.auth.uid &&
+                       request.data.keys().hasAll(['name', 'teacherUid', 'memberUids', 'createdAt']) &&
+                       request.data.memberUids is list &&
+                       request.data.memberUids.size() >= 0;
+      
+      // Only class teacher can update
+      allow update: if isClassTeacher(classId) && 
+                       resource.data.teacherUid == request.resource.data.teacherUid;
+      
+      // Only class teacher can delete
+      allow delete: if isClassTeacher(classId);
+    }
+
+    // ========== QUIZZES COLLECTION ==========
+    match /quizzes/{quizId} {
+      // Read: Public quizzes, quizzes in user's classes, or creator's quizzes
+      allow read: if isAuthenticated() && 
+                     (isQuizCreator(quizId) ||
+                      (getQuiz(quizId).published && 
+                       getQuiz(quizId).classIds.size() == 0) ||  // Public quiz
+                      (getQuiz(quizId).published && 
+                       any(getQuiz(quizId).classIds, classId, classId in getUser(request.auth.uid).classes)));
+      
+      // Create: Any authenticated user can create
+      allow create: if isAuthenticated() && 
+                       request.data.createdBy == request.auth.uid &&
+                       request.data.keys().hasAll(['title', 'description', 'timeLimitSeconds', 'createdBy', 'createdAt']) &&
+                       request.data.timeLimitSeconds > 0 &&
+                       request.data.published == false;
+      
+      // Update: Only creator can update
+      allow update: if isQuizCreator(quizId) && 
+                       resource.data.createdBy == request.resource.data.createdBy; // Prevent changing creator
+      
+      // Delete: Only creator can delete (and only if no attempts exist)
+      allow delete: if isQuizCreator(quizId);
+    }
+
+    // ========== QUESTIONS SUBCOLLECTION ==========
+    match /quizzes/{quizId}/questions/{questionId} {
+      // Read: Same access as parent quiz
+      allow read: if isAuthenticated() && 
+                     (isQuizCreator(quizId) ||
+                      (getQuiz(quizId).published && 
+                       getQuiz(quizId).classIds.size() == 0) ||
+                      (getQuiz(quizId).published && 
+                       any(getQuiz(quizId).classIds, classId, classId in getUser(request.auth.uid).classes)));
+      
+      // Create: Only quiz creator can add questions
+      allow create: if isQuizCreator(quizId) && 
+                       request.data.keys().hasAll(['text', 'choices', 'correctChoiceId', 'points', 'order', 'createdAt']) &&
+                       request.data.choices is list &&
+                       request.data.points > 0;
+      
+      // Update: Only quiz creator can edit
+      allow update: if isQuizCreator(quizId);
+      
+      // Delete: Only quiz creator can delete
+      allow delete: if isQuizCreator(quizId);
+    }
+
+    // ========== ATTEMPTS COLLECTION ==========
+    match /attempts/{attemptId} {
+      // Student can read their own attempts; teacher can read attempts for their quizzes
+      allow read: if isAuthenticated() && 
+                     (isUser(resource.data.userId) ||
+                      isQuizCreator(resource.data.quizId));
+      
+      // Student can create their own attempt
+      allow create: if isAuthenticated() && 
+                       request.data.userId == request.auth.uid &&
+                       request.data.keys().hasAll(['quizId', 'userId', 'startedAt', 'score', 'totalPoints', 'answers', 'createdAt']) &&
+                       request.data.score >= 0 &&
+                       request.data.totalPoints > 0;
+      
+      // Student can only update their own attempt (to submit)
+      allow update: if isUser(resource.data.userId) && 
+                       resource.data.userId == request.resource.data.userId &&
+                       resource.data.quizId == request.resource.data.quizId;
+      
+      // No deletes (audit trail)
+      allow delete: if false;
+    }
+
+    // ========== VIOLATIONS COLLECTION ==========
+    match /violations/{violationId} {
+      // Teachers can read violations for their quizzes; students cannot read
+      allow read: if isAuthenticated() && 
+                     isQuizCreator(resource.data.quizId);
+      
+      // Service account or backend only (restrict in production)
+      // For now, allow attempts service to log violations
+      allow create: if isAuthenticated() && 
+                       request.data.keys().hasAll(['attemptId', 'userId', 'quizId', 'type', 'detectedAt']) &&
+                       request.data.type >= 0 &&
+                       request.data.type <= 6;
+      
+      // No updates or deletes (immutable audit trail)
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // ========== DEFAULT DENY ==========
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

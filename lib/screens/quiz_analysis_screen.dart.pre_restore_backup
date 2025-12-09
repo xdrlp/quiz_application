@@ -1,0 +1,270 @@
+// Backup of current quiz_analysis_screen.dart before restore
+// Created by assistant on user request.
+
+/*
+If you need to revert this restore, replace or delete this file and restore
+`lib/screens/quiz_analysis_screen.dart.pre_restore_backup` into
+`lib/screens/quiz_analysis_screen.dart` manually.
+*/
+
+// Backup content follows (snapshot of the file at backup time):
+
+import 'package:flutter/material.dart';
+import 'package:quiz_application/services/firestore_service.dart';
+import 'package:quiz_application/models/quiz_model.dart';
+import 'package:quiz_application/models/question_model.dart';
+import 'package:quiz_application/models/attempt_model.dart';
+import 'package:quiz_application/models/violation_model.dart';
+import 'package:quiz_application/models/user_model.dart';
+// charting handled with simple widgets to avoid fl_chart version issues
+
+// Minimal, clean QuizAnalysisScreen implementation (read-only).
+class QuizAnalysisScreen extends StatefulWidget {
+  final String quizId;
+  final String initialTab;
+  const QuizAnalysisScreen({super.key, required this.quizId, this.initialTab = 'summary'});
+
+  @override
+  State<QuizAnalysisScreen> createState() => _QuizAnalysisScreenState();
+}
+
+class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProviderStateMixin {
+  final FirestoreService _fs = FirestoreService();
+  QuizModel? _quiz;
+  List<QuestionModel> _questions = [];
+  List<AttemptModel> _attempts = [];
+  Map<String, UserModel> _users = {};
+  Map<String, List<ViolationModel>> _violationsByAttempt = {};
+
+  late TabController _tabController;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this, initialIndex: _initialIndex());
+    _loadAll();
+  }
+
+  int _initialIndex() {
+    switch (widget.initialTab) {
+      case 'insights':
+        return 1;
+      case 'individual':
+        return 2;
+      default:
+        return 0;
+    }
+  }
+
+  Future<void> _loadAll() async {
+    setState(() => _loading = true);
+    try {
+      final quiz = await _fs.getQuiz(widget.quizId);
+      final qs = await _fs.getQuizQuestions(widget.quizId);
+      final attempts = await _fs.getAttemptsByQuiz(widget.quizId);
+
+      final usersMap = <String, UserModel>{};
+      final violations = <String, List<ViolationModel>>{};
+
+      for (var a in attempts) {
+        if (!usersMap.containsKey(a.userId)) {
+          final u = await _fs.getUser(a.userId);
+          if (u != null) usersMap[a.userId] = u;
+        }
+        violations[a.id] = await _fs.getViolationsByAttempt(a.id);
+      }
+
+      setState(() {
+        _quiz = quiz;
+        _questions = qs;
+        _attempts = attempts;
+        _users = usersMap;
+        _violationsByAttempt = violations;
+      });
+    } catch (_) {
+      // ignore, show whatever we have
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_quiz?.title ?? 'Quiz analysis'),
+        bottom: TabBar(controller: _tabController, tabs: const [Tab(text: 'Summary'), Tab(text: 'Insights'), Tab(text: 'Individual')]),
+      ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : TabBarView(controller: _tabController, children: [_buildSummary(), _buildInsights(), _buildIndividual()]),
+    );
+  }
+
+  Widget _buildSummary() {
+    final attemptCount = _attempts.length;
+    final bins = [for (var i = 0; i <= 10; i++) i * 10];
+    final dist = Map<int, int>.fromEntries(bins.map((b) => MapEntry(b, 0)));
+    for (var a in _attempts) {
+      final pct = a.totalPoints == 0 ? 0 : ((a.score / a.totalPoints) * 100).round();
+      final bucket = pct == 100 ? 100 : (pct ~/ 10) * 10;
+      dist[bucket] = (dist[bucket] ?? 0) + 1;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: ListView(children: [
+        ListTile(title: const Text('Attempts'), trailing: Text('$attemptCount')),
+        const SizedBox(height: 12),
+        const Text('Score distribution', style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        _buildSimpleBarChart(bins, dist),
+      ]),
+    );
+  }
+  Widget _buildSimpleBarChart(List<int> bins, Map<int, int> dist) {
+    final maxCount = dist.values.fold<int>(0, (p, e) => e > p ? e : p);
+    return Column(
+      children: [
+        for (var b in bins)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4.0),
+            child: Row(children: [
+              SizedBox(width: 48, child: Text('$b%')),
+              const SizedBox(width: 8),
+              Expanded(
+                child: LayoutBuilder(builder: (context, constraints) {
+                  final cnt = dist[b] ?? 0;
+                  final fraction = maxCount == 0 ? 0.0 : (cnt / maxCount);
+                  final barWidth = constraints.maxWidth * fraction;
+                  return Stack(alignment: Alignment.centerLeft, children: [
+                    Container(height: 20, color: Colors.grey.shade200),
+                    Container(width: barWidth, height: 20, color: Theme.of(context).colorScheme.primary),
+                    Positioned.fill(child: Center(child: Text('$cnt'))),
+                  ]);
+                }),
+              ),
+            ]),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildInsights() {
+    if (_attempts.isEmpty) return const Center(child: Padding(padding: EdgeInsets.all(24.0), child: Text('No insights yet')));
+
+    // Simple per-question correctness percentage
+    final stats = <String, Map<String, int>>{}; // qid -> {correct, total}
+    for (var q in _questions) {
+      stats[q.id] = {'correct': 0, 'total': 0};
+    }
+    for (var a in _attempts) {
+      for (var ans in a.answers) {
+        final st = stats[ans.questionId];
+        if (st == null) continue;
+        st['total'] = (st['total'] ?? 0) + 1;
+        if (ans.isCorrect) st['correct'] = (st['correct'] ?? 0) + 1;
+      }
+    }
+
+    return ListView(
+      children: [
+        for (var q in _questions)
+          ListTile(
+            title: Text(q.prompt),
+            subtitle: Builder(builder: (_) {
+              final st = stats[q.id];
+              if (st == null || (st['total'] ?? 0) == 0) return const Text('No responses');
+              final pct = ((st['correct']! / st['total']!) * 100).toStringAsFixed(0);
+              return Text('Correct: $pct% (${st['correct']}/${st['total']})');
+            }),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildIndividual() {
+    if (_attempts.isEmpty) return const Center(child: Padding(padding: EdgeInsets.all(24.0), child: Text('No attempts')));
+    return ListView.builder(
+      itemCount: _attempts.length,
+      itemBuilder: (context, i) {
+        final a = _attempts[i];
+        final user = _users[a.userId];
+        final violations = _violationsByAttempt[a.id] ?? [];
+        return Card(
+          margin: const EdgeInsets.all(8.0),
+          child: ListTile(
+            title: Text(user?.displayName ?? a.userId),
+            subtitle: Text('Score: ${a.score}/${a.totalPoints} — Violations: ${violations.length}'),
+            trailing: IconButton(icon: const Icon(Icons.open_in_new), onPressed: () => showDialog(context: context, builder: (_) => _AttemptDetailViewer(attempt: a, questions: _questions, violations: violations, user: user))),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _AttemptDetailViewer extends StatelessWidget {
+  final AttemptModel attempt;
+  final List<QuestionModel> questions;
+  final List<ViolationModel> violations;
+  final UserModel? user;
+  const _AttemptDetailViewer({required this.attempt, required this.questions, required this.violations, this.user});
+
+  QuestionModel? _findQuestion(String qid) {
+    try {
+      return questions.firstWhere((q) => q.id == qid);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Attempt by ${user?.displayName ?? attempt.userId}'),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.6,
+              child: ListView.builder(
+                itemCount: attempt.answers.length + 1,
+                itemBuilder: (context, i) {
+                  if (i == attempt.answers.length) {
+                    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      const SizedBox(height: 12),
+                      const Text('Violations', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      if (violations.isEmpty) ListTile(leading: const Icon(Icons.check_circle_outline, color: Colors.green), title: const Text('No violations detected')) else ...violations.map((v) => ListTile(title: Text(v.type.toString()), subtitle: Text(v.details ?? '')))
+                    ]);
+                  }
+
+                  final ans = attempt.answers[i];
+                  final q = _findQuestion(ans.questionId);
+                  final resp = ans.selectedChoiceId;
+                  final time = ans.timeTakenSeconds;
+                  final answeredAt = ans.answeredAt;
+                  return ListTile(
+                    title: Text(q?.prompt ?? ans.questionId),
+                    subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Response: $resp'), Text('Time: ${time}s'), if (answeredAt != null) Text('Answered at: ${answeredAt.toLocal()}'), Text('Status: ${ans.isCorrect ? 'Correct' : 'Incorrect'}')]),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Close'))],
+    );
+  }
+}
