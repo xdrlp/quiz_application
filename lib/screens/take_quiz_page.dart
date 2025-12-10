@@ -2,7 +2,10 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:quiz_application/services/firestore_service.dart';
 import 'package:quiz_application/models/violation_model.dart';
@@ -11,6 +14,7 @@ import 'package:quiz_application/models/question_model.dart';
 import 'package:quiz_application/utils/answer_utils.dart';
 import 'package:quiz_application/models/attempt_model.dart';
 import 'package:quiz_application/providers/auth_provider.dart';
+import 'package:quiz_application/services/local_violation_store.dart';
 
 class TakeQuizPage extends StatefulWidget {
   final String quizId;
@@ -36,9 +40,90 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
   Size? _reportedScreenSize;
   DateTime? _questionStartTime;
   final Map<String, AttemptAnswerModel> _answerModels = {};
+  final Set<String> _flaggedQuestionIds = {};
+  final Set<String> _lockedQuestionIds = {};
   DateTime? _attemptStartedAt;
   final TextEditingController _textController = TextEditingController();
   final List<ViolationModel> _pendingViolations = [];
+  bool _isShowingViolationDialog = false;
+
+  String _violationMessage(ViolationModel v) {
+    switch (v.type) {
+      case ViolationType.appSwitch:
+        return 'You left the quiz screen or switched to another app. Please remain on the quiz screen until you finish the attempt.';
+      case ViolationType.screenResize:
+        return 'Your screen size changed (split-screen or rotation). Please keep the app fullscreen while taking the quiz.';
+      default:
+        return 'We detected possible policy-violating behavior: ${v.type.toString().split('.').last}. Please remain on the quiz screen.';
+    }
+  }
+
+  Future<void> _showDebugInfoDialog() async {
+    final flagged = _flaggedQuestionIds.toList();
+    final answersMap = _answerModels.map((k, v) => MapEntry(k, v.toMap()));
+    final events = LocalViolationStore.getAllEvents();
+    final payload = {
+      'flagged': flagged,
+      'answers': answersMap,
+      'localEvents': events,
+    };
+    final pretty = const JsonEncoder.withIndent('  ').convert(payload);
+    if (!mounted) return;
+    await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Debug: Anti-cheat state'),
+        content: SizedBox(width: double.maxFinite, child: SingleChildScrollView(child: Text(pretty))),
+        actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Close'))],
+      ),
+    );
+  }
+
+  Future<void> _showViolationAlert(ViolationModel v) async {
+    if (!mounted) return;
+    if (_isShowingViolationDialog) return;
+    _isShowingViolationDialog = true;
+    try {
+      final base = _violationMessage(v);
+      // Determine current violation count so we can show the exact consequence
+      final count = _antiCheat.getViolationCount();
+      String consequence;
+      if (count <= 1) {
+        consequence = 'This is a warning. Please remain on the quiz screen.';
+      } else if (count == 2) {
+        consequence = 'Second violation: the current question will be flagged as incorrect.';
+      } else {
+        consequence = 'Final violation: your attempt will be automatically submitted.';
+      }
+      final message = '$base\n\n$consequence';
+      await showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Policy notice'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Continue'),
+            ),
+          ],
+        ),
+      );
+      if (!mounted) return;
+      // Apply consequences after user acknowledges
+      _applyViolationConsequences();
+    } catch (e, st) {
+      // If dialog failed due to routing races, buffer the violation instead
+      // and apply consequences when the user returns.
+      // ignore: avoid_print
+      print('[TakeQuizPage] _showViolationAlert failed: $e\n$st');
+      if (mounted) {
+        _pendingViolations.add(v);
+      }
+    } finally {
+      _isShowingViolationDialog = false;
+    }
+  }
 
   @override
   void initState() {
@@ -97,38 +182,28 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
       _syncTextControllerToCurrentQuestion();
     });
 
-    _antiCheat.startAntiCheat(id, user.uid);
-    // Show an in-app popup whenever the anti-cheat service logs a violation.
-    _antiCheat.setOnViolation((violation) {
+    // Register the UI handler before starting anti-cheat to avoid races.
+    _antiCheat.setOnViolation((violation) async {
+      // Debug: log that the UI callback was invoked
+      // ignore: avoid_print
+      print('[TakeQuizPage] onViolation callback invoked: ${violation.type}');
       if (!mounted) return;
-      final isForeground = WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
       final isCurrentRoute = ModalRoute.of(context)?.isCurrent ?? false;
-      if (isForeground && isCurrentRoute) {
-        final shortType = violation.type.toString().split('.').last;
-        showDialog(
-          context: context,
-          builder: (_) => AlertDialog(
-            title: const Text('Warning'),
-            content: Text('We detected a potential anti-cheating event: $shortType. Please remain on the quiz screen.'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  // apply punishment after user acknowledged warning
-                  _applyViolationConsequences();
-                },
-                child: const Text('Continue'),
-              )
-            ],
-          ),
-        );
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Anti-cheat: $shortType detected'), backgroundColor: Colors.orange, duration: const Duration(seconds: 3)));
+      if (isCurrentRoute) {
+        // Show a single, descriptive alert dialog for the violation.
+        await _showViolationAlert(violation);
       } else {
-        // Buffer the violation and notify when the user returns to the app.
+        // Buffer for consolidated display when the user returns.
+        // Debug
+        // ignore: avoid_print
+        print('[TakeQuizPage] Not current route, buffering violation');
         _pendingViolations.add(violation);
-        // Also show a lightweight snackbar when they return; but we store details now.
       }
     });
+
+    _antiCheat.startAntiCheat(id, user.uid);
+    // quick confirmation so tester knows monitoring is active
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Anti-cheat monitoring enabled'), duration: Duration(seconds: 1)));
 
     final quiz = await _firestore.getQuiz(widget.quizId);
     final tl = quiz?.timeLimitSeconds ?? 0;
@@ -153,32 +228,47 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.resumed && _pendingViolations.isNotEmpty && mounted) {
       // Consolidate pending violations into a single alert to avoid spamming the user.
-      final types = _pendingViolations.map((v) => v.type.toString().split('.').last).toList();
-      final unique = types.toSet().toList();
-      final summary = unique.join(', ');
-      final count = _pendingViolations.length;
+      final toShow = List<ViolationModel>.from(_pendingViolations);
+      _pendingViolations.clear();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        showDialog(
-          context: context,
-          builder: (_) => AlertDialog(
-            title: const Text('Warning'),
-            content: Text('Detected $count anti-cheat event(s): $summary. Please remain on the quiz screen.'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  // apply accumulated consequences now
-                  _applyViolationConsequences();
-                },
-                child: const Text('Continue'),
-              )
-            ],
-          ),
-        );
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Anti-cheat: $count event(s) detected'), backgroundColor: Colors.orange, duration: const Duration(seconds: 4)));
+        _showViolationsSummary(toShow);
       });
-      _pendingViolations.clear();
+    }
+  }
+
+  Future<void> _showViolationsSummary(List<ViolationModel> list) async {
+    if (!mounted) return;
+    if (_isShowingViolationDialog) return;
+    _isShowingViolationDialog = true;
+    try {
+      // Build a friendly summary with counts per type
+      final Map<String, int> counts = {};
+      for (var v in list) {
+        final key = v.type.toString().split('.').last;
+        counts[key] = (counts[key] ?? 0) + 1;
+      }
+      final parts = counts.entries.map((e) => '${e.value}× ${e.key}').toList();
+      final summary = parts.join(', ');
+      final message = 'Detected ${list.length} anti-cheat event(s): $summary. Please remain on the quiz screen.';
+      await showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Policy notice'),
+          content: Text(message),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Continue')),
+          ],
+        ),
+      );
+      if (!mounted) return;
+      _applyViolationConsequences();
+    } catch (e, st) {
+      // ignore: avoid_print
+      print('[TakeQuizPage] _showViolationsSummary failed: $e\n$st');
+      // If dialog couldn't be shown, keep the list empty (we already cleared it) and return.
+    } finally {
+      _isShowingViolationDialog = false;
     }
   }
 
@@ -240,21 +330,36 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
       userResp = _answers[qid] ?? '';
     }
 
+    final existing = _answerModels[qid];
     final model = AttemptAnswerModel(
       questionId: qid,
       selectedChoiceId: userResp,
       timeTakenSeconds: duration,
       answeredAt: now,
       isCorrect: false,
+      forceIncorrect: (existing?.forceIncorrect ?? false) || _flaggedQuestionIds.contains(qid),
     );
     _answerModels[qid] = model;
+    // debug: log each write to answer models for diagnostics
+    // ignore: avoid_print
+    print('[TakeQuizPage] _recordCurrentAnswerIfNeeded wrote for qid=$qid model=$model flagged=${_flaggedQuestionIds.contains(qid)}');
   }
 
+  // Previously used a MaterialBanner for violations. We now present a single
+  // AlertDialog per violation (or a consolidated dialog on resume) for a
+  // cleaner, less noisy UX. The banner implementation has been removed.
+
   // Flag the current question as incorrect immediately (used as a penalty).
-  void _flagCurrentQuestionIncorrect() {
-    if (_questions.isEmpty) return;
+  /// Marks the current question as forcibly incorrect. Returns true if the
+  /// question was newly flagged, false if it was already flagged.
+  bool _flagCurrentQuestionIncorrect() {
+    if (_questions.isEmpty) return false;
     final q = _questions[_currentQuestionIndex];
     final qid = q.id;
+
+    // If already flagged, do nothing.
+    if (_flaggedQuestionIds.contains(qid)) return false;
+
     final now = DateTime.now();
     final duration = _questionStartTime != null ? now.difference(_questionStartTime!).inSeconds : 0;
 
@@ -271,11 +376,29 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
       timeTakenSeconds: duration,
       answeredAt: now,
       isCorrect: false,
+      forceIncorrect: true,
     );
     setState(() {
       _answerModels[qid] = penalized;
+      _flaggedQuestionIds.add(qid);
+      _lockedQuestionIds.add(qid);
     });
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Current question flagged as incorrect due to policy violation'), backgroundColor: Colors.red, duration: Duration(seconds: 3)));
+    // debug: log the penalized model for diagnostics
+    // ignore: avoid_print
+    print('[TakeQuizPage] _flagCurrentQuestionIncorrect applied for qid=$qid penalized=$penalized');
+    // ignore: avoid_print
+    print('[TakeQuizPage] flagged set now=${_flaggedQuestionIds.toList()}');
+    // persist flagged id to Firestore so server-side record exists (best-effort)
+    try {
+      if (_attemptId != null) {
+        _firestore.patchAttempt(_attemptId!, {'flaggedQuestionIds': FieldValue.arrayUnion([qid])});
+      }
+    } catch (e) {
+      // ignore persistence failures
+      // ignore: avoid_print
+      print('[TakeQuizPage] failed to persist flagged id to firestore: $e');
+    }
+    return true;
   }
 
   // Apply consequences depending on the current violation count.
@@ -289,12 +412,22 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
       return;
     }
     if (count == 2) {
-      _flagCurrentQuestionIncorrect();
+      final flagged = _flagCurrentQuestionIncorrect();
+      if (flagged && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Current question flagged as incorrect due to policy violation'), backgroundColor: Colors.red, duration: Duration(seconds: 3)));
+        // advance the user automatically so they can't change the flagged answer
+        Future.microtask(() {
+          if (mounted) _nextQuestion();
+        });
+      }
       return;
     }
     // count >= 3 -> auto-submit
     // ensure current question is flagged as incorrect as well
-    _flagCurrentQuestionIncorrect();
+    final flagged = _flagCurrentQuestionIncorrect();
+    if (flagged && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Current question flagged as incorrect due to policy violation'), backgroundColor: Colors.red, duration: Duration(seconds: 2)));
+    }
     // small delay so the snackbar/changes have a moment to settle
     Future.delayed(const Duration(milliseconds: 300), () {
       if (mounted) _submitAttempt();
@@ -302,6 +435,12 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
   }
 
   void _answerCheckbox(String qid, String choiceId, bool selected) {
+    if (_lockedQuestionIds.contains(qid)) {
+      // ignore changes to locked (flagged) questions
+      // ignore: avoid_print
+      print('[TakeQuizPage] _answerCheckbox ignored for locked qid=$qid');
+      return;
+    }
     final list = _multiAnswers[qid] ?? [];
     if (selected) {
       list.add(choiceId);
@@ -313,16 +452,27 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
   }
 
   void _answerSingle(String qid, String choiceId) {
+    if (_lockedQuestionIds.contains(qid)) {
+      // ignore single-choice changes for locked questions
+      // ignore: avoid_print
+      print('[TakeQuizPage] _answerSingle ignored for locked qid=$qid');
+      return;
+    }
     _answers[qid] = choiceId;
     final now = DateTime.now();
     final duration = _questionStartTime != null ? now.difference(_questionStartTime!).inSeconds : 0;
+    final existing = _answerModels[qid];
     _answerModels[qid] = AttemptAnswerModel(
       questionId: qid,
       selectedChoiceId: choiceId,
       timeTakenSeconds: duration,
       answeredAt: now,
       isCorrect: false,
+      forceIncorrect: (existing?.forceIncorrect ?? false) || _flaggedQuestionIds.contains(qid),
     );
+    // debug: log each write to answer models for diagnostics
+    // ignore: avoid_print
+    print('[TakeQuizPage] _answerSingle wrote for qid=$qid model=${_answerModels[qid]} flagged=${_flaggedQuestionIds.contains(qid)}');
     _antiCheat.onQuestionAnswered();
     Future.microtask(() {
       if (mounted) _nextQuestion();
@@ -330,6 +480,12 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
   }
 
   void _answerText(String qid, String text) {
+    if (_lockedQuestionIds.contains(qid)) {
+      // ignore text edits for locked questions
+      // ignore: avoid_print
+      print('[TakeQuizPage] _answerText ignored for locked qid=$qid');
+      return;
+    }
     _answers[qid] = text;
     _antiCheat.onQuestionAnswered();
   }
@@ -373,14 +529,28 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
       if (correct) score += q.points;
 
       if (existing != null) {
-        answersList.add(existing.copyWith(isCorrect: correct));
+        // If the answer was force-marked incorrect due to a policy violation,
+        // respect that and do not allow recomputing it as correct. Also
+        // consult the independent flagged set to ensure flagging survives
+        // intermediate overwrites.
+        final isForced = existing.forceIncorrect || _flaggedQuestionIds.contains(qid);
+        if (isForced) {
+          answersList.add(existing.copyWith(isCorrect: false, forceIncorrect: true));
+        } else {
+          answersList.add(existing.copyWith(isCorrect: correct));
+        }
+        // debug: log final answer entry for this question
+        // ignore: avoid_print
+        print('[TakeQuizPage] _submitAttempt using existing for qid=$qid entry=${answersList.last} forceIncorrect=$isForced correctComputed=$correct');
       } else {
+        final wasFlagged = _flaggedQuestionIds.contains(qid);
         answersList.add(AttemptAnswerModel(
           questionId: qid,
           selectedChoiceId: userResp,
           timeTakenSeconds: 0,
           answeredAt: null,
-          isCorrect: correct,
+          isCorrect: wasFlagged ? false : correct,
+          forceIncorrect: wasFlagged,
         ));
       }
     }
@@ -407,12 +577,16 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
           title: const Text('Submitted'),
           content: Text('Score: ${attempt.score}/${attempt.totalPoints}'),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst), child: const Text('OK')),
+            TextButton(onPressed: () {
+              if (!mounted) return;
+              Navigator.of(context).popUntil((r) => r.isFirst);
+            }, child: const Text('OK')),
           ],
         ),
       );
-    }
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -425,7 +599,12 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
     });
 
     return Scaffold(
-      appBar: AppBar(title: Text(_quizTitle ?? 'Quiz')),
+      appBar: AppBar(
+        title: Text(_quizTitle ?? 'Quiz'),
+        actions: kDebugMode
+            ? [IconButton(icon: const Icon(Icons.bug_report), onPressed: _showDebugInfoDialog, tooltip: 'Debug state')]
+            : null,
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : Padding(
@@ -461,23 +640,25 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
                                               Column(
                                                 children: q.choices.map((c) {
                                                   final selected = _answers[q.id] == c.id;
+                                                  final locked = _lockedQuestionIds.contains(q.id);
                                                   return ListTile(
                                                     title: Text(c.text),
                                                     leading: IconButton(
                                                       icon: Icon(selected ? Icons.radio_button_checked : Icons.radio_button_unchecked),
-                                                      onPressed: () => _answerSingle(q.id, c.id),
+                                                      onPressed: locked ? null : () => _answerSingle(q.id, c.id),
                                                     ),
-                                                    onTap: () => _answerSingle(q.id, c.id),
+                                                    onTap: locked ? null : () => _answerSingle(q.id, c.id),
                                                   );
                                                 }).toList(),
                                               ),
                                             if (q.type == QuestionType.checkbox)
                                               Column(
                                                 children: q.choices.map((c) {
+                                                  final locked = _lockedQuestionIds.contains(q.id);
                                                   return CheckboxListTile(
                                                     title: Text(c.text),
                                                     value: (_multiAnswers[q.id] ?? []).contains(c.id),
-                                                    onChanged: (v) => _answerCheckbox(q.id, c.id, v ?? false),
+                                                    onChanged: locked ? null : (v) => _answerCheckbox(q.id, c.id, v ?? false),
                                                   );
                                                 }).toList(),
                                               ),
@@ -485,11 +666,14 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
                                               TextField(
                                                 controller: _textController,
                                                 onChanged: (v) => _answerText(q.id, v),
+                                                readOnly: _lockedQuestionIds.contains(q.id),
                                                 keyboardType: TextInputType.multiline,
                                                 textInputAction: TextInputAction.newline,
                                                 minLines: q.type == QuestionType.paragraph ? 3 : 1,
                                                 maxLines: q.type == QuestionType.paragraph ? null : 1,
-                                                decoration: const InputDecoration(border: OutlineInputBorder()),
+                                                decoration: InputDecoration(
+                                                    border: const OutlineInputBorder(),
+                                                    suffix: _lockedQuestionIds.contains(q.id) ? const Text('Flagged') : null),
                                               ),
                                             
 

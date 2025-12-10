@@ -198,11 +198,13 @@ class _QuestionEditorState extends State<QuestionEditor> {
             // Validate choices for choice-like questions
             if (_type == QuestionType.multipleChoice || _type == QuestionType.checkbox || _type == QuestionType.dropdown) {
               if (_choices.isEmpty) {
+                if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please add at least one choice')));
                 return;
               }
               final hasEmpty = _choices.any((c) => c.text.trim().isEmpty);
               if (hasEmpty) {
+                if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill in all choice text')));
                 return;
               }
@@ -215,6 +217,7 @@ class _QuestionEditorState extends State<QuestionEditor> {
               QuestionType.dropdown,
             };
             if (requiresCorrect.contains(_type) && correct.isEmpty) {
+              if (!mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please mark at least one correct answer')));
               return;
             }
@@ -223,6 +226,7 @@ class _QuestionEditorState extends State<QuestionEditor> {
             if (_type == QuestionType.shortAnswer) {
               final raw = _shortAnswerController.text.trim();
               if (raw.isEmpty) {
+                if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Short answer questions require a correct answer')));
                 return;
               }

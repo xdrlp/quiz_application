@@ -6,6 +6,7 @@ class AttemptAnswerModel {
   final int timeTakenSeconds;
   final DateTime? answeredAt;
   final bool isCorrect;
+  final bool forceIncorrect;
 
   AttemptAnswerModel({
     required this.questionId,
@@ -13,6 +14,7 @@ class AttemptAnswerModel {
     required this.timeTakenSeconds,
     this.answeredAt,
     required this.isCorrect,
+    this.forceIncorrect = false,
   });
 
   factory AttemptAnswerModel.fromMap(Map<String, dynamic> map) {
@@ -22,6 +24,7 @@ class AttemptAnswerModel {
       timeTakenSeconds: map['timeTakenSeconds'] ?? 0,
       answeredAt: map['answeredAt'] != null ? (map['answeredAt'] as Timestamp).toDate() : null,
       isCorrect: map['isCorrect'] ?? false,
+      forceIncorrect: map['forceIncorrect'] ?? false,
     );
   }
 
@@ -32,6 +35,7 @@ class AttemptAnswerModel {
       'timeTakenSeconds': timeTakenSeconds,
       'answeredAt': answeredAt != null ? Timestamp.fromDate(answeredAt!) : null,
       'isCorrect': isCorrect,
+      'forceIncorrect': forceIncorrect,
     };
   }
 
@@ -41,6 +45,7 @@ class AttemptAnswerModel {
     int? timeTakenSeconds,
     DateTime? answeredAt,
     bool? isCorrect,
+    bool? forceIncorrect,
   }) {
     return AttemptAnswerModel(
       questionId: questionId ?? this.questionId,
@@ -48,6 +53,7 @@ class AttemptAnswerModel {
       timeTakenSeconds: timeTakenSeconds ?? this.timeTakenSeconds,
       answeredAt: answeredAt ?? this.answeredAt,
       isCorrect: isCorrect ?? this.isCorrect,
+      forceIncorrect: forceIncorrect ?? this.forceIncorrect,
     );
   }
 }

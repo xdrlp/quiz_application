@@ -73,6 +73,7 @@ class _AttemptsReviewScreenState extends State<AttemptsReviewScreen> {
         attempt: attempt,
         questions: questions,
         onSaved: () async {
+          if (!mounted) return;
           await _reload();
         },
       ),
@@ -147,8 +148,9 @@ class _AttemptDetailDialogState extends State<AttemptDetailDialog> {
                                 questionId: a.questionId,
                                 selectedChoiceId: a.selectedChoiceId,
                                 timeTakenSeconds: a.timeTakenSeconds,
-                                  answeredAt: a.answeredAt,
+                                answeredAt: a.answeredAt,
                                 isCorrect: v,
+                                forceIncorrect: a.forceIncorrect,
                               );
                               final list = _attempt.answers.toList();
                               list[i] = updated;

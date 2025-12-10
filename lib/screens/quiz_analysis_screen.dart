@@ -269,7 +269,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
               // The following Row will expand to fill the available height provided by the parent
               // (caller wraps this widget in a SizedBox with a target height). Using Expanded
               // prevents hard-coded heights that caused RenderFlex overflows.
-              Expanded(
+              Flexible(
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -699,7 +699,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
             subtitle: Text('Score: ${a.score}/${a.totalPoints} — Violations: ${violations.length}'),
             trailing: IconButton(
               icon: const Icon(Icons.open_in_new),
-              onPressed: () async {
+                onPressed: () async {
                 // show interactive attempt viewer
                 await showDialog(
                   context: context,
@@ -711,6 +711,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
                   ),
                 );
                 // reload after dialog (in case of save)
+                if (!mounted) return;
                 await _loadAll();
               },
             ),
@@ -802,7 +803,7 @@ class _AttemptDetailViewerState extends State<_AttemptDetailViewer> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to save: $e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to save: $e')));
     }
   }
 

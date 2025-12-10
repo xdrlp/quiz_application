@@ -78,6 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
             final success = await authProvider.login(email: email, password: password);
             if (!mounted) return;
             if (!success) {
+              if (!mounted) return;
               messenger.showSnackBar(SnackBar(content: Text(authProvider.errorMessage ?? 'Login failed')));
                 return;
             }
@@ -91,7 +92,8 @@ class _LoginScreenState extends State<LoginScreen> {
       final firstName = _firstNameController.text.trim();
       final lastName = _lastNameController.text.trim();
       final confirm = _confirmController.text;
-      if (password != confirm) {
+        if (password != confirm) {
+        if (!mounted) return;
         if (!mounted) return;
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text('Passwords do not match')));
@@ -107,6 +109,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
       if (!mounted) return;
       if (!success) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(authProvider.errorMessage ?? 'Sign up failed')));
         return;
       }
@@ -129,7 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     if (result == true && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Verification email sent. Please check your inbox.')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Verification email sent. Please check your inbox.')));
     }
   }
 

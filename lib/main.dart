@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
+import 'package:quiz_application/services/local_violation_store.dart';
 import 'package:quiz_application/providers/auth_provider.dart';
 import 'package:quiz_application/providers/quiz_provider.dart';
 import 'package:quiz_application/screens/splash_screen.dart';
@@ -17,6 +18,13 @@ import 'package:quiz_application/screens/profile_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Initialize Hive local store for anti-cheat evidence logging.
+  try {
+    await LocalViolationStore.init();
+  } catch (e) {
+    // ignore: avoid_print
+    print('LocalViolationStore init failed: $e');
+  }
   String? firebaseInitError;
   try {
     if (kIsWeb) {

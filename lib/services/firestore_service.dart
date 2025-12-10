@@ -301,6 +301,16 @@ class FirestoreService {
     }
   }
 
+  /// Apply a partial update to an attempt document. Useful for adding
+  /// transient metadata such as flagged question ids when a penalty occurs.
+  Future<void> patchAttempt(String attemptId, Map<String, dynamic> data) async {
+    try {
+      await _firestore.collection(attemptsCollection).doc(attemptId).update(data);
+    } catch (e) {
+      // Do not rethrow; this is best-effort telemetry to persist flags.
+    }
+  }
+
   // ====== VIOLATION OPERATIONS ======
   Future<void> logViolation(ViolationModel violation) async {
     try {
