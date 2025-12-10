@@ -5,7 +5,7 @@ import 'package:quiz_application/providers/auth_provider.dart';
 import 'package:quiz_application/services/firestore_service.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:quiz_application/models/quiz_model.dart';
-import 'package:quiz_application/screens/attempts_review_screen.dart';
+import 'package:quiz_application/screens/quiz_analysis_screen.dart';
 
 // ignore_for_file: use_super_parameters
 
@@ -276,44 +276,8 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
                                   icon: const Icon(Icons.visibility),
                                   tooltip: 'View',
                                   onPressed: () {
-                                    showModalBottomSheet<void>(
-                                      context: context,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-                                      builder: (ctx) {
-                                        return SafeArea(
-                                          child: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              ListTile(
-                                                leading: const Icon(Icons.insert_chart_outlined),
-                                                title: const Text('Summary'),
-                                                onTap: () {
-                                                  Navigator.of(ctx).pop();
-                                                  showDialog(context: context, builder: (_) => AlertDialog(title: const Text('Summary'), content: Text('Summary for ${q.title}')));
-                                                },
-                                              ),
-                                              ListTile(
-                                                leading: const Icon(Icons.insights_outlined),
-                                                title: const Text('Insights'),
-                                                onTap: () {
-                                                  Navigator.of(ctx).pop();
-                                                  showDialog(context: context, builder: (_) => AlertDialog(title: const Text('Insights'), content: Text('Insights for ${q.title}')));
-                                                },
-                                              ),
-                                              ListTile(
-                                                leading: const Icon(Icons.person_outline),
-                                                title: const Text('Individual'),
-                                                onTap: () async {
-                                                  Navigator.of(ctx).pop();
-                                                  await Navigator.of(context).push(MaterialPageRoute(builder: (_) => AttemptsReviewScreen(quizId: q.id)));
-                                                  setState(() => _load());
-                                                },
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      },
-                                    );
+                                    // Directly navigate to the analysis screen (default to Summary tab)
+                                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => QuizAnalysisScreen(quizId: q.id, initialTab: 'summary')));
                                   },
                                 ),
                                 IconButton(

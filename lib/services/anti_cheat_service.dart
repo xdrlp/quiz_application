@@ -133,20 +133,13 @@ class AntiCheatService {
       detectedAt: DateTime.now(),
     );
 
-    // Notify any UI listener about this violation immediately so the UI can
-    // show a warning even if Firestore logging is slow or fails.
+    await _firestoreService.logViolation(violation);
+
+    // Notify any UI listener about this violation so it can show an in-app warning.
     try {
       onViolation?.call(violation);
     } catch (_) {
       // Swallow UI callback errors; they should be handled by the caller.
-    }
-
-    // Log to Firestore in a best-effort fashion; don't allow logging failures
-    // to prevent the UI notification from occurring.
-    try {
-      await _firestoreService.logViolation(violation);
-    } catch (_) {
-      // ignore logging errors; violation notification has already been delivered to UI
     }
   }
 
