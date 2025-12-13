@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -10,11 +11,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:quiz_application/services/firestore_service.dart';
 import 'package:quiz_application/models/violation_model.dart';
 import 'package:quiz_application/services/anti_cheat_service.dart';
+import 'package:quiz_application/services/accessibility_monitor.dart';
 import 'package:quiz_application/models/question_model.dart';
 import 'package:quiz_application/utils/answer_utils.dart';
 import 'package:quiz_application/models/attempt_model.dart';
 import 'package:quiz_application/providers/auth_provider.dart';
 import 'package:quiz_application/services/local_violation_store.dart';
+import 'package:usage_stats/usage_stats.dart';
 
 class TakeQuizPage extends StatefulWidget {
   final String quizId;
@@ -46,11 +49,74 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
   final TextEditingController _textController = TextEditingController();
   final List<ViolationModel> _pendingViolations = [];
   bool _isShowingViolationDialog = false;
+  bool? _usageAccessGranted;
+  bool? _accessibilityServiceEnabled;
+
+  String? _extractDetailValue(String? details, String key) {
+    if (details == null || details.isEmpty) return null;
+    final prefix = '${key.toLowerCase()}:';
+    for (final part in details.split('|')) {
+      final trimmed = part.trim();
+      if (trimmed.isEmpty) continue;
+      final lower = trimmed.toLowerCase();
+      if (lower.startsWith(prefix)) {
+        return trimmed.substring(prefix.length).trim();
+      }
+    }
+    return null;
+  }
+
+  String? _extractSwitchedToApp(String? details) {
+    final value = _extractDetailValue(details, 'switchedTo');
+    if (value == null || value.isEmpty) return null;
+    final match = RegExp(r'^(.*)\(([^)]+)\)$').firstMatch(value);
+    if (match != null) {
+      final label = match.group(1)?.trim();
+      final pkg = match.group(2)?.trim();
+      if (pkg != null && pkg.contains('.')) {
+        if (label != null && label.isNotEmpty) {
+          return '$label [$pkg]';
+        }
+        return pkg;
+      }
+    }
+    return value;
+  }
+
+  String? _extractSwitchPath(String? details) => _extractDetailValue(details, 'switchPath');
+
+  String? _extractTrigger(String? details) => _extractDetailValue(details, 'trigger');
+
+  String? _extractAccessibilityPath(String? details) => _extractDetailValue(details, 'accessibilityPath');
+
+  String? _extractOpenedApps(String? details) => _extractDetailValue(details, 'openedApps');
 
   String _violationMessage(ViolationModel v) {
     switch (v.type) {
       case ViolationType.appSwitch:
-        return 'You left the quiz screen or switched to another app. Please remain on the quiz screen until you finish the attempt.';
+        final target = _extractSwitchedToApp(v.details);
+        final sequence = _extractSwitchPath(v.details);
+        final trigger = _extractTrigger(v.details);
+        final accessibilityPath = _extractAccessibilityPath(v.details);
+        final openedApps = _extractOpenedApps(v.details);
+        final extras = <String>[];
+        // Prefer showing the ordered list of opened apps first so the UI
+        // always displays a sequence the user opened (even if it's just the
+        // system home). This helps post-hoc review and answers the user's
+        // expectation for a list.
+        if (openedApps != null && openedApps.isNotEmpty) {
+          extras.add('Opened apps (ordered): $openedApps.');
+        } else if (target != null) {
+          // Fallback to single-package description when openedApps not present
+          extras.add('Detected switch to: $target.');
+        }
+        if (sequence != null && sequence.isNotEmpty) extras.add('Observed sequence: $sequence.');
+        if (trigger != null && trigger.isNotEmpty) extras.add('Likely action: $trigger.');
+        if (accessibilityPath != null && accessibilityPath.isNotEmpty) {
+          extras.add('Accessibility trace: $accessibilityPath.');
+        }
+        final suffix = extras.isNotEmpty ? '\n\n${extras.join('\n')}' : '';
+        return 'You left the quiz screen or switched to another app. Please remain on the quiz screen until you finish the attempt.$suffix';
       case ViolationType.screenResize:
         return 'Your screen size changed (split-screen or rotation). Please keep the app fullscreen while taking the quiz.';
       default:
@@ -125,11 +191,91 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
     }
   }
 
+  Future<void> _refreshMonitoringPrereqs() async {
+    if (!Platform.isAndroid) {
+      if (!mounted) return;
+      setState(() {
+        _usageAccessGranted = true;
+        _accessibilityServiceEnabled = true;
+      });
+      return;
+    }
+
+    final usageGranted = (await UsageStats.checkUsagePermission()) == true;
+    final monitor = AccessibilityMonitor.instance;
+    await monitor.initialize();
+    final accessibilityEnabled = await monitor.isServiceEnabled();
+
+    if (!mounted) return;
+    setState(() {
+      _usageAccessGranted = usageGranted;
+      _accessibilityServiceEnabled = accessibilityEnabled;
+    });
+  }
+
+  Future<bool> _ensureAccessibilityService() async {
+    if (!Platform.isAndroid) {
+      await _refreshMonitoringPrereqs();
+      return true;
+    }
+
+    final monitor = AccessibilityMonitor.instance;
+    await monitor.initialize();
+    if (await monitor.isServiceEnabled()) {
+      await _refreshMonitoringPrereqs();
+      return true;
+    }
+
+    if (!mounted) return false;
+
+    final shouldOpen = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Accessibility monitoring required'),
+        content: const Text('To monitor which apps are opened during the quiz, enable the accessibility service for this app, then return here.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Open Settings'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldOpen == true) {
+      await monitor.openAccessibilitySettings();
+      await Future.delayed(const Duration(milliseconds: 500));
+    }
+
+    final recheck = await monitor.isServiceEnabled();
+    await _refreshMonitoringPrereqs();
+
+    if (!recheck && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Accessibility service not enabled. Please turn it on and try again.')));
+    }
+
+    return recheck;
+  }
+
+  Future<void> _openUsageAccessSettings() async {
+    if (!Platform.isAndroid) return;
+    await UsageStats.grantUsagePermission();
+  }
+
+  Future<void> _openAccessibilitySettings() async {
+    if (!Platform.isAndroid) return;
+    final monitor = AccessibilityMonitor.instance;
+    await monitor.initialize();
+    await monitor.openAccessibilitySettings();
+  }
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _load();
+    _refreshMonitoringPrereqs();
   }
 
   @override
@@ -154,6 +300,49 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
       _questions = qs;
       _loading = false;
     });
+  }
+
+  Future<bool> _ensureUsageAccessPermission() async {
+    if (!Platform.isAndroid) {
+      await _refreshMonitoringPrereqs();
+      return true;
+    }
+    final granted = (await UsageStats.checkUsagePermission()) == true;
+    if (granted) {
+      await _refreshMonitoringPrereqs();
+      return true;
+    }
+
+    if (!mounted) return false;
+
+    final shouldOpen = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Usage access required'),
+        content: const Text('To detect app switching, the app needs Usage Access permission. Tap Continue to open system settings, enable the permission for this app, then return to restart the attempt.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Continue')),
+        ],
+      ),
+    );
+
+    if (shouldOpen == true) {
+      await UsageStats.grantUsagePermission();
+      // give the system a moment; user may still be in settings when this completes
+      await Future.delayed(const Duration(milliseconds: 500));
+    }
+
+    final recheck = (await UsageStats.checkUsagePermission()) == true;
+    await _refreshMonitoringPrereqs();
+    if (recheck) {
+      return true;
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Usage Access permission not granted. Please enable it in system settings and then try again.')));
+    }
+    return false;
   }
 
   Future<void> _startAttempt() async {
@@ -204,6 +393,7 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
     _antiCheat.startAntiCheat(id, user.uid);
     // quick confirmation so tester knows monitoring is active
     if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Anti-cheat monitoring enabled'), duration: Duration(seconds: 1)));
+    await _refreshMonitoringPrereqs();
 
     final quiz = await _firestore.getQuiz(widget.quizId);
     final tl = quiz?.timeLimitSeconds ?? 0;
@@ -223,9 +413,87 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
     }
   }
 
+  /// Show a policy/violation notice to the user before starting the attempt.
+  /// Requires user acknowledgement (checkbox) before enabling Start.
+  Future<void> _confirmStartAttempt() async {
+    await _refreshMonitoringPrereqs();
+    if (!mounted) return;
+    var acknowledged = false;
+    final res = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(builder: (ctx, setState) {
+          return AlertDialog(
+            title: const Text('Violation Policy Notice'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                      'Please read and acknowledge the exam conduct policy before starting. Violations such as collaboration, screen sharing, use of unauthorised resources, or attempting to circumvent monitoring may be detected and penalised.'),
+                  const SizedBox(height: 12),
+                  const Text('If you understand and agree to abide by the policy, check the box below to enable Start.'),
+                  const SizedBox(height: 12),
+                  _monitoringStatusRow('Usage access permission required', _usageAccessGranted == true, () async {
+                    await _openUsageAccessSettings();
+                    await Future.delayed(const Duration(milliseconds: 500));
+                    await _refreshMonitoringPrereqs();
+                    setState(() {});
+                  }),
+                  const SizedBox(height: 6),
+                  _monitoringStatusRow('Accessibility service required', _accessibilityServiceEnabled == true, () async {
+                    await _openAccessibilitySettings();
+                    await Future.delayed(const Duration(milliseconds: 500));
+                    await _refreshMonitoringPrereqs();
+                    setState(() {});
+                  }),
+                  const SizedBox(height: 12),
+                  const Divider(),
+                  const SizedBox(height: 12),
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: acknowledged,
+                    onChanged: (v) => setState(() => acknowledged = v ?? false),
+                    title: const Text('I have read and agree to the conduct policy'),
+                    controlAffinity: ListTileControlAffinity.leading,
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+              ElevatedButton(
+                onPressed: acknowledged
+                    ? () {
+                        Navigator.of(ctx).pop(true);
+                      }
+                    : null,
+                child: const Text('Start Attempt'),
+              ),
+            ],
+          );
+        });
+      },
+    );
+
+    if (!mounted) return;
+
+    if (res == true) {
+      final usageAllowed = await _ensureUsageAccessPermission();
+      if (!usageAllowed) return;
+      final accessibilityAllowed = await _ensureAccessibilityService();
+      if (!accessibilityAllowed) return;
+      await _startAttempt();
+    }
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      _refreshMonitoringPrereqs();
+    }
     if (state == AppLifecycleState.resumed && _pendingViolations.isNotEmpty && mounted) {
       // Consolidate pending violations into a single alert to avoid spamming the user.
       final toShow = List<ViolationModel>.from(_pendingViolations);
@@ -250,7 +518,47 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
       }
       final parts = counts.entries.map((e) => '${e.value}× ${e.key}').toList();
       final summary = parts.join(', ');
-      final message = 'Detected ${list.length} anti-cheat event(s): $summary. Please remain on the quiz screen.';
+      var message = 'Detected ${list.length} anti-cheat event(s): $summary. Please remain on the quiz screen.';
+      final switchedTargets = list
+          .map((v) => _extractSwitchedToApp(v.details))
+          .whereType<String>()
+          .toSet()
+          .toList();
+      if (switchedTargets.isNotEmpty) {
+        message += '\n\nRecent app switches: ${switchedTargets.join(', ')}.';
+      }
+      final sequences = list
+          .map((v) => _extractSwitchPath(v.details))
+          .whereType<String>()
+          .toSet()
+          .toList();
+      if (sequences.isNotEmpty) {
+        message += '\nObserved sequences: ${sequences.join(' | ')}.';
+      }
+      final triggers = list
+          .map((v) => _extractTrigger(v.details))
+          .whereType<String>()
+          .toSet()
+          .toList();
+      if (triggers.isNotEmpty) {
+        message += '\nLikely actions: ${triggers.join(', ')}.';
+      }
+      final accessibilityPaths = list
+          .map((v) => _extractAccessibilityPath(v.details))
+          .whereType<String>()
+          .toSet()
+          .toList();
+      if (accessibilityPaths.isNotEmpty) {
+        message += '\nAccessibility traces: ${accessibilityPaths.join(' | ')}.';
+      }
+      final openedApps = list
+          .map((v) => _extractOpenedApps(v.details))
+          .whereType<String>()
+          .toSet()
+          .toList();
+      if (openedApps.isNotEmpty) {
+        message += '\nOpened apps: ${openedApps.join(' | ')}.';
+      }
       await showDialog(
         context: context,
         builder: (_) => AlertDialog(
@@ -270,6 +578,65 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
     } finally {
       _isShowingViolationDialog = false;
     }
+  }
+
+  Widget _monitoringStatusRow(String label, bool ready, Future<void> Function()? onPressed) {
+    final icon = ready ? Icons.check_circle : Icons.warning_amber_outlined;
+    final color = ready ? Colors.green : Colors.orange;
+    return Row(
+      children: [
+        Icon(icon, color: color, size: 20),
+        const SizedBox(width: 8),
+        Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600))),
+        if (!ready)
+          TextButton(
+            onPressed: onPressed == null
+                ? null
+                : () async {
+                    await onPressed();
+                  },
+            child: const Text('Open settings'),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildMonitoringBanner() {
+    final usageReady = _usageAccessGranted == true;
+    final accessibilityReady = _accessibilityServiceEnabled == true;
+    return Card(
+      color: const Color(0xFFFFF7E6),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.shield_outlined, color: Colors.orange),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Enable monitoring protections',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text('Usage access and accessibility monitoring must be enabled before starting the quiz.'),
+            const SizedBox(height: 12),
+            _monitoringStatusRow('Usage access permission', usageReady, () async {
+              await _openUsageAccessSettings();
+            }),
+            const SizedBox(height: 6),
+            _monitoringStatusRow('Accessibility service', accessibilityReady, () async {
+              await _openAccessibilitySettings();
+            }),
+          ],
+        ),
+      ),
+    );
   }
 
   void _nextQuestion() {
@@ -612,6 +979,11 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
               child: Column(
                 children: [
                   if (_remainingSeconds != null) Text('Time left: ${_formatRemaining(_remainingSeconds!)}'),
+                  if ((_usageAccessGranted ?? false) == false || (_accessibilityServiceEnabled ?? false) == false)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12.0),
+                      child: _buildMonitoringBanner(),
+                    ),
                   Expanded(
                     child: _questions.isEmpty
                         ? const SizedBox.shrink()
@@ -713,7 +1085,7 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
                                           alignment: Alignment.center,
                                           child: ElevatedButton(
                                             style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12)),
-                                            onPressed: _startAttempt,
+                                            onPressed: _confirmStartAttempt,
                                             child: const Text('Start Attempt'),
                                           ),
                                         ),

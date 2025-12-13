@@ -32,6 +32,17 @@ Future<void> showTakeQuizDialog(BuildContext context) async {
             }
             // fetch creator info
             final creator = await FirestoreService().getUser(quiz.createdBy);
+            // if the quiz doc doesn't have a totalQuestions value set, fetch the questions
+            // subcollection to compute an accurate count so the UI doesn't show 0.
+            int questionCount = quiz.totalQuestions;
+            try {
+              if (questionCount == 0) {
+                final qs = await FirestoreService().getQuizQuestions(quiz.id);
+                questionCount = qs.length;
+              }
+            } catch (_) {
+              // if fetching questions fails, fall back to the stored totalQuestions
+            }
             if (!ctx.mounted) return;
             setState(() => isLoading = false);
             Navigator.of(ctx).pop(); // close code dialog
@@ -65,7 +76,7 @@ Future<void> showTakeQuizDialog(BuildContext context) async {
                       children: [
                         if (quiz.description.isNotEmpty) Text(quiz.description),
                         const SizedBox(height: 8),
-                        Text('Questions: ${quiz.totalQuestions}'),
+                        Text('Questions: $questionCount'),
                         const SizedBox(height: 8),
                         Text('Author: ${authorName.isNotEmpty ? authorName : 'Unknown'}'),
                       ],

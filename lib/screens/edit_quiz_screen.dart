@@ -22,8 +22,6 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
   bool _shuffleChoices = false;
   bool _singleResponse = false;
   int _timeMinutes = 0;
-  // scoring is automatic and not configurable in the UI
-  // scoring is automatic and not configurable in the UI
 
   @override
   void didChangeDependencies() {
@@ -33,7 +31,6 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
       quizId = arg;
       _load();
     } else {
-      // missing id — go back
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.of(context).pop();
       });
@@ -61,7 +58,6 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
       builder: (_) => const QuestionEditor(),
     );
     if (result != null) {
-      // assign order to append at end
       final toSave = result.copyWith(order: _questions.length, createdAt: DateTime.now());
       await FirestoreService().addQuestion(quizId, toSave);
       await _load();
@@ -105,7 +101,6 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
       return;
     }
 
-    // Ensure questions that require correct answers have them
     final requiresCorrect = {
       QuestionType.multipleChoice,
       QuestionType.checkbox,
@@ -118,7 +113,6 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
       return;
     }
 
-    // Confirm publish: show summary (question count + total points)
     final questionCount = _questions.length;
     final totalPoints = _questions.fold<int>(0, (s, q) => s + q.points);
 
@@ -228,7 +222,6 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
               child: Column(
                 children: [
                   if (_quiz != null) Text(_quiz!.description),
-                  // Mobile-friendly helper: explain publish requirement when there are no questions
                   if (_quiz != null && !_quiz!.published && _questions.isEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -276,7 +269,6 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                               ),
                             )
                           ]),
-                          // Scoring removed from UI — scoring is automatic by default.
                           const SizedBox(height: 8),
                           Align(
                             alignment: Alignment.centerRight,
@@ -287,14 +279,13 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Expanded(
+                  Flexible(
                     child: ReorderableListView.builder(
                       itemCount: _questions.length,
                       onReorder: (oldIndex, newIndex) async {
                         if (newIndex > oldIndex) newIndex -= 1;
                         final item = _questions.removeAt(oldIndex);
                         _questions.insert(newIndex, item);
-                        // update order fields in firestore
                         for (var i = 0; i < _questions.length; i++) {
                           await FirestoreService().updateQuestion(quizId, _questions[i].id, {'order': i});
                         }
@@ -302,15 +293,11 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                       },
                       itemBuilder: (context, index) {
                         final q = _questions[index];
-                        // Build a friendly subtitle showing the question type as a badge and the correct answer as a chip
                         final typeLabel = questionTypeDisplayName(q.type);
                         String? correctText;
                         if (q.correctAnswers.isNotEmpty) {
-                          // Map correct answer ids to choice text when possible
                           final resolved = q.correctAnswers.map((ans) {
-                            final match = q.choices.firstWhere(
-                                (c) => c.id == ans || c.text == ans,
-                                orElse: () => Choice(id: '', text: ans));
+                            final match = q.choices.firstWhere((c) => c.id == ans || c.text == ans, orElse: () => Choice(id: '', text: ans));
                             return match.text;
                           }).toList();
                           correctText = resolved.join(', ');
@@ -334,11 +321,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                                         spacing: 8,
                                         runSpacing: 6,
                                         children: [
-                                          Chip(
-                                            label: Text(typeLabel),
-                                            visualDensity: VisualDensity.compact,
-                                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                          ),
+                                          Chip(label: Text(typeLabel), visualDensity: VisualDensity.compact, materialTapTargetSize: MaterialTapTargetSize.shrinkWrap),
                                           if (correctText != null)
                                             Chip(
                                               label: Text('Answer: $correctText'),
@@ -354,23 +337,9 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                                 Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    IconButton(
-                                      tooltip: 'Edit question',
-                                      icon: const Icon(Icons.settings),
-                                      onPressed: () => _editQuestion(q),
-                                    ),
-                                    IconButton(
-                                      tooltip: 'Delete question',
-                                      icon: const Icon(Icons.delete),
-                                      onPressed: () => _deleteQuestion(q.id),
-                                    ),
-                                    ReorderableDragStartListener(
-                                      index: index,
-                                      child: const Padding(
-                                        padding: EdgeInsets.symmetric(horizontal: 4.0),
-                                        child: Icon(Icons.drag_handle),
-                                      ),
-                                    ),
+                                    IconButton(tooltip: 'Edit question', icon: const Icon(Icons.settings), onPressed: () => _editQuestion(q)),
+                                    IconButton(tooltip: 'Delete question', icon: const Icon(Icons.delete), onPressed: () => _deleteQuestion(q.id)),
+                                    ReorderableDragStartListener(index: index, child: const Padding(padding: EdgeInsets.symmetric(horizontal: 4.0), child: Icon(Icons.drag_handle))),
                                   ],
                                 ),
                               ],

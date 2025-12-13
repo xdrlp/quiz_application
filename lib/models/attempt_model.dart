@@ -68,6 +68,7 @@ class AttemptModel {
   final int totalPoints;
   final List<AttemptAnswerModel> answers;
   final int totalViolations;
+  final List<Map<String, dynamic>> openedApps;
 
   AttemptModel({
     required this.id,
@@ -79,6 +80,7 @@ class AttemptModel {
     required this.totalPoints,
     this.answers = const [],
     this.totalViolations = 0,
+    this.openedApps = const [],
   });
 
   double get scorePercentage {
@@ -102,6 +104,7 @@ class AttemptModel {
       totalPoints: data['totalPoints'] ?? 0,
       answers: answersList,
       totalViolations: data['totalViolations'] ?? 0,
+      openedApps: (data['openedApps'] as List<dynamic>? ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList(),
     );
   }
 
@@ -116,6 +119,7 @@ class AttemptModel {
       'totalPoints': totalPoints,
       'answers': answers.map((a) => a.toMap()).toList(),
       'totalViolations': totalViolations,
+      'openedApps': openedApps,
     };
   }
 
@@ -129,6 +133,7 @@ class AttemptModel {
     int? totalPoints,
     List<AttemptAnswerModel>? answers,
     int? totalViolations,
+    List<Map<String, dynamic>>? openedApps,
   }) {
     return AttemptModel(
       id: id ?? this.id,
@@ -140,6 +145,7 @@ class AttemptModel {
       totalPoints: totalPoints ?? this.totalPoints,
       answers: answers ?? this.answers,
       totalViolations: totalViolations ?? this.totalViolations,
+      openedApps: openedApps ?? this.openedApps,
     );
   }
 }

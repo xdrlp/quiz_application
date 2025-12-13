@@ -260,6 +260,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
       Widget _buildVerticalScoreChart(Map<int, int> dist) {
         final bins = [for (var i = 0; i <= 10; i++) i * 10];
         final maxCount = dist.values.isEmpty ? 0 : dist.values.reduce((a, b) => a > b ? a : b);
+        const int yTickCount = 5; // number of Y ticks/grid lines to show (including 0)
         
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -273,44 +274,76 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Left vertical label (grey) — nudged further right for visual alignment
+                    // Left vertical label (grey) — slightly above vertical center
                     SizedBox(
-                      width: 20,
-                      child: Center(
+                      width: 14,
+                      child: Align(
+                        alignment: const Alignment(0.0, -0.05),
                         child: RotatedBox(
                           quarterTurns: 3,
                           child: Text('Attempts', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey)),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 2),
                     // Y axis labels (top-to-bottom) - right-aligned
                     SizedBox(
-                      width: 28,
-                      child: Padding(
-                        // add larger bottom padding so the '0' label sits on the x-axis line
-                        padding: const EdgeInsets.only(bottom: 20.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [for (var i = maxCount; i >= 0; i--) Align(alignment: Alignment.centerRight, child: Text('$i', style: Theme.of(context).textTheme.bodySmall))],
-                        ),
+                      width: 24,
+                      child: Column(
+                        children: [
+                          Expanded(
+                            child: Builder(builder: (ctx) {
+                              // Produce up to `yTickCount` evenly spaced Y-axis ticks (including 0 and max)
+                              final tickValues = <int>[];
+                              if (maxCount == 0) {
+                                tickValues.add(0);
+                              } else {
+                                for (var i = 0; i < yTickCount; i++) {
+                                  final val = ((maxCount * i) / (yTickCount - 1)).round();
+                                  tickValues.add(val);
+                                }
+                                // remove duplicates (can happen when maxCount < yTickCount)
+                                final dedup = <int>[];
+                                for (var v in tickValues) {
+                                  if (dedup.isEmpty || dedup.last != v) dedup.add(v);
+                                }
+                                tickValues
+                                  ..clear()
+                                  ..addAll(dedup.reversed); // want descending order
+                              }
+                              return Column(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: tickValues.map((v) => Align(alignment: Alignment.centerRight, child: Text('$v', style: Theme.of(context).textTheme.bodySmall))).toList(),
+                              );
+                            }),
+                          ),
+                          const SizedBox(height: 52),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     // Chart area
                     Expanded(
-                      child: LayoutBuilder(builder: (context, constraints) {
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 4, right: 8),
+                        child: LayoutBuilder(builder: (context, constraints) {
                         final plotWidth = constraints.maxWidth;
-                        final plotHeight = (constraints.maxHeight - 40).clamp(0.0, double.infinity); // reserve for x-axis labels
-                        final spacing = bins.length <= 1 ? plotWidth : plotWidth / (bins.length - 1);
-                        return Stack(
+                        // reserve vertical space for rotated labels
+                        final plotHeight = (constraints.maxHeight - 52).clamp(0.0, double.infinity);
+                        // keep modest left/right margins so axis labels remain legible while maximizing width
+                        final double chartMarginLeft = math.min(12.0, plotWidth * 0.05);
+                        final double chartMarginRight = math.min(12.0, plotWidth * 0.05);
+                        final effectiveWidth = (plotWidth - chartMarginLeft - chartMarginRight).clamp(0.0, double.infinity);
+                        final spacing = bins.length <= 1 ? effectiveWidth : (bins.length > 1 ? effectiveWidth / (bins.length - 1) : effectiveWidth);
+                        // allow children (rotated labels) to overflow so 0%/100% remain visible
+                        return Stack(clipBehavior: Clip.none,
                           children: [
-                            // horizontal grid lines (evenly spaced based on maxCount)
-                            for (var i = 0; i <= maxCount; i++)
+                            // horizontal grid lines (evenly spaced based on yTickCount)
+                            for (var gi = 0; gi < yTickCount; gi++)
                               Positioned(
-                                top: ((maxCount - i) / (maxCount == 0 ? 1 : maxCount)) * (plotHeight - 4),
-                                left: 0,
-                                right: 0,
+                                top: ((gi) / (yTickCount - 1)) * (plotHeight - 4),
+                                left: chartMarginLeft,
+                                right: chartMarginRight,
                                 child: Container(height: 1, color: Colors.grey.shade200),
                               ),
 
@@ -320,12 +353,14 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
                                     final bin = bins[idx];
                                     final cnt = dist[bin] ?? 0;
                                     final barHeight = maxCount == 0 ? 0.0 : (cnt / maxCount) * (plotHeight - 8);
-                                    final x = idx * spacing;
-                                    // make bars thicker by increasing width fraction
-                                    final thickBarWidth = spacing * 0.6;
+                                    final x = chartMarginLeft + idx * spacing;
+                                    // make bars slightly narrower so they don't collide with axis labels
+                                    final thickBarWidth = spacing * 0.55;
+                                    // add small offset so leftmost bar doesn't touch y-axis
+                                    final minLeft = chartMarginLeft + 2.0;
                                     return Positioned(
-                                      bottom: 40,
-                                      left: (x - (thickBarWidth / 2)).clamp(0.0, plotWidth - thickBarWidth),
+                                      bottom: 52,
+                                      left: (x - (thickBarWidth / 2)).clamp(minLeft, plotWidth - chartMarginRight - thickBarWidth - 2.0),
                                       child: Column(
                                         children: [
                                           Container(
@@ -342,35 +377,67 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
                                     );
                                   }),
 
-                            // x-axis labels under the chart (percent)
+                            // x-axis labels under the chart (percent) - positioned precisely under each tick using spacing
                             Positioned(
                               left: 0,
                               right: 0,
                               bottom: 0,
                               child: SizedBox(
-                                height: 40,
-                                child: Row(
-                                  children: [for (var idx = 0; idx < bins.length; idx++) Expanded(child: Center(child: Text('${bins[idx]}%', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black))))],
+                                height: 52,
+                                child: Stack(
+                                  children: [
+                                    for (var idx = 0; idx < bins.length; idx++)
+                                      Builder(builder: (ctx) {
+                                            // show labels at a spacing-aware frequency to avoid overlap
+                                            final showEvery = (spacing < 28.0) ? 2 : 1; // if cramped, show every 20%
+                                            if (idx % showEvery != 0) return const SizedBox.shrink();
+
+                                            // compute compact label width and font size; ensure enough room for "100%"
+                                            final labelW = math.min(56.0, math.max(42.0, spacing * 0.85));
+                                            final fontSize = 11.0;
+                                            final x = chartMarginLeft + idx * spacing;
+                                            final unconstrainedLeft = x - (labelW / 2);
+                                            final minLabelLeft = chartMarginLeft - (labelW * 0.6);
+                                            final maxLabelLeft = plotWidth - chartMarginRight - (labelW * 0.4);
+                                            final left = unconstrainedLeft.clamp(minLabelLeft, maxLabelLeft);
+                                            return Positioned(
+                                              left: left,
+                                              width: labelW,
+                                              top: 12,
+                                              child: Center(
+                                                child: Transform.rotate(
+                                                  angle: -math.pi / 4,
+                                                  alignment: Alignment.center,
+                                                  child: SizedBox(
+                                                    width: labelW,
+                                                    child: Text('${bins[idx]}%', textAlign: TextAlign.center, softWrap: false, maxLines: 1, overflow: TextOverflow.clip, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black, fontSize: fontSize)),
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                      }),
+                                  ],
                                 ),
                               ),
                             ),
 
                             // axis lines and tick marks
-                            // vertical y-axis line
-                            Positioned(left: 0, bottom: 40, top: 0, child: Container(width: 1.2, color: Colors.grey.shade300)),
-                            // horizontal x-axis line
-                            Positioned(left: 0, right: 0, bottom: 40, child: Container(height: 1.2, color: Colors.grey.shade300)),
+                            // vertical y-axis line (aligned with chart left margin)
+                            Positioned(left: chartMarginLeft, bottom: 52, top: 0, child: Container(width: 1.2, color: Colors.grey.shade300)),
+                            // horizontal x-axis line (span only the plotting area)
+                            Positioned(left: chartMarginLeft, right: chartMarginRight, bottom: 52, child: Container(height: 1.2, color: Colors.grey.shade300)),
                             // x-axis tick marks
                             for (var idx = 0; idx < bins.length; idx++)
-                              Positioned(bottom: 40 - 6, left: (idx * spacing - 1).clamp(0.0, plotWidth - 2), child: Container(width: 2, height: 6, color: Colors.grey.shade400)),
+                              Positioned(bottom: 52 - 6, left: (chartMarginLeft + idx * spacing - 1).clamp(chartMarginLeft, plotWidth - chartMarginRight - 2), child: Container(width: 2, height: 6, color: Colors.grey.shade400)),
                           ],
                         );
                       }),
+                      ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 2),
               Text('Score (%)', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey)),
             ],
           ),
@@ -745,6 +812,98 @@ class _AttemptDetailViewerState extends State<_AttemptDetailViewer> {
     _attempt = widget.attempt;
   }
 
+  String _formatTimestamp(DateTime dt) {
+    final local = dt.toLocal();
+    final day = local.day.toString().padLeft(2, '0');
+    final month = local.month.toString().padLeft(2, '0');
+    final year = (local.year % 100).toString().padLeft(2, '0');
+    final hour12 = local.hour % 12 == 0 ? 12 : local.hour % 12;
+    final minute = local.minute.toString().padLeft(2, '0');
+    final ampm = local.hour >= 12 ? 'PM' : 'AM';
+    return '$day/$month/$year ${hour12.toString().padLeft(2, '0')}:$minute $ampm';
+  }
+
+  String? _extractDetailValue(String? details, String key) {
+    if (details == null || details.isEmpty) return null;
+    final prefix = '${key.toLowerCase()}:';
+    for (final part in details.split('|')) {
+      final trimmed = part.trim();
+      if (trimmed.isEmpty) continue;
+      final lower = trimmed.toLowerCase();
+      if (lower.startsWith(prefix)) {
+        return trimmed.substring(prefix.length).trim();
+      }
+    }
+    return null;
+  }
+
+  String? _extractSwitchedToApp(String? details) {
+    final value = _extractDetailValue(details, 'switchedTo');
+    if (value == null || value.isEmpty) return null;
+    final match = RegExp(r'^(.*)\(([^)]+)\)$').firstMatch(value);
+    if (match != null) {
+      final label = match.group(1)?.trim();
+      final pkg = match.group(2)?.trim();
+      if (pkg != null && pkg.contains('.')) {
+        if (label != null && label.isNotEmpty) {
+          return '$label [$pkg]';
+        }
+        return pkg;
+      }
+    }
+    return value;
+  }
+
+  String? _extractSwitchPath(String? details) => _extractDetailValue(details, 'switchPath');
+
+  String? _extractTrigger(String? details) => _extractDetailValue(details, 'trigger');
+
+  String? _extractAccessibilityPath(String? details) => _extractDetailValue(details, 'accessibilityPath');
+
+  String? _extractOpenedApps(String? details) => _extractDetailValue(details, 'openedApps');
+
+  String _primaryDetail(String? details) {
+    if (details == null) return '';
+    return details.split('|').first.trim();
+  }
+
+  String _violationTypeLabel(ViolationType type) {
+    switch (type) {
+      case ViolationType.appSwitch:
+        return 'App switch';
+      case ViolationType.screenResize:
+        return 'Screen resize';
+      case ViolationType.splitScreen:
+        return 'Split screen';
+      case ViolationType.screenshot:
+        return 'Screenshot';
+      case ViolationType.rapidResponse:
+        return 'Rapid response';
+      case ViolationType.copyPaste:
+        return 'Copy/Paste';
+      case ViolationType.other:
+        return 'Other violation';
+    }
+  }
+
+  String _violationSubtitle(ViolationModel v) {
+    final parts = <String>[];
+    final primary = _primaryDetail(v.details);
+    if (primary.isNotEmpty) parts.add(primary);
+    parts.add('Detected at ${_formatTimestamp(v.detectedAt)}');
+    final target = _extractSwitchedToApp(v.details);
+    if (target != null) parts.add('Switched to: $target');
+    final sequence = _extractSwitchPath(v.details);
+    if (sequence != null && sequence.isNotEmpty) parts.add('Sequence: $sequence');
+    final trigger = _extractTrigger(v.details);
+    if (trigger != null && trigger.isNotEmpty) parts.add('Likely action: $trigger');
+    final accessibility = _extractAccessibilityPath(v.details);
+    if (accessibility != null && accessibility.isNotEmpty) parts.add('Accessibility trace: $accessibility');
+    final opened = _extractOpenedApps(v.details);
+    if (opened != null && opened.isNotEmpty) parts.add('Opened apps: $opened');
+    return parts.join('\n');
+  }
+
   QuestionModel? _findQuestion(String qid) {
     try {
       return widget.questions.firstWhere((q) => q.id == qid);
@@ -828,7 +987,46 @@ class _AttemptDetailViewerState extends State<_AttemptDetailViewer> {
                       const SizedBox(height: 12),
                       const Text('Violations', style: TextStyle(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
-                      if (widget.violations.isEmpty) ListTile(leading: const Icon(Icons.check_circle_outline, color: Colors.green), title: const Text('No violations detected'), subtitle: const Text('This respondent had 0 anti-cheating flags.')) else for (var v in widget.violations) ListTile(title: Text(v.type.toString()), subtitle: Text(v.details ?? ''))
+                      if (widget.violations.isEmpty)
+                        ListTile(
+                          leading: const Icon(Icons.check_circle_outline, color: Colors.green),
+                          title: const Text('No violations detected'),
+                          subtitle: const Text('This respondent had 0 anti-cheating flags.'),
+                        )
+                      else
+                        for (var v in widget.violations)
+                          ListTile(
+                            leading: const Icon(Icons.warning_amber_rounded, color: Colors.deepOrange),
+                            title: Text(_violationTypeLabel(v.type)),
+                            subtitle: Text(_violationSubtitle(v)),
+                          )
+                      ,
+                      const SizedBox(height: 12),
+                      const Text('Opened apps timeline', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      if ((_attempt.openedApps).isEmpty)
+                        ListTile(
+                          leading: const Icon(Icons.check_circle_outline, color: Colors.green),
+                          title: const Text('No opened apps recorded'),
+                          subtitle: const Text('No app switches were recorded for this attempt.'),
+                        )
+                      else
+                        Column(
+                          children: _attempt.openedApps.map((e) {
+                            final pkg = e['package']?.toString() ?? '';
+                            final label = e['label']?.toString() ?? pkg;
+                            final tsRaw = e['ts']?.toString() ?? '';
+                            String tsFormatted = tsRaw;
+                            try {
+                              tsFormatted = _formatTimestamp(DateTime.parse(tsRaw));
+                            } catch (_) {}
+                            return ListTile(
+                              leading: const Icon(Icons.phone_iphone_outlined),
+                              title: Text(label),
+                              subtitle: Text('$pkg • $tsFormatted'),
+                            );
+                          }).toList(),
+                        )
                     ]);
                   }
 
