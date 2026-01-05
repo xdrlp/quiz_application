@@ -29,13 +29,14 @@ class AccessibilityMonitor {
   bool _initialized = false;
   final List<AccessibilityEventPayload> _recent = <AccessibilityEventPayload>[];
   final StreamController<AccessibilityEventPayload> _controller = StreamController<AccessibilityEventPayload>.broadcast();
+  StreamSubscription? _eventSubscription;
 
   Stream<AccessibilityEventPayload> get stream => _controller.stream;
 
   Future<void> initialize() async {
     if (_initialized) return;
     _initialized = true;
-    _eventChannel.receiveBroadcastStream().listen(
+    _eventSubscription = _eventChannel.receiveBroadcastStream().listen(
       _handleEvent,
       onError: (_) {},
       cancelOnError: false,
@@ -92,6 +93,19 @@ class AccessibilityMonitor {
     try {
       await _methodChannel.invokeMethod<void>('openAccessibilitySettings');
     } catch (_) {}
+  }
+
+  /// Dispose the underlying event subscription. Call when the app no longer
+  /// needs accessibility events (e.g., after stopping anti-cheat) to avoid
+  /// platform channels attempting to send events to a detached engine.
+  Future<void> dispose() async {
+    try {
+      await _eventSubscription?.cancel();
+    } catch (_) {}
+    _eventSubscription = null;
+    _initialized = false;
+    // Do not close the controller so callers can re-use the stream after
+    // re-initialization; only cancel the platform subscription.
   }
 
 }

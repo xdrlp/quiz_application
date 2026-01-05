@@ -177,6 +177,9 @@ class AntiCheatService {
     _accessibilitySubscription = null;
     _capturedAccessibilityEvents.clear();
     try {
+      await _accessibilityMonitor.dispose();
+    } catch (_) {}
+    try {
       _foregroundSampler?.cancel();
     } catch (_) {}
     _foregroundSampler = null;
@@ -210,6 +213,11 @@ class AntiCheatService {
         backgroundSince: _pausedAt,
         captureTimeline: false,
       );
+      try {
+        // Pause accessibility subscription while app is backgrounded to avoid
+        // platform messages being delivered to a detached engine.
+        _accessibilitySubscription?.pause();
+      } catch (_) {}
       // ignore: avoid_print
       print('[AntiCheat] recorded pause at $_pausedAt and logged immediate warning');
     }
@@ -217,6 +225,10 @@ class AntiCheatService {
 
   void _handleAppResumed() {
     if (_isQuizActive && _currentAttemptId != null) {
+      try {
+        // Resume accessibility subscription when app returns to foreground
+        _accessibilitySubscription?.resume();
+      } catch (_) {}
       final now = DateTime.now();
       if (_pausedAt == null) {
         // No recorded pause; ignore as we cannot determine duration.

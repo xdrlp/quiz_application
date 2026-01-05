@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:quiz_application/services/local_violation_store.dart';
 import 'package:quiz_application/providers/auth_provider.dart';
@@ -15,6 +16,7 @@ import 'package:quiz_application/screens/edit_quiz_screen.dart';
 import 'package:quiz_application/screens/take_quiz_page.dart' as tqp;
 import 'package:quiz_application/screens/my_quizzes_screen.dart';
 import 'package:quiz_application/screens/profile_screen.dart';
+import 'package:quiz_application/screens/quiz_history_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -90,10 +92,67 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         title: 'Quiz Application',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-          useMaterial3: true,
-        ),
+        theme: (() {
+          // Core colors
+          const absBlack = Color(0xFF050507);
+          const coldSteel = Color(0xFF0F172A);
+          const ashWhite = Color(0xFFE5E5E5);
+          const deadGray = Color(0xFF4B5563);
+          const dividerColor = Color(0xFF1F2937);
+          const crimson = Color(0xFF8B0000);
+          const violationColor = Color(0xFFB00020);
+
+          final base = ColorScheme.dark().copyWith(
+            surface: coldSteel,
+            onSurface: ashWhite,
+            primary: ashWhite,
+            secondary: const Color(0xFF9CA3AF),
+          );
+
+          return ThemeData(
+            useMaterial3: true,
+            colorScheme: base,
+            scaffoldBackgroundColor: absBlack,
+            cardColor: crimson,
+            dividerColor: dividerColor,
+            canvasColor: absBlack,
+            disabledColor: deadGray,
+            appBarTheme: AppBarTheme(
+              backgroundColor: crimson,
+              foregroundColor: base.onSurface,
+              elevation: 0,
+              titleTextStyle: TextStyle(color: base.onSurface, fontSize: 20, fontWeight: FontWeight.w700),
+              iconTheme: IconThemeData(color: base.onSurface),
+            ),
+            textTheme: (() {
+              final base = GoogleFonts.spaceGroteskTextTheme(
+                TextTheme(
+                  titleLarge: TextStyle(color: ashWhite),
+                  bodyLarge: TextStyle(color: ashWhite),
+                  bodyMedium: TextStyle(color: const Color(0xFF9CA3AF)),
+                  labelSmall: TextStyle(color: const Color(0xFF9CA3AF)),
+                ),
+              );
+              final condensed = GoogleFonts.robotoCondensedTextTheme();
+              return base.copyWith(
+                headlineLarge: condensed.headlineLarge,
+                headlineMedium: condensed.headlineMedium,
+                headlineSmall: condensed.headlineSmall,
+                titleLarge: condensed.titleLarge ?? base.titleLarge,
+                titleMedium: condensed.titleMedium ?? base.titleMedium,
+                labelLarge: condensed.labelLarge ?? base.labelLarge,
+              );
+            })(),
+            iconTheme: IconThemeData(color: ashWhite),
+            elevatedButtonTheme: ElevatedButtonThemeData(
+              style: ElevatedButton.styleFrom(backgroundColor: coldSteel, foregroundColor: ashWhite),
+            ),
+            // Card visuals are set per-card in UI; cardColor is set above.
+            extensions: <ThemeExtension<dynamic>>[
+              const MonitoringColors(monitoringColor: Color(0x1A8B0000), violationColor: violationColor),
+            ],
+          );
+        })(),
         home: const SplashScreen(),
         routes: {
           '/splash': (context) => const SplashScreen(),
@@ -104,6 +163,7 @@ class MyApp extends StatelessWidget {
           '/edit_quiz': (context) => const EditQuizScreen(),
           '/my_quizzes': (context) => const MyQuizzesScreen(),
           '/profile': (context) => const ProfileScreen(),
+          '/quiz_history': (context) => const QuizHistoryScreen(),
           '/take_quiz': (context) {
             final args = ModalRoute.of(context)!.settings.arguments;
             final quizId = args is String ? args : '';
@@ -111,6 +171,30 @@ class MyApp extends StatelessWidget {
           },
         },
       ),
+    );
+  }
+}
+
+class MonitoringColors extends ThemeExtension<MonitoringColors> {
+  final Color? monitoringColor;
+  final Color? violationColor;
+
+  const MonitoringColors({this.monitoringColor, this.violationColor});
+
+  @override
+  MonitoringColors copyWith({Color? monitoringColor, Color? violationColor}) {
+    return MonitoringColors(
+      monitoringColor: monitoringColor ?? this.monitoringColor,
+      violationColor: violationColor ?? this.violationColor,
+    );
+  }
+
+  @override
+  MonitoringColors lerp(ThemeExtension<MonitoringColors>? other, double t) {
+    if (other is! MonitoringColors) return this;
+    return MonitoringColors(
+      monitoringColor: Color.lerp(monitoringColor, other.monitoringColor, t),
+      violationColor: Color.lerp(violationColor, other.violationColor, t),
     );
   }
 }

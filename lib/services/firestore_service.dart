@@ -305,7 +305,7 @@ class FirestoreService {
   /// transient metadata such as flagged question ids when a penalty occurs.
   Future<void> patchAttempt(String attemptId, Map<String, dynamic> data) async {
     try {
-      await _firestore.collection(attemptsCollection).doc(attemptId).update(data);
+      await _firestore.collection(attemptsCollection).doc(attemptId).set(data, SetOptions(merge: true));
     } catch (e) {
       // Do not rethrow; this is best-effort telemetry to persist flags.
     }

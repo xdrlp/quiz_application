@@ -135,6 +135,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       },
                       child: const Text('Sign out'),
                     ),
+                    // Sync status button removed — sync runs automatically.
                   ],
                 ),
               ),

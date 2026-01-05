@@ -175,6 +175,8 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
           ],
         ),
       );
+      // indicate to caller that publishing occurred so they can refresh
+      if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to publish: $e')));
@@ -217,9 +219,10 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : Padding(
+          : SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (_quiz != null) Text(_quiz!.description),
                   if (_quiz != null && !_quiz!.published && _questions.isEmpty)
@@ -279,8 +282,9 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Flexible(
-                    child: ReorderableListView.builder(
+                  ReorderableListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
                       itemCount: _questions.length,
                       onReorder: (oldIndex, newIndex) async {
                         if (newIndex > oldIndex) newIndex -= 1;
@@ -348,7 +352,6 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                         );
                       },
                     ),
-                  ),
                   const SizedBox(height: 12),
                 ],
               ),

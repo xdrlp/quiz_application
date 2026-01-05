@@ -42,11 +42,13 @@ dependencies:
   wakelock_plus: ^1.1.6
   device_info_plus: ^12.3.0
   fl_chart: ^1.1.1
+  google_fonts: ^4.0.3
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   usage_stats: ^1.3.1
   package_info_plus: ^9.0.0
   installed_apps: ^2.0.0
+  connectivity_plus: ^4.0.1
   # image_picker and firebase_storage removed (no profile image uploads)
   # cloud_functions removed — using Firebase SDK sendEmailVerification instead
   # flutter_windowmanager removed due to Android Gradle Plugin namespace issue.

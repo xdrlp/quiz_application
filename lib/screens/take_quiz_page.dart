@@ -605,7 +605,7 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
     final usageReady = _usageAccessGranted == true;
     final accessibilityReady = _accessibilityServiceEnabled == true;
     return Card(
-      color: const Color(0xFFFFF7E6),
+      color: Theme.of(context).cardColor,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:quiz_application/services/firestore_service.dart';
+// Local queueing removed intentionally; use FirestoreService directly.
 import 'package:quiz_application/models/attempt_model.dart';
 import 'package:quiz_application/models/question_model.dart';
 
@@ -93,7 +94,6 @@ class AttemptDetailDialog extends StatefulWidget {
 
 class _AttemptDetailDialogState extends State<AttemptDetailDialog> {
   late AttemptModel _attempt;
-  final FirestoreService _fs = FirestoreService();
 
   @override
   void initState() {
@@ -110,8 +110,13 @@ class _AttemptDetailDialogState extends State<AttemptDetailDialog> {
   }
 
   Future<void> _saveAttempt() async {
-    await _fs.submitAttempt(_attempt.id, _attempt);
-    widget.onSaved();
+    try {
+      await FirestoreService().patchAttempt(_attempt.id, _attempt.toFirestore());
+      widget.onSaved();
+    } catch (e) {
+      // ignore: avoid_print
+      print('[AttemptsReview] failed to save attempt: $e');
+    }
   }
 
   @override

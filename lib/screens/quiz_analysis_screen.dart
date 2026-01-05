@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:quiz_application/services/firestore_service.dart';
+// Local queuing removed intentionally; use FirestoreService directly.
 import 'package:quiz_application/models/quiz_model.dart';
 import 'package:quiz_application/models/question_model.dart';
 import 'package:quiz_application/models/attempt_model.dart';
@@ -150,11 +151,11 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
       title: 'Participation',
       accent: Colors.blue,
       children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Attempts', style: TextStyle(color: Color(0xFF6B7280))), Text('$attemptCount', style: const TextStyle(fontWeight: FontWeight.w600))]),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Attempts', style: TextStyle(color: Theme.of(context).colorScheme.secondary)), Text('$attemptCount', style: const TextStyle(fontWeight: FontWeight.w600))]),
         const SizedBox(height: 12),
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Submitted', style: TextStyle(color: Color(0xFF6B7280))), Text('$submittedCount', style: const TextStyle(fontWeight: FontWeight.w600))]),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Submitted', style: TextStyle(color: Theme.of(context).colorScheme.secondary)), Text('$submittedCount', style: const TextStyle(fontWeight: FontWeight.w600))]),
         const SizedBox(height: 12),
-        Text('Completion rate', style: TextStyle(color: Color(0xFF6B7280))),
+        Text('Completion rate', style: TextStyle(color: Theme.of(context).colorScheme.secondary)),
         const SizedBox(height: 8),
         Row(children: [
           Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(8), child: LinearProgressIndicator(value: completionRate / 100.0, minHeight: 10, color: Colors.blue, backgroundColor: Colors.grey.shade200))),
@@ -174,11 +175,11 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
       icon: Icons.bar_chart, title: 'Performance', accent: Colors.green, children: [
         // Compact flow: label, then a single row with score on the left and a progress bar to the right.
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Average score', style: TextStyle(color: Color(0xFF6B7280))),
+          Text('Average score', style: TextStyle(color: Theme.of(context).colorScheme.secondary)),
           const SizedBox(height: 6),
           Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
             // Score value
-            Text('${avgScore.toStringAsFixed(1)}/$maxPoints', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
+            Text('${avgScore.toStringAsFixed(1)}/$maxPoints', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(width: 12),
             // Progress bar next to score
             Expanded(
@@ -198,8 +199,8 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
           const SizedBox(height: 12),
           // Small stats row: Highest and Lowest side-by-side
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Highest', style: TextStyle(color: Color(0xFF6B7280), fontSize: 12)), const SizedBox(height: 4), Text('$highest', style: const TextStyle(fontWeight: FontWeight.w600))]),
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Lowest', style: TextStyle(color: Color(0xFF6B7280), fontSize: 12)), const SizedBox(height: 4), Text('$lowest', style: const TextStyle(fontWeight: FontWeight.w600))]),
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Highest', style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 12)), const SizedBox(height: 4), Text('$highest', style: const TextStyle(fontWeight: FontWeight.w600))]),
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Lowest', style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 12)), const SizedBox(height: 4), Text('$lowest', style: const TextStyle(fontWeight: FontWeight.w600))]),
           ])
         ])
       ],
@@ -208,9 +209,9 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
     // Behavior & Time tile
     final behaviorTile = buildTile(
       icon: Icons.schedule, title: 'Behavior & Time', accent: Colors.orange, children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Average time', style: TextStyle(color: Color(0xFF6B7280))), Text('${avgTimeFormatted.inMinutes}:${(avgTimeFormatted.inSeconds % 60).toString().padLeft(2, '0')}', style: const TextStyle(fontWeight: FontWeight.w600))]),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Average time', style: TextStyle(color: Theme.of(context).colorScheme.secondary)), Text('${avgTimeFormatted.inMinutes}:${(avgTimeFormatted.inSeconds % 60).toString().padLeft(2, '0')}', style: const TextStyle(fontWeight: FontWeight.w600))]),
         const SizedBox(height: 12),
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Total violations', style: TextStyle(color: Color(0xFF6B7280))), Row(children: [totalViolations == 0 ? Icon(Icons.check_circle, color: Colors.green, size: 18) : const SizedBox(width: 18), const SizedBox(width: 8), Text('$totalViolations', style: const TextStyle(fontWeight: FontWeight.w600))])]),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Total violations', style: TextStyle(color: Theme.of(context).colorScheme.secondary)), Row(children: [totalViolations == 0 ? Icon(Icons.check_circle, color: Colors.green, size: 18) : const SizedBox(width: 18), const SizedBox(width: 8), Text('$totalViolations', style: const TextStyle(fontWeight: FontWeight.w600))])]),
       ],
     );
 
@@ -240,7 +241,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
             title: 'Score distribution',
             accent: Theme.of(ctx).colorScheme.primary,
             children: [
-              Center(child: Text('Total attempts: $totalAttempts', style: Theme.of(ctx).textTheme.bodySmall?.copyWith(color: Colors.grey))),
+              Center(child: Text('Total attempts: $totalAttempts', style: Theme.of(ctx).textTheme.bodySmall?.copyWith(color: Theme.of(ctx).colorScheme.secondary))),
               const SizedBox(height: 8),
                   LayoutBuilder(builder: (c, cc) {
                     final available = cc.maxHeight.isFinite ? cc.maxHeight : double.infinity;
@@ -803,7 +804,6 @@ class _AttemptDetailViewer extends StatefulWidget {
 
 class _AttemptDetailViewerState extends State<_AttemptDetailViewer> {
   late AttemptModel _attempt;
-  final FirestoreService _fs = FirestoreService();
   bool _saving = false;
 
   @override
@@ -955,7 +955,7 @@ class _AttemptDetailViewerState extends State<_AttemptDetailViewer> {
   Future<void> _saveChanges() async {
     setState(() => _saving = true);
     try {
-      await _fs.submitAttempt(_attempt.id, _attempt);
+      await FirestoreService().patchAttempt(_attempt.id, _attempt.toFirestore());
       if (!mounted) return;
       setState(() => _saving = false);
       Navigator.of(context).pop();
