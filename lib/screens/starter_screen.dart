@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:ui' as ui;
 import 'report_bug_dialog.dart';
 
 // StarterScreen — pixel-conscious copy of the provided reference image.
@@ -11,7 +10,7 @@ class StarterScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Local helper to show the Report a bug dialog. Uses absolute-positioned
     // fields and tappable areas so you can tweak X/Y/width/height easily.
-    void _showReportBugDialog(BuildContext parentContext) {
+    void showReportBugDialog(BuildContext parentContext) {
       showGeneralDialog(
         context: parentContext,
         barrierDismissible: true,
@@ -223,7 +222,7 @@ class StarterScreen extends StatelessWidget {
                         top: 12.0 * scaleY,
                         child: IconButton(
                           onPressed: () {
-                            _showReportBugDialog(context);
+                            showReportBugDialog(context);
                           },
                           icon: Icon(Icons.contact_mail, color: const Color.fromARGB(0, 255, 255, 255)),
                           tooltip: 'Report a bug',
