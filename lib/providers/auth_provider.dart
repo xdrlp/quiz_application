@@ -21,7 +21,36 @@ class AuthProvider with ChangeNotifier {
   AuthProvider() {
     _authService.authStateChanges.listen((user) async {
       if (user != null) {
-        _currentUser = await _firestoreService.getUser(user.uid);
+        try {
+          _currentUser = await _firestoreService.getUser(user.uid);
+          // If profile doc is missing, attempt to create a minimal one.
+          if (_currentUser == null) {
+            try {
+              final fu = _authService.currentUser;
+              final display = fu?.displayName ?? '';
+              final parts = display.split(' ');
+              final first = parts.isNotEmpty ? parts.first : '';
+              final last = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+              final newUser = UserModel(
+                uid: user.uid,
+                email: fu?.email ?? '',
+                displayName: fu?.displayName ?? fu?.email?.split('@').first ?? '',
+                firstName: first,
+                lastName: last,
+                createdAt: DateTime.now(),
+              );
+              await _firestoreService.createUser(user.uid, newUser);
+              _currentUser = await _firestoreService.getUser(user.uid);
+            } catch (e) {
+              // Creation may fail due to rules; log and continue with null profile.
+              // ignore: avoid_print
+              print('Failed to auto-create user doc: $e');
+            }
+          }
+        } catch (e) {
+          _currentUser = null;
+          _errorMessage = 'Unable to load profile information.';
+        }
       } else {
         _currentUser = null;
       }
@@ -108,14 +137,7 @@ class AuthProvider with ChangeNotifier {
       );
 
       await _firestoreService.createUser(credential.user!.uid, newUser);
-      // Send email verification using Firebase's built-in sendEmailVerification
-      // and record the timestamp in Firestore so the client can enforce a
-      // short-lived verification window (e.g. 5 minutes).
-      await _authService.sendEmailVerification();
-      // Record verification sent time (server timestamp)
-      await _firestoreService.setVerificationSent(credential.user!.uid);
-      // Keep the user signed in so they can use the resend flow from the client.
-      // The app already prevents navigation into the main app until `isEmailVerified` is true.
+      // Keep the user signed in. We no longer require email verification.
 
       _isLoading = false;
       notifyListeners();
@@ -192,6 +214,10 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return true;
     } on FirebaseAuthException catch (e) {
+      // Log the exception for debugging (visible in device logs).
+      // This helps diagnose issues like network, config, or auth method problems.
+      // ignore: avoid_print
+      print('FirebaseAuthException during login: ${e.code} ${e.message}');
       switch (e.code) {
         case 'invalid-email':
           _errorMessage = 'The email address is badly formatted.';
@@ -216,6 +242,8 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return false;
     } catch (e) {
+      // ignore: avoid_print
+      print('Unexpected error during login: $e');
       _errorMessage = e.toString();
       _isLoading = false;
       notifyListeners();
@@ -223,37 +251,20 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  bool get isEmailVerified => _authService.currentUser?.emailVerified ?? false;
+  // Email verification is not required in this application.
+  bool get isEmailVerified => true;
 
   /// Attempts to resend a verification email. Returns true on success.
   Future<bool> resendVerification() async {
-    final user = _authService.currentUser;
-    if (user == null) {
-      _errorMessage = 'No authenticated user to resend verification for.';
-      notifyListeners();
-      return false;
-    }
-    try {
-      await _authService.sendEmailVerification();
-      await _firestoreService.setVerificationSent(user.uid);
-      return true;
-    } on FirebaseAuthException catch (e) {
-      _errorMessage = e.message ?? e.toString();
-      notifyListeners();
-      return false;
-    } catch (e) {
-      _errorMessage = e.toString();
-      notifyListeners();
-      return false;
-    }
+    // Verification flow removed — treat resend as a no-op that succeeds.
+    return true;
   }
 
   /// Return the verificationSentAt timestamp for the current authenticated user,
   /// or null if not available.
   Future<DateTime?> getVerificationSentAt() async {
-    final uid = _authService.currentUser?.uid;
-    if (uid == null) return null;
-    return await _firestoreService.getVerificationSentAt(uid);
+    // Verification timestamps are no longer used.
+    return null;
   }
 
   Future<void> logout() async {
@@ -272,7 +283,8 @@ class AuthProvider with ChangeNotifier {
         _currentUser = await _firestoreService.getUser(user.uid);
       }
       notifyListeners();
-      return _authService.currentUser?.emailVerified ?? false;
+      // Email verification not required — consider user verified.
+      return true;
     } catch (e) {
       _errorMessage = e.toString();
       notifyListeners();

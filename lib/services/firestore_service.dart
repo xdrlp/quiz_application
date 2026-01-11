@@ -18,7 +18,10 @@ class FirestoreService {
   // ====== USER OPERATIONS ======
   Future<void> createUser(String uid, UserModel user) async {
     try {
-      await _firestore.collection(usersCollection).doc(uid).set(user.toFirestore());
+      final data = user.toFirestore();
+      // Ensure a role is set so it satisfies stricter security rules.
+      data.putIfAbsent('role', () => 1);
+      await _firestore.collection(usersCollection).doc(uid).set(data);
     } catch (e) {
       rethrow;
     }
@@ -28,6 +31,13 @@ class FirestoreService {
     try {
       final doc = await _firestore.collection(usersCollection).doc(uid).get();
       return doc.exists ? UserModel.fromFirestore(doc) : null;
+    } on FirebaseException catch (e) {
+      // Permission denied or other Firestore-specific errors should not
+      // crash the app. Return null so callers can handle a missing profile.
+      // Caller may log or surface a user-friendly message.
+      // ignore: avoid_print
+      print('Firestore.getUser error: ${e.code} ${e.message}');
+      return null;
     } catch (e) {
       rethrow;
     }
@@ -50,30 +60,6 @@ class FirestoreService {
   Future<void> updateUser(String uid, Map<String, dynamic> data) async {
     try {
       await _firestore.collection(usersCollection).doc(uid).update(data);
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  // Record when a verification email was sent for the user.
-  Future<void> setVerificationSent(String uid) async {
-    try {
-      await _firestore.collection(usersCollection).doc(uid).update({
-        'verificationSentAt': FieldValue.serverTimestamp(),
-      });
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  // Retrieve the verificationSentAt as a DateTime (server timestamp may be null)
-  Future<DateTime?> getVerificationSentAt(String uid) async {
-    try {
-      final doc = await _firestore.collection(usersCollection).doc(uid).get();
-      if (!doc.exists) return null;
-      final data = doc.data();
-      final ts = data?['verificationSentAt'] as Timestamp?;
-      return ts?.toDate();
     } catch (e) {
       rethrow;
     }

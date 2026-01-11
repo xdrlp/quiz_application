@@ -1,7 +1,8 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'dart:async';
 import 'package:flutter/material.dart';
+import 'dart:ui' as ui;
+// removed unused import
 import 'package:provider/provider.dart';
 import 'package:quiz_application/providers/auth_provider.dart';
 
@@ -15,404 +16,403 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _confirmController = TextEditingController();
-  final _firstNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
-
-  bool _isLogin = true;
-  DateTime? _verificationSentAt;
-  Timer? _verificationPollTimer;
+  bool _passwordVisible = false;
+  // Scroll / keyboard handling reused from signup screen
+  final ScrollController _scrollController = ScrollController();
+  double _prevBottomInset = 0.0;
+  final FocusNode _emailFocus = FocusNode();
+  final FocusNode _passwordFocus = FocusNode();
+  final GlobalKey _emailKey = GlobalKey();
+  final GlobalKey _passwordKey = GlobalKey();
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _confirmController.dispose();
-    _firstNameController.dispose();
-    _lastNameController.dispose();
-    _verificationPollTimer?.cancel();
+    _scrollController.dispose();
+    _emailFocus.dispose();
+    _passwordFocus.dispose();
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
-    // Periodically refresh the verificationSentAt from Firestore so cooldown
-    // state persists across devices/tabs. Poll every 5 seconds.
-    _fetchVerificationSentAt();
-    _verificationPollTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-      _fetchVerificationSentAt();
+    _emailFocus.addListener(() => _handleFocusChange(_emailFocus, _emailKey));
+    _passwordFocus.addListener(() => _handleFocusChange(_passwordFocus, _passwordKey));
+  }
+
+  void _handleFocusChange(FocusNode node, GlobalKey key) {
+    if (node.hasFocus) _ensureVisible(key);
+  }
+
+  void _ensureVisible(GlobalKey key) {
+    final ctx = key.currentContext;
+    if (ctx == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        Scrollable.ensureVisible(ctx, duration: const Duration(milliseconds: 250), alignment: 0.35, curve: Curves.easeInOut);
+      }
     });
   }
 
-  Future<void> _fetchVerificationSentAt() async {
-    final authProvider = mounted ? context.read<AuthProvider>() : null;
-    if (authProvider == null) return;
-    try {
-      final sent = await authProvider.getVerificationSentAt();
-      if (!mounted) return;
-      setState(() {
-        _verificationSentAt = sent;
-      });
-    } catch (_) {
-      // ignore failures silently; banner will still allow resend locally
-    }
-  }
-
-  int _resendCooldownRemainingSeconds() {
-    if (_verificationSentAt == null) return 0;
-    final since = DateTime.now().difference(_verificationSentAt!);
-    const cooldown = Duration(seconds: 60);
-    final remaining = cooldown - since;
-    return remaining.isNegative ? 0 : remaining.inSeconds;
-  }
-
   Future<void> _submit(BuildContext context) async {
-    final authProvider = context.read<AuthProvider>();
-    final messenger = ScaffoldMessenger.of(context);
-    final navigator = Navigator.of(context);
+    final auth = context.read<AuthProvider>();
     final email = _emailController.text.trim();
     final password = _passwordController.text;
-
-        if (_isLogin) {
-            final success = await authProvider.login(email: email, password: password);
-            if (!mounted) return;
-            if (!success) {
-              if (!mounted) return;
-              messenger.showSnackBar(SnackBar(content: Text(authProvider.errorMessage ?? 'Login failed')));
-                return;
-            }
-            // If the account isn't verified show verification dialog, otherwise enter app
-            if (!authProvider.isEmailVerified) {
-                await _showVerifyDialog();
-                return;
-            }
-            if (mounted) navigator.pushReplacementNamed('/home');
-        } else {
-      final firstName = _firstNameController.text.trim();
-      final lastName = _lastNameController.text.trim();
-      final confirm = _confirmController.text;
-        if (password != confirm) {
-        if (!mounted) return;
-        if (!mounted) return;
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Passwords do not match')));
-        return;
-      }
-      final success = await authProvider.signUp(
-        email: email,
-        password: password,
-        firstName: firstName,
-        lastName: lastName,
-      );
-
-      if (!mounted) return;
-      if (!mounted) return;
-      if (!success) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(authProvider.errorMessage ?? 'Sign up failed')));
-        return;
-      }
-      // After successful sign up we present the verification dialog.
-      await _showVerifyDialog();
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter email and password.')));
+      return;
     }
-
-  
-  }
-
-  Future<void> _showVerifyDialog() async {
-    final authProvider = context.read<AuthProvider>();
-    final initialSentAt = await authProvider.getVerificationSentAt();
+    final ok = await auth.login(email: email, password: password);
     if (!mounted) return;
-
-    final result = await showDialog<bool?>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => _VerifyDialog(initialSentAt: initialSentAt),
-    );
-
-    if (result == true && mounted) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Verification email sent. Please check your inbox.')));
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Signed in')));
+      // navigate home if your app expects that
+      // Navigator.pushReplacementNamed(context, '/home');
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(auth.errorMessage ?? 'Sign in failed')));
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final authProvider = context.watch<AuthProvider>();
-
-    return Scaffold(
-      appBar: AppBar(title: Text(_isLogin ? 'Sign in' : 'Create account')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
+  Future<void> _showResetDialog(BuildContext parentContext) async {
+    final authProvider = parentContext.read<AuthProvider>();
+    final dialogController = TextEditingController();
+    final result = await showGeneralDialog<String?>(
+      context: parentContext,
+      barrierDismissible: true,
+      barrierLabel: 'ResetPassword',
+      barrierColor: const Color.fromRGBO(0, 0, 0, 0.25),
+      transitionDuration: const Duration(milliseconds: 180),
+      pageBuilder: (dialogContext, animation, secondaryAnimation) {
+        return Stack(
           children: [
-            if (authProvider.isAuthenticated && !authProvider.isEmailVerified)
-              Card(
-                color: Theme.of(context).colorScheme.secondary.withAlpha(15),
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            Positioned.fill(
+                child: BackdropFilter(
+                filter: ui.ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
+                child: Container(color: Colors.transparent),
+              ),
+            ),
+            Center(
+              child: Dialog(
+                backgroundColor: Colors.transparent,
+                insetPadding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+                child: SizedBox(
+                  width: 360,
+                  child: Stack(
                     children: [
-                      const Text('Email not verified', style: TextStyle(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
-                      const Text('Your account is not verified. Please check your email (including your spam/junk folder) or resend the verification link.'),
-                      const SizedBox(height: 8),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Row(
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.asset('assets/images/reset_password_bg.png', fit: BoxFit.cover),
+                      ),
+                      Positioned.fill(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 65.0, vertical: 28.0),
+                          child: Column(
                             children: [
-                              // Resend appears as a small link when enabled, or as a chip showing remaining seconds when disabled.
-                              if (_resendCooldownRemainingSeconds() > 0)
-                                Chip(label: Text('Resend (${_resendCooldownRemainingSeconds()})'))
-                              else
-                                TextButton(
-                                  onPressed: () async {
-                                    final ok = await authProvider.resendVerification();
-                                    if (!mounted) return;
-                                    if (!ok) {
-                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(authProvider.errorMessage ?? 'Failed to resend verification')));
-                                      return;
-                                    }
-                                    await _fetchVerificationSentAt();
-                                    if (!mounted) return;
-                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Verification email resent.')));
-                                  },
-                                  child: const Text('Resend'),
+                              const SizedBox(height: 180),
+                              Container(
+                                height: 52,
+                                color: Colors.transparent,
+                                child: Row(
+                                  children: [
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: TextField(
+                                        controller: dialogController,
+                                        cursorColor: Colors.black,
+                                        decoration: const InputDecoration(
+                                          border: InputBorder.none,
+                                          hintText: 'Email',
+                                          hintStyle: TextStyle(color: Color(0x803E3B36)),
+                                        ),
+                                        style: const TextStyle(color: Colors.black),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              const SizedBox(width: 8),
-                              TextButton(
-                                onPressed: () => _showVerifyDialog(),
-                                child: const Text('Open verification dialog'),
                               ),
+                              const Spacer(),
                             ],
                           ),
-                          const SizedBox(height: 8),
-                          LayoutBuilder(
-                            builder: (context, constraints) {
-                              return SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    minimumSize: const Size.fromHeight(44),
-                                  ),
-                                  onPressed: () async {
-                                    final ok = await authProvider.reloadAndCheckVerified();
-                                    if (!mounted) return;
-                                    if (ok) {
-                                      Navigator.of(context).pushReplacementNamed('/home');
-                                    } else {
-                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Email still not verified.')));
-                                    }
-                                  },
-                                  child: const Text('Check verification status'),
-                                ),
-                              );
-                            },
+                        ),
+                      ),
+                      Positioned(
+                        left: 36,
+                        right: 28,
+                        bottom: 78,
+                        height: 30,
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => Navigator.of(dialogContext).pop(dialogController.text.trim()),
+                            borderRadius: BorderRadius.circular(28),
+                            splashColor: Colors.white24,
+                            highlightColor: Colors.white10,
+                            child: Container(),
                           ),
-                        ],
-                      )
+                        ),
+                      ),
+                      Positioned(
+                        left: 36,
+                        right: 28,
+                        bottom: 34,
+                        height: 30,
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => Navigator.of(dialogContext).pop(),
+                            borderRadius: BorderRadius.circular(28),
+                            splashColor: Colors.white24,
+                            highlightColor: Colors.white10,
+                            child: Container(),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ),
-
-            const SizedBox(height: 8),
-
-            // rest of fields
-            TextField(
-                  controller: _emailController,
-              decoration: const InputDecoration(labelText: 'Email'),
-              keyboardType: TextInputType.emailAddress,
-            ),
-                const SizedBox(height: 12),
-                    const SizedBox(height: 12),
-            TextField(
-              controller: _passwordController,
-              decoration: const InputDecoration(labelText: 'Password'),
-              obscureText: true,
-            ),
-            if (!_isLogin) ...[
-              const SizedBox(height: 12),
-              TextField(
-                controller: _confirmController,
-                decoration: const InputDecoration(labelText: 'Confirm Password'),
-                obscureText: true,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _firstNameController,
-                decoration: const InputDecoration(labelText: 'First name'),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _lastNameController,
-                decoration: const InputDecoration(labelText: 'Last name'),
-              ),
-              const SizedBox(height: 12),
-            ],
-            // Forgot password placed above the Sign In button
-            if (_isLogin)
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () async {
-                    final parentContext = context;
-                    final authProvider = parentContext.read<AuthProvider>();
-                    String email = _emailController.text.trim();
-                    if (email.isEmpty) {
-                      final controller = TextEditingController();
-                      final result = await showDialog<String?>(
-                        context: parentContext,
-                        builder: (dialogContext) => AlertDialog(
-                          title: const Text('Reset password'),
-                          content: TextField(controller: controller, decoration: const InputDecoration(hintText: 'Enter your email')),
-                          actions: [
-                            TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancel')),
-                            ElevatedButton(onPressed: () => Navigator.of(dialogContext).pop(controller.text.trim()), child: const Text('Send')),
-                          ],
-                        ),
-                      );
-                      if (result == null || result.isEmpty) return;
-                      email = result;
-                    }
-                    final messenger = ScaffoldMessenger.of(parentContext);
-                    final ok = await authProvider.requestPasswordReset(email: email);
-                    if (!mounted) return;
-                    if (ok) {
-                      messenger.showSnackBar(const SnackBar(content: Text('Password reset email sent. Please check your inbox (including spam).')));
-                    } else {
-                      messenger.showSnackBar(SnackBar(content: Text(authProvider.errorMessage ?? 'Failed to send reset email')));
-                    }
-                  },
-                  child: const Text('Forgot password?'),
-                ),
-              ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => _submit(context),
-              child: Text(_isLogin ? 'Sign In' : 'Sign Up'),
-            ),
-            const SizedBox(height: 8),
-            // Toggle between sign in and sign up
-            TextButton(
-              onPressed: () {
-                setState(() => _isLogin = !_isLogin);
-              },
-              child: Text(_isLogin ? 'Create account' : 'Have an account? Sign in'),
             ),
           ],
-        ),
-      ),
+        );
+      },
     );
-  }
-}
 
-class _VerifyDialog extends StatefulWidget {
-  final DateTime? initialSentAt;
-  const _VerifyDialog({this.initialSentAt});
-
-  @override
-  State<_VerifyDialog> createState() => _VerifyDialogState();
-}
-
-class _VerifyDialogState extends State<_VerifyDialog> {
-  static const expiryDuration = Duration(minutes: 5);
-  static const resendCooldown = Duration(seconds: 60);
-
-  Timer? _timer;
-  DateTime? _sentAt;
-  bool _resendDisabled = false;
-  Duration _remaining = Duration.zero;
-
-  @override
-  void initState() {
-    super.initState();
-    _sentAt = widget.initialSentAt;
-    _startTimer();
-  }
-
-  void _startTimer() {
-    _updateState();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) return;
-      setState(_updateState);
-    });
-  }
-
-  void _updateState() {
-    final now = DateTime.now();
-    if (_sentAt != null) {
-      final expiry = _sentAt!.add(expiryDuration);
-      _remaining = expiry.difference(now);
-      if (_remaining.isNegative) _remaining = Duration.zero;
-
-      final sinceSent = now.difference(_sentAt!);
-      _resendDisabled = sinceSent < resendCooldown;
+    String email = _emailController.text.trim();
+    if (result != null && result.isNotEmpty) email = result;
+    if (email.isEmpty) return;
+    final messenger = ScaffoldMessenger.of(parentContext);
+    final ok = await authProvider.requestPasswordReset(email: email);
+    if (!mounted) return;
+    if (ok) {
+      messenger.showSnackBar(const SnackBar(content: Text('Password reset email sent. Please check your inbox (including spam).')));
     } else {
-      _remaining = Duration.zero;
-      _resendDisabled = false;
+      messenger.showSnackBar(SnackBar(content: Text(authProvider.errorMessage ?? 'Failed to send reset email')));
     }
   }
 
   @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  String _formatDuration(Duration d) {
-    final minutes = d.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final seconds = d.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final authProvider = context.read<AuthProvider>();
+    return Scaffold(
+      resizeToAvoidBottomInset: false,
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Center(
+          child: SizedBox(
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Positioned.fill(
+                  child: Image.asset(
+                    'assets/images/background.png',
+                    fit: BoxFit.cover,
+                    alignment: Alignment.topCenter,
+                    errorBuilder: (ctx, err, stack) => Container(color: Colors.grey.shade900),
+                  ),
+                ),
 
-    return AlertDialog(
-      title: const Text('Verify your email'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text('A verification link was sent to your email.'),
-          const SizedBox(height: 8),
-          if (_remaining > Duration.zero)
-            Text('Link expires in ${_formatDuration(_remaining)}')
-          else
-            const Text('Link expired. Please resend.'),
-        ],
+                
+
+                Positioned.fill(
+                  child: LayoutBuilder(builder: (context, constraints) {
+                    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (_prevBottomInset > 0 && bottomInset == 0) {
+                        if (_scrollController.hasClients) {
+                          final double minExtent = _scrollController.position.minScrollExtent;
+                          try {
+                            _scrollController.animateTo(minExtent, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+                          } catch (_) {
+                            _scrollController.jumpTo(minExtent);
+                          }
+                        }
+                      }
+                      _prevBottomInset = bottomInset;
+                    });
+
+                    final bool isKeyboardOpen = bottomInset > 0.0;
+
+                    return SingleChildScrollView(
+                      controller: _scrollController,
+                      physics: isKeyboardOpen ? const ClampingScrollPhysics() : const NeverScrollableScrollPhysics(),
+                      padding: const EdgeInsets.only(left: 0, right: 0, top: 30.0, bottom: 0),
+                      child: SizedBox(
+                        width: constraints.maxWidth,
+                        // compute overlay height from 16:9 aspect ratio
+                        child: Builder(builder: (ctx) {
+                          final double overlayHeight = constraints.maxWidth * (1080 / 1920);
+                          return SizedBox(
+                            width: constraints.maxWidth,
+                            height: overlayHeight + 800,
+                            child: Stack(
+                              children: [
+                                Positioned(
+                                  left: 0,
+                                  right: 0,
+                                  top: 0,
+                                  child: Image.asset(
+                                    'assets/images/login_elements.png',
+                                    width: constraints.maxWidth,
+                                    fit: BoxFit.fitWidth,
+                                    alignment: Alignment.topCenter,
+                                    errorBuilder: (ctx, err, stack) => const SizedBox.shrink(),
+                                  ),
+                                ),
+                                // Sign-in tappable overlay
+                                Positioned(
+                                  left: 34,
+                                  right: 34,
+                                  bottom: 515,
+                                  height: 37,
+                                  child: Material(
+                                    borderRadius: BorderRadius.circular(8),
+                                    color: const Color.fromARGB(0, 0, 0, 0),
+                                    child: InkWell(
+                                      onTap: () {
+                                        FocusScope.of(context).unfocus();
+                                        _submit(context);
+                                      },
+                                      borderRadius: BorderRadius.circular(8),
+                                      splashColor: const Color.fromARGB(108, 15, 15, 15),
+                                      highlightColor: const Color.fromARGB(0, 0, 0, 0),
+                                      child: Container(),
+                                    ),
+                                  ),
+                                ),
+                                // Absolute-positioned tappable area for the "Forgot password" artwork element.
+                                Positioned(
+                                  left: 260, // adjust X here
+                                  top: 412, // adjust Y here
+                                  width: 110,
+                                  height: 30,
+                                  child: Material(
+                                    color: const Color.fromARGB(0, 0, 0, 0),
+                                    child: InkWell(
+                                      onTap: () {
+                                        FocusScope.of(context).unfocus();
+                                        _showResetDialog(context);
+                                      },
+                                      borderRadius: BorderRadius.circular(6),
+                                      child: Container(),
+                                    ),
+                                  ),
+                                ),
+                                // Debug tappable overlay for the "Don't have an account? Sign up" artwork.
+                                Positioned(
+                                  left: 110, // adjust X here
+                                  top: 520, // adjust Y here
+                                  width: 180,
+                                  height: 30,
+                                  child: Material(
+                                    color: const Color.fromARGB(0, 0, 0, 0),
+                                    child: InkWell(
+                                      onTap: () {
+                                        FocusScope.of(context).unfocus();
+                                        Navigator.pushReplacementNamed(context, '/signup');
+                                      },
+                                      borderRadius: BorderRadius.circular(6),
+                                      child: Container(),
+                                    ),
+                                  ),
+                                ),
+                                // Absolute-positioned email field so X/Y can be adjusted directly
+                                Positioned(
+                                  left: 85, // adjust X here
+                                  right: 56,
+                                  top: 292, // adjust Y here
+                                  height: 56,
+                                  child: Container(
+                                    color: Colors.transparent,
+                                    child: TextField(
+                                      key: _emailKey,
+                                      focusNode: _emailFocus,
+                                      controller: _emailController,
+                                      cursorColor: Colors.black,
+                                      decoration: const InputDecoration(
+                                        border: InputBorder.none,
+                                        hintText: 'Email',
+                                        hintStyle: TextStyle(color: Color(0x803E3B36)),
+                                      ),
+                                      style: const TextStyle(color: Colors.black),
+                                    ),
+                                  ),
+                                ),
+                                // Absolute-positioned password field so X/Y can be adjusted directly
+                                Positioned(
+                                  left: 85, // adjust X here
+                                  right: 20, // reduced inset so icon can move further right
+                                  top: 358, // adjust Y here
+                                  height: 56,
+                                  child: Container(
+                                    color: Colors.transparent,
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: TextField(
+                                            key: _passwordKey,
+                                            focusNode: _passwordFocus,
+                                            controller: _passwordController,
+                                            cursorColor: Colors.black,
+                                            obscureText: !_passwordVisible,
+                                            decoration: const InputDecoration(
+                                              border: InputBorder.none,
+                                              hintText: 'Password',
+                                              hintStyle: TextStyle(color: Color(0x803E3B36)),
+                                            ),
+                                            style: const TextStyle(color: Colors.black),
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.only(right: 15.0),
+                                          child: IconButton(
+                                            icon: Icon(_passwordVisible ? Icons.visibility_off : Icons.visibility, color: Color.fromARGB(104, 0, 0, 0)),
+                                            onPressed: () => setState(() => _passwordVisible = !_passwordVisible),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                      ),
+                    );
+                  }),
+                ),
+                // Back button in the upper-left corner (ripple on tap) - placed last so it's tappable
+                Positioned(
+                  left: 12,
+                  top: 12,
+                  width: 48,
+                  height: 48,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        FocusScope.of(context).unfocus();
+                        if (Navigator.canPop(context)) Navigator.pop(context);
+                      },
+                      borderRadius: BorderRadius.circular(24),
+                      splashColor: Colors.white24,
+                      child: Semantics(
+                        label: 'Back',
+                        button: true,
+                        child: Center(child: SizedBox.shrink()),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
-      actions: [
-        TextButton(
-          onPressed: _resendDisabled
-              ? null
-              : () async {
-                  final navigator = Navigator.of(context);
-                  final ok = await authProvider.resendVerification();
-                  if (!mounted) return;
-                  if (!ok) {
-                    // show the provider's friendly error
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(authProvider.errorMessage ?? 'Failed to resend verification')));
-                    return;
-                  }
-                  setState(() {
-                    _sentAt = DateTime.now();
-                    _updateState();
-                  });
-                  if (!mounted) return;
-                  navigator.pop(true);
-                },
-          child: Text(_resendDisabled ? 'Resend (wait)' : 'Resend'),
-        ),
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('Close'),
-        ),
-      ],
     );
   }
 }
- 
+

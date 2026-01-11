@@ -49,6 +49,7 @@ dependencies:
   package_info_plus: ^9.0.0
   installed_apps: ^2.0.0
   connectivity_plus: ^4.0.1
+  flutter_svg: ^2.0.7
   # image_picker and firebase_storage removed (no profile image uploads)
   # cloud_functions removed — using Firebase SDK sendEmailVerification instead
   # flutter_windowmanager removed due to Android Gradle Plugin namespace issue.
@@ -76,6 +77,13 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  # Register Canva Sans font files. Place your TTF files under
+  # `assets/fonts/` (for example: `CanvaSans-Regular.ttf`).
+  fonts:
+    - family: CanvaSans
+      fonts:
+        - asset: assets/fonts/Canva Sans.ttf
 
   # To add assets to your application, add an assets section, like this:
   # assets:
@@ -107,3 +115,18 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+  # Custom fonts - add your Canva Sans font files under assets/fonts/
+  # Then uncomment and adjust the paths below. Example:
+  # fonts:
+  #   - family: CanvaSans
+  #     fonts:
+  #       - asset: assets/fonts/CanvaSans-Regular.ttf
+  #       - asset: assets/fonts/CanvaSans-Bold.ttf
+  #         weight: 700
+  #       - asset: assets/fonts/CanvaSans-Italic.ttf
+  #         style: italic
+
+  # Register image assets. Place your logo at `assets/images/logo.png`.
+  assets:
+    - assets/images/

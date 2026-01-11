@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
+import 'package:quiz_application/screens/starter_screen.dart';
 import 'package:quiz_application/services/local_violation_store.dart';
 import 'package:quiz_application/providers/auth_provider.dart';
 import 'package:quiz_application/providers/quiz_provider.dart';
 import 'package:quiz_application/screens/splash_screen.dart';
 import 'package:quiz_application/screens/login_screen.dart';
+import 'package:quiz_application/screens/signup_screen.dart';
 import 'package:quiz_application/screens/home_screen.dart';
 import 'package:quiz_application/screens/create_quiz_screen.dart';
 import 'package:quiz_application/screens/find_quiz_screen.dart';
@@ -111,6 +113,15 @@ class MyApp extends StatelessWidget {
 
           return ThemeData(
             useMaterial3: true,
+            // Use slide-only page transitions to avoid fade/opacity flashes
+            pageTransitionsTheme: const PageTransitionsTheme(builders: {
+              TargetPlatform.android: SlidePageTransitionsBuilder(),
+              TargetPlatform.iOS: SlidePageTransitionsBuilder(),
+              TargetPlatform.linux: SlidePageTransitionsBuilder(),
+              TargetPlatform.macOS: SlidePageTransitionsBuilder(),
+              TargetPlatform.windows: SlidePageTransitionsBuilder(),
+              TargetPlatform.fuchsia: SlidePageTransitionsBuilder(),
+            }),
             colorScheme: base,
             scaffoldBackgroundColor: absBlack,
             cardColor: crimson,
@@ -119,30 +130,22 @@ class MyApp extends StatelessWidget {
             disabledColor: deadGray,
             appBarTheme: AppBarTheme(
               backgroundColor: crimson,
-              foregroundColor: base.onSurface,
+              foregroundColor: Colors.black,
               elevation: 0,
-              titleTextStyle: TextStyle(color: base.onSurface, fontSize: 20, fontWeight: FontWeight.w700),
-              iconTheme: IconThemeData(color: base.onSurface),
+              titleTextStyle: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.w700),
+              iconTheme: IconThemeData(color: Colors.black),
             ),
-            textTheme: (() {
-              final base = GoogleFonts.spaceGroteskTextTheme(
-                TextTheme(
-                  titleLarge: TextStyle(color: ashWhite),
-                  bodyLarge: TextStyle(color: ashWhite),
-                  bodyMedium: TextStyle(color: const Color(0xFF9CA3AF)),
-                  labelSmall: TextStyle(color: const Color(0xFF9CA3AF)),
-                ),
-              );
-              final condensed = GoogleFonts.robotoCondensedTextTheme();
-              return base.copyWith(
-                headlineLarge: condensed.headlineLarge,
-                headlineMedium: condensed.headlineMedium,
-                headlineSmall: condensed.headlineSmall,
-                titleLarge: condensed.titleLarge ?? base.titleLarge,
-                titleMedium: condensed.titleMedium ?? base.titleMedium,
-                labelLarge: condensed.labelLarge ?? base.labelLarge,
-              );
-            })(),
+            // Use a custom font family named "CanvaSans". To enable this you must
+            // add the Canva Sans font files to your project `assets/fonts/`
+            // and declare them in `pubspec.yaml` (see below). If the font files
+            // are not present the engine will fall back to the platform default.
+            fontFamily: 'CanvaSans',
+            textTheme: TextTheme(
+              titleLarge: TextStyle(color: ashWhite),
+              bodyLarge: TextStyle(color: ashWhite),
+              bodyMedium: TextStyle(color: const Color(0xFF9CA3AF)),
+              labelSmall: TextStyle(color: const Color(0xFF9CA3AF)),
+            ),
             iconTheme: IconThemeData(color: ashWhite),
             elevatedButtonTheme: ElevatedButtonThemeData(
               style: ElevatedButton.styleFrom(backgroundColor: coldSteel, foregroundColor: ashWhite),
@@ -153,7 +156,7 @@ class MyApp extends StatelessWidget {
             ],
           );
         })(),
-        home: const SplashScreen(),
+        home: const AuthGate(),
         routes: {
           '/splash': (context) => const SplashScreen(),
           '/login': (context) => const LoginScreen(),
@@ -164,6 +167,7 @@ class MyApp extends StatelessWidget {
           '/my_quizzes': (context) => const MyQuizzesScreen(),
           '/profile': (context) => const ProfileScreen(),
           '/quiz_history': (context) => const QuizHistoryScreen(),
+          '/signup': (context) => const SignUpScreen(),
           '/take_quiz': (context) {
             final args = ModalRoute.of(context)!.settings.arguments;
             final quizId = args is String ? args : '';
@@ -172,6 +176,61 @@ class MyApp extends StatelessWidget {
         },
       ),
     );
+  }
+}
+
+class AuthGate extends StatefulWidget {
+  const AuthGate({super.key});
+
+  @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  late final Stream<fb_auth.User?> _authStream;
+  fb_auth.User? _lastUser;
+
+  @override
+  void initState() {
+    super.initState();
+    _authStream = fb_auth.FirebaseAuth.instance.authStateChanges();
+    _lastUser = fb_auth.FirebaseAuth.instance.currentUser;
+    _authStream.listen((user) {
+      if (!mounted) return;
+      if (user == _lastUser) return;
+      _lastUser = user;
+      // Replace the entire navigation stack so users cannot navigate back
+      // into authenticated screens after signing out.
+      if (user == null) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const StarterScreen()),
+          (route) => false,
+        );
+      } else {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const SplashScreen()),
+          (route) => false,
+        );
+      }
+    });
+    // Precache frequently-used large assets to avoid frame drops / black flashes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        precacheImage(const AssetImage('assets/images/background.png'), context);
+        precacheImage(const AssetImage('assets/images/starter_elements.png'), context);
+        precacheImage(const AssetImage('assets/images/login_elements.png'), context);
+        precacheImage(const AssetImage('assets/images/sign_up_elements.png'), context);
+      } catch (_) {
+        // ignore precache failures
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = fb_auth.FirebaseAuth.instance.currentUser;
+    if (user == null) return const StarterScreen();
+    return const SplashScreen();
   }
 }
 
@@ -196,6 +255,25 @@ class MonitoringColors extends ThemeExtension<MonitoringColors> {
       monitoringColor: Color.lerp(monitoringColor, other.monitoringColor, t),
       violationColor: Color.lerp(violationColor, other.violationColor, t),
     );
+  }
+}
+
+// Custom transitions builder that performs a simple horizontal slide
+// without any fade/opacity animation to avoid blinking between routes.
+class SlidePageTransitionsBuilder extends PageTransitionsBuilder {
+  const SlidePageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    final offsetAnimation = Tween<Offset>(begin: const Offset(1.0, 0.0), end: Offset.zero)
+        .animate(CurvedAnimation(parent: animation, curve: Curves.easeOut));
+    return SlideTransition(position: offsetAnimation, child: child);
   }
 }
 

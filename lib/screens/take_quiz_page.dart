@@ -18,6 +18,7 @@ import 'package:quiz_application/models/attempt_model.dart';
 import 'package:quiz_application/providers/auth_provider.dart';
 import 'package:quiz_application/services/local_violation_store.dart';
 import 'package:usage_stats/usage_stats.dart';
+import 'package:quiz_application/services/screen_protector.dart';
 
 class TakeQuizPage extends StatefulWidget {
   final String quizId;
@@ -370,6 +371,11 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
       _attemptStartedAt = attempt.startedAt;
       _syncTextControllerToCurrentQuestion();
     });
+
+    // Enable screenshot protection for the duration of the attempt.
+    try {
+      await ScreenProtector.setSecure(true);
+    } catch (_) {}
 
     // Register the UI handler before starting anti-cheat to avoid races.
     _antiCheat.setOnViolation((violation) async {
@@ -937,6 +943,11 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
     await _firestore.submitAttempt(_attemptId!, attempt);
     _antiCheat.stopAntiCheat();
 
+    // Disable screenshot protection after attempt submission.
+    try {
+      await ScreenProtector.setSecure(false);
+    } catch (_) {}
+
     if (mounted) {
       showDialog(
         context: context,
@@ -967,7 +978,7 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_quizTitle ?? 'Quiz'),
+        title: Text(_quizTitle ?? 'Quiz Guard'),
         actions: kDebugMode
             ? [IconButton(icon: const Icon(Icons.bug_report), onPressed: _showDebugInfoDialog, tooltip: 'Debug state')]
             : null,
