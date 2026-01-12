@@ -40,48 +40,51 @@ class StarterScreen extends StatelessWidget {
       child: Scaffold(
       backgroundColor: Colors.black, // keep status/notification bar black to match other screens
       resizeToAvoidBottomInset: false, // prevent dialog/background resizing when keyboard opens
-      body: SizedBox.expand(
-        child: Stack(
-          children: [
-            // Full-screen shared background image (covers whole screen).
-            // Draw a black strip at the top equal to the status bar height so
-            // the image does not appear underneath the status bar on devices
-            // where the bar is transparent.
-            Positioned.fill(
-              child: Builder(builder: (ctx) {
-                final topPad = MediaQuery.of(ctx).padding.top;
-                return Column(
-                  children: [
-                    Container(height: topPad, color: Colors.black),
-                    Expanded(
-                      child: Image.asset(
-                        'assets/images/background.png',
-                        fit: BoxFit.cover,
-                        alignment: Alignment.topCenter,
-                      ),
-                    ),
-                  ],
-                );
-              }),
-            ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: SizedBox.expand(
+            child: Stack(
+              children: [
+                // Full-screen shared background image (covers whole screen).
+                // Draw a black strip at the top equal to the status bar height so
+                // the image does not appear underneath the status bar on devices
+                // where the bar is transparent.
+                Positioned.fill(
+                  child: Builder(builder: (ctx) {
+                    final topPad = MediaQuery.of(ctx).padding.top;
+                    return Column(
+                      children: [
+                        Container(height: topPad, color: Colors.black),
+                        Expanded(
+                          child: Image.asset(
+                            'assets/images/background.png',
+                            fit: BoxFit.cover,
+                            alignment: Alignment.topCenter,
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
+                ),
 
-            // Decorative elements overlay (separate from background so buttons can be positioned above)
-            Positioned(
-              left: 0,
-              right: 0,
-              top: 45,
-              child: Image.asset(
-                'assets/images/starter_elements.png',
-                fit: BoxFit.fitWidth,
-                alignment: Alignment.topCenter,
-                errorBuilder: (ctx, err, stack) => const SizedBox.shrink(),
-              ),
-            ),
+                // Decorative elements overlay (separate from background so buttons can be positioned above)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: 45,
+                  child: Image.asset(
+                    'assets/images/starter_elements.png',
+                    fit: BoxFit.fitWidth,
+                    alignment: Alignment.topCenter,
+                    errorBuilder: (ctx, err, stack) => const SizedBox.shrink(),
+                  ),
+                ),
 
-            // Overlay interactive hit areas positioned to match the visual image.
-            Positioned.fill(
-              child: SafeArea(
-                child: LayoutBuilder(builder: (context, constraints) {
+                // Overlay interactive hit areas positioned to match the visual image.
+                Positioned.fill(
+                  child: SafeArea(
+                    child: LayoutBuilder(builder: (context, constraints) {
                   // Base artboard dimensions (user-provided)
                   const baseW = 1080.0;
                   const baseH = 1920.0;

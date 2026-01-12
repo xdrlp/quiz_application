@@ -199,25 +199,27 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: Colors.black,
       body: SafeArea(
         child: Center(
-          child: SizedBox(
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Positioned.fill(
-                  child: Image.asset(
-                    'assets/images/background.png',
-                    fit: BoxFit.cover,
-                    alignment: Alignment.topCenter,
-                    errorBuilder: (ctx, err, stack) => Container(color: Colors.grey.shade900),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width,
+              height: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Positioned.fill(
+                    child: Image.asset(
+                      'assets/images/background.png',
+                      fit: BoxFit.cover,
+                      alignment: Alignment.topCenter,
+                      errorBuilder: (ctx, err, stack) => Container(color: Colors.grey.shade900),
+                    ),
                   ),
-                ),
 
-                
+                  
 
-                Positioned.fill(
-                  child: LayoutBuilder(builder: (context, constraints) {
+                  Positioned.fill(
+                    child: LayoutBuilder(builder: (context, constraints) {
                     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       if (_prevBottomInset > 0 && bottomInset == 0) {
@@ -244,6 +246,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         // compute overlay height from 16:9 aspect ratio
                         child: Builder(builder: (ctx) {
                           final double overlayHeight = constraints.maxWidth * (1080 / 1920);
+                          // Calculate scale factor based on design width (392 is typical phone width)
+                          final double scale = constraints.maxWidth / 392.0;
                           return SizedBox(
                             width: constraints.maxWidth,
                             height: overlayHeight + 800,
@@ -263,10 +267,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 // Sign-in tappable overlay
                                 Positioned(
-                                  left: 34,
-                                  right: 34,
-                                  bottom: 515,
-                                  height: 37,
+                                  left: 34 * scale,
+                                  right: 34 * scale,
+                                  bottom: 515 * scale,
+                                  height: 37 * scale,
                                   child: Material(
                                     borderRadius: BorderRadius.circular(8),
                                     color: const Color.fromARGB(0, 0, 0, 0),
@@ -284,10 +288,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 // Absolute-positioned tappable area for the "Forgot password" artwork element.
                                 Positioned(
-                                  left: 260, // adjust X here
-                                  top: 412, // adjust Y here
-                                  width: 110,
-                                  height: 30,
+                                  left: 260 * scale, // adjust X here
+                                  top: 412 * scale, // adjust Y here
+                                  width: 110 * scale,
+                                  height: 30 * scale,
                                   child: Material(
                                     color: const Color.fromARGB(0, 0, 0, 0),
                                     child: InkWell(
@@ -302,10 +306,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 // Debug tappable overlay for the "Don't have an account? Sign up" artwork.
                                 Positioned(
-                                  left: 110, // adjust X here
-                                  top: 520, // adjust Y here
-                                  width: 180,
-                                  height: 30,
+                                  left: 110 * scale, // adjust X here
+                                  top: 520 * scale, // adjust Y here
+                                  width: 180 * scale,
+                                  height: 30 * scale,
                                   child: Material(
                                     color: const Color.fromARGB(0, 0, 0, 0),
                                     child: InkWell(
@@ -320,10 +324,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 // Absolute-positioned email field so X/Y can be adjusted directly
                                 Positioned(
-                                  left: 85, // adjust X here
-                                  right: 56,
-                                  top: 292, // adjust Y here
-                                  height: 56,
+                                  left: 85 * scale, // adjust X here
+                                  right: 56 * scale,
+                                  top: 292 * scale, // adjust Y here
+                                  height: 56 * scale,
                                   child: Container(
                                     color: Colors.transparent,
                                     child: TextField(
@@ -342,10 +346,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 // Absolute-positioned password field so X/Y can be adjusted directly
                                 Positioned(
-                                  left: 85, // adjust X here
-                                  right: 20, // reduced inset so icon can move further right
-                                  top: 358, // adjust Y here
-                                  height: 56,
+                                  left: 85 * scale, // adjust X here
+                                  right: 20 * scale, // reduced inset so icon can move further right
+                                  top: 358 * scale, // adjust Y here
+                                  height: 56 * scale,
                                   child: Container(
                                     color: Colors.transparent,
                                     child: Row(

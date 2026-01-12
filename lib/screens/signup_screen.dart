@@ -88,24 +88,26 @@ class _SignUpScreenState extends State<SignUpScreen> {
       backgroundColor: Colors.black,
       body: SafeArea(
         child: Center(
-          child: SizedBox(
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom,
-            child: Stack(
-              children: [
-                // Static background image (covers the whole screen)
-                Positioned.fill(
-                  child: Image.asset(
-                    'assets/images/background.png',
-                    fit: BoxFit.cover,
-                    alignment: Alignment.topCenter,
-                    errorBuilder: (ctx, err, stack) => Container(color: Colors.grey.shade900),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width,
+              height: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom,
+              child: Stack(
+                children: [
+                  // Static background image (covers the whole screen)
+                  Positioned.fill(
+                    child: Image.asset(
+                      'assets/images/background.png',
+                      fit: BoxFit.cover,
+                      alignment: Alignment.topCenter,
+                      errorBuilder: (ctx, err, stack) => Container(color: Colors.grey.shade900),
+                    ),
                   ),
-                ),
 
-                // Scrollable form while keeping background static
-                Positioned.fill(
-                  child: LayoutBuilder(builder: (context, constraints) {
+                  // Scrollable form while keeping background static
+                  Positioned.fill(
+                    child: LayoutBuilder(builder: (context, constraints) {
                     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
                     // manage behavior when keyboard opens/closes and only allow user scroll when keyboard open
                     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -134,6 +136,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         // compute overlay height from 16:9 aspect ratio
                         child: Builder(builder: (ctx) {
                           final double overlayHeight = constraints.maxWidth * (1080 / 1920);
+                          // Calculate scale factor based on design width (392 is typical phone width)
+                          final double scale = constraints.maxWidth / 392.0;
                           // Stack overlay image and input column so inputs appear above the art
                           return SizedBox(
                             width: constraints.maxWidth,
@@ -156,10 +160,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 // Edit `createButtonLeft`, `createButtonTop`, `createButtonWidth`, `createButtonHeight` at the top of this file.
                                 // Create-account button (edit the numeric values here)
                                 Positioned(
-                                  left: 34,
-                                  top: 576,
-                                  width: 325,
-                                  height: 38,
+                                  left: 34 * scale,
+                                  top: 576 * scale,
+                                  width: 325 * scale,
+                                  height: 38 * scale,
                                   child: Material(
                                     color: const Color.fromARGB(0, 0, 0, 0),
                                     borderRadius: BorderRadius.circular(5),
@@ -205,9 +209,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 ),
                                 // Inputs placed on top of the overlay. Adjust the `top` value to nudge vertically.
                                 Positioned(
-                                  left: 80,
-                                  right: 20,
-                                  top: 227,
+                                  left: 80 * scale,
+                                  right: 20 * scale,
+                                  top: 227 * scale,
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.stretch,
                                     children: [
