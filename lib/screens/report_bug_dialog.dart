@@ -71,6 +71,7 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
                     maxHeight: MediaQuery.of(context).size.height * 0.85,
+                    maxWidth: 500, // Add max width for desktop
                   ),
                   child: Material(
                    color: Colors.transparent,
@@ -82,19 +83,23 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Stack(
-                              children: [
-                                // Background image
-                                Image.asset(
-                                  'assets/images/report_bug_bg.png',
-                                  fit: BoxFit.contain,
-                                ),
-                                // Title TextField
-                                Positioned(
-                                  left: 44,
-                                  right: 44,
-                                  top: 222,
-                                  height: 40,
+                            LayoutBuilder(
+                              builder: (context, constraints) {
+                                // Calculate scale factor based on design width (392 is typical phone width)
+                                final double scale = constraints.maxWidth / 392.0;
+                                return Stack(
+                                  children: [
+                                    // Background image
+                                    Image.asset(
+                                      'assets/images/report_bug_bg.png',
+                                      fit: BoxFit.contain,
+                                    ),
+                                    // Title TextField
+                                    Positioned(
+                                      left: 44 * scale,
+                                      right: 44 * scale,
+                                      top: 222 * scale,
+                                      height: 40 * scale,
                                   child: Container(
                                     color: Colors.transparent,
                                     child: TextField(
@@ -113,12 +118,12 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
                                     ),
                                   ),
                                 ),
-                                // Description TextField
-                                Positioned(
-                                  left: 44,
-                                  right: 44,
-                                  top: 290,
-                                  height: 200,
+                                    // Description TextField
+                                    Positioned(
+                                      left: 44 * scale,
+                                      right: 44 * scale,
+                                      top: 290 * scale,
+                                      height: 200 * scale,
                                   child: Container(
                                     color: Colors.transparent,
                                     child: TextField(
@@ -140,12 +145,12 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
                                     ),
                                   ),
                                 ),
-                                // Submit button overlay
-                                Positioned(
-                                  left: 40,
-                                  right: 33,
-                                  top: 460,
-                                  height: 31,
+                                    // Submit button overlay
+                                    Positioned(
+                                      left: 40 * scale,
+                                      right: 33 * scale,
+                                      top: 460 * scale,
+                                      height: 31 * scale,
                                   child: Material(
                                     color: const Color.fromARGB(0, 76, 175, 92),
                                     borderRadius: BorderRadius.circular(8),
@@ -162,12 +167,12 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
                                     ),
                                   ),
                                 ),
-                                // Cancel button overlay
-                                Positioned(
-                                  left: 40,
-                                  right: 33,
-                                  top: 507,
-                                  height: 31,
+                                    // Cancel button overlay
+                                    Positioned(
+                                      left: 40 * scale,
+                                      right: 33 * scale,
+                                      top: 507 * scale,
+                                      height: 31 * scale,
                                   child: Material(
                                     borderRadius: BorderRadius.circular(8),
                                     color: const Color.fromARGB(0, 0, 0, 0),
@@ -182,7 +187,9 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
                                     ),
                                   ),
                                 ),
-                              ],
+                                  ],
+                                );
+                              },
                             ),
                             // Extra space at bottom for scrolling when keyboard opens
                             const SizedBox(height: 300),

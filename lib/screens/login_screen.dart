@@ -97,79 +97,85 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Dialog(
                 backgroundColor: Colors.transparent,
                 insetPadding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
-                child: SizedBox(
-                  width: 360,
-                  child: Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: Image.asset('assets/images/reset_password_bg.png', fit: BoxFit.cover),
-                      ),
-                      Positioned.fill(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 65.0, vertical: 28.0),
-                          child: Column(
-                            children: [
-                              const SizedBox(height: 180),
-                              Container(
-                                height: 52,
-                                color: Colors.transparent,
-                                child: Row(
-                                  children: [
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: TextField(
-                                        controller: dialogController,
-                                        cursorColor: Colors.black,
-                                        decoration: const InputDecoration(
-                                          border: InputBorder.none,
-                                          hintText: 'Email',
-                                          hintStyle: TextStyle(color: Color(0x803E3B36)),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 400),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      // Calculate scale factor based on design width (360)
+                      final double scale = constraints.maxWidth / 360.0;
+                      return Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.asset('assets/images/reset_password_bg.png', fit: BoxFit.cover),
+                          ),
+                          Positioned.fill(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 65.0 * scale, vertical: 28.0 * scale),
+                              child: Column(
+                                children: [
+                                  SizedBox(height: 180 * scale),
+                                  Container(
+                                    height: 52 * scale,
+                                    color: Colors.transparent,
+                                    child: Row(
+                                      children: [
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: TextField(
+                                            controller: dialogController,
+                                            cursorColor: Colors.black,
+                                            decoration: const InputDecoration(
+                                              border: InputBorder.none,
+                                              hintText: 'Email',
+                                              hintStyle: TextStyle(color: Color(0x803E3B36)),
+                                            ),
+                                            style: const TextStyle(color: Colors.black),
+                                          ),
                                         ),
-                                        style: const TextStyle(color: Colors.black),
-                                      ),
+                                      ],
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                  const Spacer(),
+                                ],
                               ),
-                              const Spacer(),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 36,
-                        right: 28,
-                        bottom: 78,
-                        height: 30,
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () => Navigator.of(dialogContext).pop(dialogController.text.trim()),
-                            borderRadius: BorderRadius.circular(28),
-                            splashColor: Colors.white24,
-                            highlightColor: Colors.white10,
-                            child: Container(),
+                          Positioned(
+                            left: 36 * scale,
+                            right: 28 * scale,
+                            bottom: 78 * scale,
+                            height: 30 * scale,
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () => Navigator.of(dialogContext).pop(dialogController.text.trim()),
+                                borderRadius: BorderRadius.circular(28),
+                                splashColor: Colors.white24,
+                                highlightColor: Colors.white10,
+                                child: Container(),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 36,
-                        right: 28,
-                        bottom: 34,
-                        height: 30,
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () => Navigator.of(dialogContext).pop(),
-                            borderRadius: BorderRadius.circular(28),
-                            splashColor: Colors.white24,
-                            highlightColor: Colors.white10,
-                            child: Container(),
+                          Positioned(
+                            left: 36 * scale,
+                            right: 28 * scale,
+                            bottom: 34 * scale,
+                            height: 30 * scale,
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () => Navigator.of(dialogContext).pop(),
+                                borderRadius: BorderRadius.circular(28),
+                                splashColor: Colors.white24,
+                                highlightColor: Colors.white10,
+                                child: Container(),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    ],
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),
