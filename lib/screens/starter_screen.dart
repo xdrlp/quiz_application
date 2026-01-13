@@ -18,7 +18,7 @@ class StarterScreen extends StatelessWidget {
         barrierColor: const Color.fromRGBO(0, 0, 0, 0.25),
         transitionDuration: const Duration(milliseconds: 180),
         pageBuilder: (context, animation, secondaryAnimation) {
-          return const ReportBugDialog();
+          return const ReportBugDialog(screenName: 'StarterScreen');
         },
       );
     }
@@ -254,8 +254,7 @@ class StarterScreen extends StatelessWidget {
                                     Text(
                                       'Learn more about Quiz Guard',
                                       style: TextStyle(
-                                        fontFamily: 'CanvaSans',
-                                        fontWeight: FontWeight.w600,
+                                        fontWeight: FontWeight.bold,
                                         color: const Color.fromARGB(179, 51, 49, 49),
                                         fontSize: learnMoreBase * 0.30,
                                         decoration: TextDecoration.underline,
@@ -345,8 +344,7 @@ class _ImagePillButton extends StatelessWidget {
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
-                          fontFamily: 'CanvaSans',
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.bold,
                           shadows: [Shadow(offset: Offset(0, 1), blurRadius: 2, color: Color(0x66000000))],
                         ),
                       )
@@ -382,8 +380,7 @@ class _ImagePillButton extends StatelessWidget {
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
-                            fontFamily: 'CanvaSans',
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.bold,
                             shadows: [Shadow(offset: Offset(0, 1), blurRadius: 2, color: Color(0x66000000))],
                           ),
                         )

@@ -222,9 +222,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                             decoration: const InputDecoration(
                                               border: InputBorder.none,
                                               hintText: 'Email',
-                                              hintStyle: TextStyle(color: Color(0x803E3B36)),
+                                              hintStyle: TextStyle(color: Color(0x803E3B36), fontWeight: FontWeight.bold),
                                             ),
-                                            style: const TextStyle(color: Colors.black),
+                                            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold), 
                                           ),
                                         ),
                                       ),
@@ -240,9 +240,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                             decoration: const InputDecoration(
                                               border: InputBorder.none,
                                               hintText: 'First name',
-                                              hintStyle: TextStyle(color: Color(0x803E3B36)),
+                                              hintStyle: TextStyle(color: Color(0x803E3B36), fontWeight: FontWeight.bold),
                                             ),
-                                            style: const TextStyle(color: Colors.black),
+                                            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
                                           ),
                                         ),
                                       ),
@@ -258,9 +258,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                             decoration: const InputDecoration(
                                               border: InputBorder.none,
                                               hintText: 'Last name',
-                                              hintStyle: TextStyle(color: Color(0x803E3B36)),
+                                              hintStyle: TextStyle(color: Color(0x803E3B36), fontWeight: FontWeight.bold),
                                             ),
-                                            style: const TextStyle(color: Colors.black),
+                                            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
                                           ),
                                         ),
                                       ),
@@ -280,9 +280,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                                   decoration: const InputDecoration(
                                                     border: InputBorder.none,
                                                     hintText: 'Password',
-                                                    hintStyle: TextStyle(color: Color(0x803E3B36)),
+                                                    hintStyle: TextStyle(color: Color(0x803E3B36), fontWeight: FontWeight.bold),
                                                   ),
-                                                  style: const TextStyle(color: Colors.black),
+                                                  style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
                                                 ),
                                               ),
                                               Padding(
@@ -312,9 +312,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                                   decoration: const InputDecoration(
                                                     border: InputBorder.none,
                                                     hintText: 'Confirm password',
-                                                    hintStyle: TextStyle(color: Color(0x803E3B36)),
+                                                    hintStyle: TextStyle(color: Color(0x803E3B36), fontWeight: FontWeight.bold),
                                                   ),
-                                                  style: const TextStyle(color: Colors.black),
+                                                  style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
                                                 ),
                                               ),
                                               Padding(

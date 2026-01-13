@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
@@ -135,17 +136,14 @@ class MyApp extends StatelessWidget {
               titleTextStyle: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.w700),
               iconTheme: IconThemeData(color: Colors.black),
             ),
-            // Use a custom font family named "CanvaSans". To enable this you must
-            // add the Canva Sans font files to your project `assets/fonts/`
-            // and declare them in `pubspec.yaml` (see below). If the font files
-            // are not present the engine will fall back to the platform default.
-            fontFamily: 'CanvaSans',
-            textTheme: TextTheme(
+            // Switched to Google Fonts "Inter" for consistent rendering on all devices.
+            fontFamily: GoogleFonts.inter().fontFamily,
+            textTheme: GoogleFonts.interTextTheme(TextTheme(
               titleLarge: TextStyle(color: ashWhite),
               bodyLarge: TextStyle(color: ashWhite),
               bodyMedium: TextStyle(color: const Color(0xFF9CA3AF)),
               labelSmall: TextStyle(color: const Color(0xFF9CA3AF)),
-            ),
+            )),
             iconTheme: IconThemeData(color: ashWhite),
             elevatedButtonTheme: ElevatedButtonThemeData(
               style: ElevatedButton.styleFrom(backgroundColor: coldSteel, foregroundColor: ashWhite),

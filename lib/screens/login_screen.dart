@@ -334,9 +334,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                       decoration: const InputDecoration(
                                         border: InputBorder.none,
                                         hintText: 'Email',
-                                        hintStyle: TextStyle(color: Color(0x803E3B36)),
+                                        hintStyle: TextStyle(
+                                          color: Color(0x803E3B36),
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
-                                      style: const TextStyle(color: Colors.black),
+                                      style: const TextStyle(
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -360,9 +366,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                             decoration: const InputDecoration(
                                               border: InputBorder.none,
                                               hintText: 'Password',
-                                              hintStyle: TextStyle(color: Color(0x803E3B36)),
+                                              hintStyle: TextStyle(
+                                                color: Color(0x803E3B36),
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                             ),
-                                            style: const TextStyle(color: Colors.black),
+                                            style: const TextStyle(
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
                                         ),
                                         Padding(

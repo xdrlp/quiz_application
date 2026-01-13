@@ -593,7 +593,7 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
       children: [
         Icon(icon, color: color, size: 20),
         const SizedBox(width: 8),
-        Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600))),
+        Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold))),
         if (!ready)
           TextButton(
             onPressed: onPressed == null

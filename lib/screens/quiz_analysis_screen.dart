@@ -151,16 +151,16 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
       title: 'Participation',
       accent: Colors.blue,
       children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Attempts', style: TextStyle(color: Theme.of(context).colorScheme.secondary)), Text('$attemptCount', style: const TextStyle(fontWeight: FontWeight.w600))]),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Attempts', style: TextStyle(color: Theme.of(context).colorScheme.secondary)), Text('$attemptCount', style: const TextStyle(fontWeight: FontWeight.bold))]),
         const SizedBox(height: 12),
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Submitted', style: TextStyle(color: Theme.of(context).colorScheme.secondary)), Text('$submittedCount', style: const TextStyle(fontWeight: FontWeight.w600))]),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Submitted', style: TextStyle(color: Theme.of(context).colorScheme.secondary)), Text('$submittedCount', style: const TextStyle(fontWeight: FontWeight.bold))]),
         const SizedBox(height: 12),
         Text('Completion rate', style: TextStyle(color: Theme.of(context).colorScheme.secondary)),
         const SizedBox(height: 8),
         Row(children: [
           Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(8), child: LinearProgressIndicator(value: completionRate / 100.0, minHeight: 10, color: Colors.blue, backgroundColor: Colors.grey.shade200))),
           const SizedBox(width: 12),
-          Text('${completionRate.toStringAsFixed(1)}%', style: const TextStyle(fontWeight: FontWeight.w600)),
+          Text('${completionRate.toStringAsFixed(1)}%', style: const TextStyle(fontWeight: FontWeight.bold)),
         ]),
       ],
     );
@@ -194,13 +194,13 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
               ),
             ),
             const SizedBox(width: 12),
-            SizedBox(width: 44, child: Text('${((maxPoints == 0) ? 0 : ((avgScore / maxPoints) * 100)).toStringAsFixed(0)}%', textAlign: TextAlign.right, style: const TextStyle(fontWeight: FontWeight.w600))),
+            SizedBox(width: 44, child: Text('${((maxPoints == 0) ? 0 : ((avgScore / maxPoints) * 100)).toStringAsFixed(0)}%', textAlign: TextAlign.right, style: const TextStyle(fontWeight: FontWeight.bold))),
           ]),
           const SizedBox(height: 12),
           // Small stats row: Highest and Lowest side-by-side
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Highest', style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 12)), const SizedBox(height: 4), Text('$highest', style: const TextStyle(fontWeight: FontWeight.w600))]),
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Lowest', style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 12)), const SizedBox(height: 4), Text('$lowest', style: const TextStyle(fontWeight: FontWeight.w600))]),
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Highest', style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 12)), const SizedBox(height: 4), Text('$highest', style: const TextStyle(fontWeight: FontWeight.bold))]),
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Lowest', style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 12)), const SizedBox(height: 4), Text('$lowest', style: const TextStyle(fontWeight: FontWeight.bold))]),
           ])
         ])
       ],
@@ -568,7 +568,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
                     child: Row(children: [
                       CircleAvatar(backgroundColor: Colors.grey.shade200, child: Text(initials.isEmpty ? '?' : initials.substring(0, initials.length > 2 ? 2 : initials.length))),
                       const SizedBox(width: 12),
-                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(name, style: const TextStyle(fontWeight: FontWeight.w600)), const SizedBox(height: 6), Row(children: [
+                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(name, style: const TextStyle(fontWeight: FontWeight.bold)), const SizedBox(height: 6), Row(children: [
                         if (violCount > 0) Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: Colors.red.withAlpha(30), borderRadius: BorderRadius.circular(12)), child: Text('$violCount violations', style: TextStyle(color: Colors.red, fontSize: 12))),
                         if (violCount > 0) const SizedBox(width: 8),
                         if (appSwitchCount > 0) Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: Colors.orange.withAlpha(30), borderRadius: BorderRadius.circular(12)), child: Text('$appSwitchCount app-switches', style: TextStyle(color: Colors.orange, fontSize: 12))),
@@ -589,9 +589,9 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
               Row(children: [Icon(Icons.shield_outlined, color: impactColor(percentFlagged)), const SizedBox(width: 8), Text('Quiz Integrity Overview', style: Theme.of(context).textTheme.titleMedium)]),
               const SizedBox(height: 12),
               Row(children: [
-                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('${percentFlagged.toStringAsFixed(1)}%', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: impactColor(percentFlagged))), const SizedBox(height: 6), Text('${attemptsWithViol.length} out of ${_attempts.length} attempts', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey))])),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('${percentFlagged.toStringAsFixed(1)}%', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: impactColor(percentFlagged))), const SizedBox(height: 6), Text('${attemptsWithViol.length} out of ${_attempts.length} attempts', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey))])),
                 const SizedBox(width: 12),
-                SizedBox(width: 84, height: 84, child: Stack(alignment: Alignment.center, children: [CircularProgressIndicator(value: (percentFlagged / 100.0).clamp(0.0, 1.0), color: impactColor(percentFlagged), backgroundColor: Colors.grey.shade200, strokeWidth: 8), Text('${percentFlagged.toStringAsFixed(0)}%', style: const TextStyle(fontWeight: FontWeight.w700))])),
+                SizedBox(width: 84, height: 84, child: Stack(alignment: Alignment.center, children: [CircularProgressIndicator(value: (percentFlagged / 100.0).clamp(0.0, 1.0), color: impactColor(percentFlagged), backgroundColor: Colors.grey.shade200, strokeWidth: 8), Text('${percentFlagged.toStringAsFixed(0)}%', style: const TextStyle(fontWeight: FontWeight.bold))])),
               ]),
               const SizedBox(height: 12),
               LinearProgressIndicator(value: (percentFlagged / 100.0).clamp(0.0, 1.0), color: impactColor(percentFlagged), backgroundColor: Colors.grey.shade200, minHeight: 10),
@@ -687,7 +687,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(color: badgeColor.withAlpha((0.12 * 255).round()), borderRadius: BorderRadius.circular(14)),
-                  child: Text('$viol/$total', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: badgeColor, fontWeight: FontWeight.w600)),
+                  child: Text('$viol/$total', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: badgeColor, fontWeight: FontWeight.bold)),
                 ),
               ]),
             );

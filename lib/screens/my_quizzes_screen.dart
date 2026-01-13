@@ -94,7 +94,7 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
               Expanded(
                 child: Text(
                   "Quiz ${quizTitle.replaceAll('\n', ' ')} deleted",
-                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
