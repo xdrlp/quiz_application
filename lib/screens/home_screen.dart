@@ -18,26 +18,59 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _loaded = false;
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.person),
-          onPressed: () {
-            Navigator.of(context).pushNamed('/profile');
-          },
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(217, 255, 255, 255)],
         ),
-        title: Text('Quiz Application', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w800)),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              Navigator.of(context).pushNamed('/profile');
-            },
-          ),
-        ],
       ),
-      body: Consumer2<AuthProvider, QuizProvider>(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight),
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: [Color.fromARGB(255, 169, 169, 169), Color.fromARGB(255, 255, 255, 255)],
+              ),
+            ),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 2),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [Color.fromARGB(108, 244, 244, 244), Color.fromARGB(205, 223, 223, 223)],
+                ),
+              ),
+              child: AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                centerTitle: true,
+                leading: IconButton(
+                  icon: const Icon(Icons.person, color: Colors.black, size: 28),
+                  onPressed: () {
+                    Navigator.of(context).pushNamed('/profile');
+                  },
+                ),
+                title: const Text('Quiz Application', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20)),
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.settings, color: Colors.black, size: 28),
+                    onPressed: () {
+                      Navigator.of(context).pushNamed('/profile');
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        body: Consumer2<AuthProvider, QuizProvider>(
         builder: (context, authProvider, quizProvider, _) {
           // Load user quizzes once
           if (!_loaded && authProvider.currentUser != null) {
@@ -56,10 +89,10 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Hello, $userName', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white)),
-                  const SizedBox(height: 4),
-                  Text('What would you like to do today?', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70)),
-                  const SizedBox(height: 16),
+                  Text('Hello, $userName', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF2C3E50))),
+                  const SizedBox(height: 8),
+                  Text('What would you like to do today?', style: const TextStyle(fontSize: 16, color: Color(0xFF7F8C8D))),
+                  const SizedBox(height: 24),
                   // Action tiles arranged in a 2x2 grid
                   GridView.count(
                     shrinkWrap: true,
@@ -70,106 +103,112 @@ class _HomeScreenState extends State<HomeScreen> {
                     childAspectRatio: 1.0,
                     children: [
                       // Create Quiz (top-left)
-                      Card(
-                        color: Theme.of(context).cardColor,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        child: InkWell(
-                          onTap: () => Navigator.of(context).pushNamed('/create_quiz'),
-                          child: Padding(
-                            padding: const EdgeInsets.all(14.0),
-                            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                CircleAvatar(radius: 22, backgroundColor: Colors.black26, child: const Icon(Icons.add, size: 28, color: Colors.white)),
-                                const SizedBox(height: 12),
-                                Text('Create Quiz', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w800)),
-                              ]),
-                              const SizedBox(height: 12),
-                              Flexible(child: Text('Design your own quiz', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: const Color(0xFFBEC5D1)))),
-                            ]),
-                          ),
-                        ),
-                      ),
-                      // My Quizzes
-                      Card(
-                        color: Theme.of(context).cardColor,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        child: InkWell(
-                          onTap: () => Navigator.of(context).pushNamed('/my_quizzes'),
-                          child: Padding(
-                            padding: const EdgeInsets.all(14.0),
-                            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                CircleAvatar(radius: 22, backgroundColor: Colors.black26, child: const Icon(Icons.menu_book_outlined, size: 26, color: Colors.white)),
-                                const SizedBox(height: 12),
-                                Text('Quiz board', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w800)),
-                              ]),
-                              const SizedBox(height: 12),
-                              Flexible(child: Text('${quizzes.length} created', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: const Color(0xFFBEC5D1)))),
-                            ]),
-                          ),
+                      _neumorphicCard(
+                        onTap: () => Navigator.of(context).pushNamed('/create_quiz'),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.add_circle, size: 48, color: Colors.black),
+                            const SizedBox(height: 12),
+                            const Text('Create Quiz', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+                            const SizedBox(height: 4),
+                            const Text('Design your own Quiz', style: TextStyle(fontSize: 12, color: Color(0xFF7F8C8D))),
+                          ],
                         ),
                       ),
                       // Take Quiz
-                      Card(
-                        color: Theme.of(context).cardColor,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        child: InkWell(
-                          onTap: () => showTakeQuizDialog(context),
-                          child: Padding(
-                            padding: const EdgeInsets.all(14.0),
-                            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                CircleAvatar(radius: 22, backgroundColor: Colors.black26, child: const Icon(Icons.gps_fixed, size: 26, color: Colors.white)),
-                                const SizedBox(height: 12),
-                                Text('Take Quiz', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w800)),
-                              ]),
-                              const SizedBox(height: 12),
-                              Flexible(child: Text('Enter quiz code', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: const Color(0xFFBEC5D1)))),
-                            ]),
-                          ),
+                      _neumorphicCard(
+                        onTap: () => showTakeQuizDialog(context),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.gps_fixed, size: 48, color: Colors.black),
+                            const SizedBox(height: 12),
+                            const Text('Take Quiz', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+                            const SizedBox(height: 4),
+                            const Text('Enter quiz code to take quiz', style: TextStyle(fontSize: 12, color: Color(0xFF7F8C8D))),
+                          ],
+                        ),
+                      ),
+                      // Quiz board
+                      _neumorphicCard(
+                        onTap: () => Navigator.of(context).pushNamed('/my_quizzes'),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.menu_book, size: 48, color: Colors.black),
+                            const SizedBox(height: 12),
+                            const Text('Quiz board', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+                            const SizedBox(height: 4),
+                            Text('25 Created 5 Published\n2 drafts', style: const TextStyle(fontSize: 12, color: Color(0xFF7F8C8D), height: 1.3)),
+                          ],
                         ),
                       ),
                       // Quiz History
-                      Card(
-                        color: Theme.of(context).cardColor,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        child: InkWell(
-                          onTap: () => Navigator.of(context).pushNamed('/quiz_history'),
-                          child: Padding(
-                            padding: const EdgeInsets.all(14.0),
-                            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                CircleAvatar(radius: 22, backgroundColor: Colors.black26, child: const Icon(Icons.history, size: 26, color: Colors.white)),
-                                const SizedBox(height: 12),
-                                Text('Quiz Taken', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w800)),
-                              ]),
-                              const SizedBox(height: 12),
-                              Flexible(child: Text('45 Completed 89% avg score', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: const Color(0xFFBEC5D1)))),
-                            ]),
-                          ),
+                      _neumorphicCard(
+                        onTap: () => Navigator.of(context).pushNamed('/quiz_history'),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.history, size: 48, color: Colors.black),
+                            const SizedBox(height: 12),
+                            const Text('Quiz Taken', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+                            const SizedBox(height: 4),
+                            const Text('45 Submitted 89% avg score', style: TextStyle(fontSize: 12, color: Color(0xFF7F8C8D))),
+                          ],
                         ),
                       ),
                     ],
                   ),
 
-                  const SizedBox(height: 8),
-                  Text('recent activity', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: const Color(0xFF787B82), fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
+                  const Text('recent activity', style: TextStyle(fontSize: 14, color: Color(0xFF7F8C8D), fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 12),
                   if (recent.isEmpty)
-                    Card(child: Padding(padding: const EdgeInsets.all(12.0), child: Text('No recent activity', style: Theme.of(context).textTheme.bodyMedium)))
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8E8E8),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(color: Colors.white, offset: const Offset(-6, -6), blurRadius: 12),
+                          BoxShadow(color: const Color(0xFFB0B8C1).withOpacity(0.6), offset: const Offset(6, 6), blurRadius: 12),
+                        ],
+                      ),
+                      child: const Text('No recent activity', style: TextStyle(color: Color(0xFF7F8C8D))),
+                    )
                   else
                     Column(
                       children: List.generate(math.min(5, recent.length), (i) {
                         final q = recent[i];
                         final ago = _relativeTime(q.createdAt);
-                        return Card(
-                          color: Theme.of(context).colorScheme.surface,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          child: ListTile(
-                            title: Text(q.title, style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white70)),
-                            subtitle: Text(ago, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54)),
-                            trailing: Text('View Details', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70)),
-                            onTap: () => Navigator.of(context).pushNamed('/edit_quiz', arguments: q.id),
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: const Color.fromARGB(255, 110, 110, 110),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(q.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color.fromARGB(255, 224, 224, 224))),
+                                  const SizedBox(height: 4),
+                                  Text(ago, style: const TextStyle(fontSize: 13, color: Color.fromARGB(255, 192, 192, 192))),
+                                ],
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pushNamed('/edit_quiz', arguments: q.id),
+                                child: const Text('View Details', style: TextStyle(color: Color.fromARGB(255, 203, 203, 203), fontSize: 13)),
+                              ),
+                            ],
                           ),
                         );
                       }),
@@ -180,6 +219,7 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         },
       ),
+      ),
     );
   }
 
@@ -188,5 +228,34 @@ class _HomeScreenState extends State<HomeScreen> {
     if (diff.inMinutes < 60) return '${diff.inMinutes} minutes ago';
     if (diff.inHours < 48) return '${diff.inHours} hours ago';
     return '${diff.inDays} days ago';
+  }
+
+  Widget _neumorphicCard({required VoidCallback onTap, required Widget child}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(3),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(255, 0, 0, 0)],
+          ),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(17),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [Color(0xFFA6A6A6), Color(0xFFFFFFFF)],
+            ),
+            borderRadius: BorderRadius.circular(17),
+          ),
+          child: child,
+        ),
+      ),
+    );
   }
 }
