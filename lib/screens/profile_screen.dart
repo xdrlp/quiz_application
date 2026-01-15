@@ -6,6 +6,7 @@ import 'package:quiz_application/providers/auth_provider.dart';
 import 'package:quiz_application/models/user_model.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:quiz_application/services/firestore_service.dart';
+import 'starter_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -97,6 +98,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } else {
       messenger.showSnackBar(SnackBar(content: Text(auth.errorMessage ?? 'Failed to update profile')));
     }
+  }
+
+  Future<void> _handleSignOut() async {
+    final auth = context.read<AuthProvider>();
+    await auth.logout();
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const StarterScreen()),
+      (route) => false,
+    );
   }
 
   // Profile picture/upload features removed per user request.
@@ -236,11 +247,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ),
                                   const SizedBox(height: 8),
                                   OutlinedButton(
-                                    onPressed: () async {
-                                      await auth.logout();
-                                      if (!mounted) return;
-                                      Navigator.of(context).pushReplacementNamed('/login');
-                                    },
+                                    onPressed: _handleSignOut,
                                     child: const Text('Sign out'),
                                   ),
                                 ],
@@ -328,11 +335,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     ),
                                     const SizedBox(height: 8),
                                     OutlinedButton(
-                                      onPressed: () async {
-                                        await auth.logout();
-                                        if (!mounted) return;
-                                        Navigator.of(context).pushReplacementNamed('/login');
-                                      },
+                                      onPressed: _handleSignOut,
                                       child: const Text('Sign out'),
                                     ),
                                   ],

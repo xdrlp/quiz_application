@@ -1,6 +1,8 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:quiz_application/providers/auth_provider.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -49,12 +51,66 @@ class _SignUpScreenState extends State<SignUpScreen> {
   // Tweakable constants for overlay scaling and input positioning
   final double _overlayScale = 1.1; // 1.0 = native 1920x1080 scale; increase to make art larger
   bool _confirmPasswordVisible = false;
+  static final RegExp _nameRegExp = RegExp(r"^[A-Za-zÀ-ÖØ-öø-ÿ' -]+$");
+  bool _isCreatingAccount = false;
   // Per-widget manual nudges for debug elements (edit these to move the sign-in box)
 
   // (Create-account position/size are now specified inline at the Positioned widget.)
 
-  void _createAccount() {
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Create account tapped')));
+  bool _isValidName(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return false;
+    return _nameRegExp.hasMatch(trimmed);
+  }
+
+  void _showMessage(String message) {
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _handleCreateAccount() async {
+    if (_isCreatingAccount) return;
+    FocusScope.of(context).unfocus();
+    final email = _emailController.text.trim();
+    final firstName = _firstController.text.trim();
+    final lastName = _lastController.text.trim();
+    final password = _passwordController.text;
+    final confirmPassword = _confirmController.text;
+
+    if ([email, firstName, lastName, password, confirmPassword].any((value) => value.isEmpty)) {
+      _showMessage('All fields are required.');
+      return;
+    }
+    if (!_isValidName(firstName) || !_isValidName(lastName)) {
+      _showMessage('First and last name can include letters, spaces, hyphens or apostrophes only.');
+      return;
+    }
+    if (password.length < 6) {
+      _showMessage('Password must be at least 6 characters.');
+      return;
+    }
+    if (password != confirmPassword) {
+      _showMessage('Passwords do not match.');
+      return;
+    }
+
+    setState(() => _isCreatingAccount = true);
+    final auth = context.read<AuthProvider>();
+    final success = await auth.signUp(
+      email: email,
+      password: password,
+      firstName: firstName,
+      lastName: lastName,
+    );
+    if (!mounted) return;
+    setState(() => _isCreatingAccount = false);
+    if (success) {
+      _showMessage('Account created. Welcome!');
+    } else {
+      _showMessage(auth.errorMessage ?? 'Create account failed.');
+    }
   }
 
   @override
@@ -164,7 +220,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     color: const Color.fromARGB(0, 0, 0, 0),
                                     borderRadius: BorderRadius.circular(5),
                                     child: InkWell(
-                                      onTap: _createAccount,
+                                      onTap: _isCreatingAccount ? null : _handleCreateAccount,
                                       splashColor: const Color.fromARGB(53, 50, 50, 50),
                                       highlightColor: const Color.fromARGB(0, 0, 0, 0),
                                       child: Container(

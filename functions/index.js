@@ -1,5 +1,8 @@
 const functions = require("firebase-functions");
+const admin = require("firebase-admin");
 const nodemailer = require("nodemailer");
+
+admin.initializeApp();
 
 const CONFIG_KEY = "bugreport";
 const DEFAULT_DESTINATION = "nepomucenodiether0606@gmail.com";
@@ -62,4 +65,20 @@ exports.sendBugReport = functions.https.onCall(async (data, context) => {
 	});
 
 	return { success: true };
+});
+
+exports.checkEmailExists = functions.https.onCall(async (data, context) => {
+	const email = (data?.email ?? "").toString().trim();
+	if (!email) {
+		throw new functions.https.HttpsError("invalid-argument", "Email is required.");
+	}
+	try {
+		await admin.auth().getUserByEmail(email);
+		return { exists: true };
+	} catch (error) {
+		if (error.code === 'auth/user-not-found') {
+			return { exists: false };
+		}
+		throw new functions.https.HttpsError("internal", "Error checking email.", error);
+	}
 });

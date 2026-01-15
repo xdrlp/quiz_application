@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:quiz_application/models/user_model.dart';
 import 'package:quiz_application/services/auth_service.dart';
@@ -170,24 +171,64 @@ class AuthProvider with ChangeNotifier {
 
   Future<bool> requestPasswordReset({required String email}) async {
     try {
-      // Check if the email is registered in our users collection before
-      // sending a password reset. Firebase Auth intentionally avoids
-      // revealing account existence via sendPasswordResetEmail, so we
-      // perform a conservative lookup in Firestore where user docs are
-      // created at signup.
-      final exists = await _firestoreService.emailExists(email);
-      if (!exists) {
-        _errorMessage = 'No account found for that email.';
-        notifyListeners();
-        return false;
+      // 1. Try client-side fetch (fastest)
+      // Note: fetching sign-in methods might return empty if email enumeration protection is on,
+      // even for valid users. So an empty list is inconclusive.
+      try {
+        final methods = await _authService.fetchSignInMethods(email);
+        if (methods.isNotEmpty) {
+          // If we see methods, the user definitely exists.
+          await _authService.resetPassword(email);
+          return true;
+        }
+      } catch (_) {
+        // Platform or network error, proceed to next check.
       }
 
+      // 2. Try Firestore check (if rules allow it)
+      // Note: Rules typically block this for unauthenticated users, returning false/error.
+      final firestoreExists = await _firestoreService.emailExists(email);
+      if (firestoreExists) {
+        await _authService.resetPassword(email);
+        return true;
+      }
+      
+      // 3. Try Cloud Function (Authoritative check bypassing client rules)
+      // This requires the 'checkEmailExists' function to be deployed.
+      try {
+        final result = await FirebaseFunctions.instance
+            .httpsCallable('checkEmailExists')
+            .call({'email': email});
+        final data = result.data as Map<dynamic, dynamic>?;
+        if (data != null && data['exists'] == true) {
+           await _authService.resetPassword(email);
+           return true;
+        } else if (data != null && data['exists'] == false) {
+           _errorMessage = 'No account found for that email.';
+           notifyListeners();
+           return false;
+        }
+      } catch (e) {
+        // Function not deployed or other error.
+        // We have a dilemma: Block everyone (current bug) or Allow everyone (privacy feature).
+        // Since user complained about blocking valid emails, we MUST Fail Open (Allow) if we can't verify.
+        // But we can try one last thing: attempting to send the email and catching specific errors.
+      }
+
+      // 4. Final Fallback: Attempt to send and catch error.
+      // If Protection is ON, this succeeds (void) even if user missing -> user sees success (Privacy).
+      // If Protection is OFF, this throws user-not-found -> user sees error.
+      // This is the standard behavior.
       await _authService.resetPassword(email);
       return true;
+
     } on FirebaseAuthException catch (e) {
       switch (e.code) {
         case 'invalid-email':
           _errorMessage = 'The email address is badly formatted.';
+          break;
+        case 'user-not-found':
+          _errorMessage = 'No account found for that email.';
           break;
         default:
           _errorMessage = e.message ?? e.toString();

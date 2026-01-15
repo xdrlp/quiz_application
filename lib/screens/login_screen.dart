@@ -24,6 +24,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final FocusNode _passwordFocus = FocusNode();
   final GlobalKey _emailKey = GlobalKey();
   final GlobalKey _passwordKey = GlobalKey();
+  OverlayEntry? _topToastEntry;
+  static final RegExp _emailRegExp = RegExp(r"^[^@\s]+@[^@\s]+\.[^@\s]+");
 
   @override
   void dispose() {
@@ -52,6 +54,43 @@ class _LoginScreenState extends State<LoginScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         Scrollable.ensureVisible(ctx, duration: const Duration(milliseconds: 250), alignment: 0.35, curve: Curves.easeInOut);
+      }
+    });
+  }
+
+  void _showTopToast(String message) {
+    _topToastEntry?.remove();
+    final overlay = Overlay.of(context);
+    if (overlay == null) return;
+    final entry = OverlayEntry(
+      builder: (context) {
+        final topPadding = MediaQuery.of(context).padding.top + 8;
+        return Positioned(
+          top: topPadding,
+          left: 16,
+          right: 16,
+          child: Material(
+            elevation: 6,
+            borderRadius: BorderRadius.circular(12),
+            color: Colors.grey.shade900,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+              child: Text(
+                message,
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+    _topToastEntry = entry;
+    overlay.insert(entry);
+    Future.delayed(const Duration(seconds: 2), () {
+      if (_topToastEntry == entry) {
+        _topToastEntry?.remove();
+        _topToastEntry = null;
       }
     });
   }
@@ -181,14 +220,20 @@ class _LoginScreenState extends State<LoginScreen> {
 
     String email = _emailController.text.trim();
     if (result != null && result.isNotEmpty) email = result;
-    if (email.isEmpty) return;
-    final messenger = ScaffoldMessenger.of(parentContext);
+    if (email.isEmpty) {
+      _showTopToast('Please enter your email address.');
+      return;
+    }
+    if (!_emailRegExp.hasMatch(email)) {
+      _showTopToast('Please enter a valid email address.');
+      return;
+    }
     final ok = await authProvider.requestPasswordReset(email: email);
     if (!mounted) return;
     if (ok) {
-      messenger.showSnackBar(const SnackBar(content: Text('Password reset email sent. Please check your inbox (including spam).')));
+      _showTopToast('Password reset email sent. Please check your inbox (including spam).');
     } else {
-      messenger.showSnackBar(SnackBar(content: Text(authProvider.errorMessage ?? 'Failed to send reset email')));
+      _showTopToast(authProvider.errorMessage ?? 'Failed to send reset email');
     }
   }
 

@@ -23,6 +23,16 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(uid)).data;
     }
     
+    // Safe check for class access
+    function hasClassAccess(quizClassIds) {
+       // Check if user doc exists
+       return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+              // Check if 'classes' field exists
+              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.keys().hasAny(['classes']) &&
+              // Check intersection
+              quizClassIds.hasAny(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classes);
+    }
+    
     function getQuiz(quizId) {
       return get(/databases/$(database)/documents/quizzes/$(quizId)).data;
     }
@@ -48,15 +58,15 @@ service cloud.firestore {
       
       // Users can create their own document (during signup)
       allow create: if isUser(uid) && 
-                       request.data.keys().hasAll(['email', 'displayName', 'role', 'createdAt']) &&
-                       request.data.role in [0, 1] &&
-                       request.data.size() <= 10; // Limit fields to prevent bloat
+                       request.resource.data.keys().hasAll(['email', 'displayName', 'role', 'createdAt']) &&
+                       request.resource.data.role in [0, 1] &&
+                       request.resource.data.size() <= 20; // Increased limit to allow optional fields
       
       // Users can update their own document
       allow update: if isUser(uid) && 
                        // Prevent changing email, role, uid
                        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['email', 'uid', 'role']) &&
-                       request.data.size() <= 15;
+                       request.resource.data.size() <= 20;
       
       // No deletes allowed
       allow delete: if false;
@@ -70,10 +80,10 @@ service cloud.firestore {
       
       // Only teachers can create classes
       allow create: if isAuthenticated() && 
-                       request.data.teacherUid == request.auth.uid &&
-                       request.data.keys().hasAll(['name', 'teacherUid', 'memberUids', 'createdAt']) &&
-                       request.data.memberUids is list &&
-                       request.data.memberUids.size() >= 0;
+                       request.resource.data.teacherUid == request.auth.uid &&
+                       request.resource.data.keys().hasAll(['name', 'teacherUid', 'memberUids', 'createdAt']) &&
+                       request.resource.data.memberUids is list &&
+                       request.resource.data.memberUids.size() >= 0;
       
       // Only class teacher can update
       allow update: if isClassTeacher(classId) && 
@@ -86,26 +96,41 @@ service cloud.firestore {
     // ========== QUIZZES COLLECTION ==========
     match /quizzes/{quizId} {
       // Read: Public quizzes, quizzes in user's classes, or creator's quizzes
-      allow read: if isAuthenticated() && 
-                     (isQuizCreator(quizId) ||
-                      (getQuiz(quizId).published && 
-                       getQuiz(quizId).classIds.size() == 0) ||  // Public quiz
-                      (getQuiz(quizId).published && 
-                       any(getQuiz(quizId).classIds, classId, classId in getUser(request.auth.uid).classes)));
+      allow read: if isAuthenticated() && (
+        resource.data.createdBy == request.auth.uid ||
+        (
+          // Ensure published matches first
+          resource.data.keys().hasAny(['published']) &&
+          resource.data.published == true && 
+          (
+            // 1. Access by Class (Public or Member) - requires classIds
+            (
+              resource.data.keys().hasAny(['classIds']) && 
+              (resource.data.classIds.size() == 0 || hasClassAccess(resource.data.classIds))
+            ) ||
+            // 2. Access by Quiz Code - doesn't require classIds
+            (
+              resource.data.keys().hasAny(['quizCode']) && 
+              resource.data.quizCode != null && 
+              resource.data.quizCode != ""
+            )
+          )
+        )
+      );
       
       // Create: Any authenticated user can create
       allow create: if isAuthenticated() && 
-                       request.data.createdBy == request.auth.uid &&
-                       request.data.keys().hasAll(['title', 'description', 'timeLimitSeconds', 'createdBy', 'createdAt']) &&
-                       request.data.timeLimitSeconds > 0 &&
-                       request.data.published == false;
+                       request.resource.data.createdBy == request.auth.uid &&
+                       request.resource.data.keys().hasAll(['title', 'description', 'timeLimitSeconds', 'createdBy', 'createdAt']) &&
+                       request.resource.data.timeLimitSeconds > 0 &&
+                       request.resource.data.published == false;
       
       // Update: Only creator can update
-      allow update: if isQuizCreator(quizId) && 
+      allow update: if isAuthenticated() && resource.data.createdBy == request.auth.uid && 
                        resource.data.createdBy == request.resource.data.createdBy; // Prevent changing creator
       
       // Delete: Only creator can delete (and only if no attempts exist)
-      allow delete: if isQuizCreator(quizId);
+      allow delete: if isAuthenticated() && resource.data.createdBy == request.auth.uid;
     }
 
     // ========== QUESTIONS SUBCOLLECTION ==========
@@ -120,9 +145,9 @@ service cloud.firestore {
       
       // Create: Only quiz creator can add questions
       allow create: if isQuizCreator(quizId) && 
-                       request.data.keys().hasAll(['text', 'choices', 'correctChoiceId', 'points', 'order', 'createdAt']) &&
-                       request.data.choices is list &&
-                       request.data.points > 0;
+                       request.resource.data.keys().hasAll(['type', 'prompt', 'choices', 'correctAnswers', 'points', 'order', 'createdAt']) &&
+                       request.resource.data.choices is list &&
+                       request.resource.data.points >= 0;
       
       // Update: Only quiz creator can edit
       allow update: if isQuizCreator(quizId);
@@ -140,15 +165,15 @@ service cloud.firestore {
       
       // Student can create their own attempt
       allow create: if isAuthenticated() && 
-                       request.data.userId == request.auth.uid &&
-                       request.data.keys().hasAll(['quizId', 'userId', 'startedAt', 'score', 'totalPoints', 'answers', 'createdAt']) &&
-                       request.data.score >= 0 &&
-                       request.data.totalPoints > 0;
+                       request.resource.data.userId == request.auth.uid &&
+                       request.resource.data.keys().hasAll(['quizId', 'userId', 'startedAt', 'score', 'totalPoints', 'answers']) &&
+                       request.resource.data.score >= 0;
       
       // Student can only update their own attempt (to submit)
-      allow update: if isUser(resource.data.userId) && 
-                       resource.data.userId == request.resource.data.userId &&
-                       resource.data.quizId == request.resource.data.quizId;
+      allow update: if isAuthenticated() && 
+                       request.auth.uid == resource.data.userId &&
+                       request.resource.data.userId == resource.data.userId &&
+                       request.resource.data.quizId == resource.data.quizId;
       
       // No deletes (audit trail)
       allow delete: if false;
@@ -163,9 +188,9 @@ service cloud.firestore {
       // Service account or backend only (restrict in production)
       // For now, allow attempts service to log violations
       allow create: if isAuthenticated() && 
-                       request.data.keys().hasAll(['attemptId', 'userId', 'quizId', 'type', 'detectedAt']) &&
-                       request.data.type >= 0 &&
-                       request.data.type <= 6;
+                       request.resource.data.keys().hasAll(['attemptId', 'userId', 'type', 'detectedAt']) &&
+                       request.resource.data.type >= 0 &&
+                       request.resource.data.type <= 8; // Extended enum range
       
       // No updates or deletes (immutable audit trail)
       allow update: if false;
