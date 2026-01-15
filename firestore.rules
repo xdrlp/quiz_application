@@ -181,9 +181,9 @@ service cloud.firestore {
 
     // ========== VIOLATIONS COLLECTION ==========
     match /violations/{violationId} {
-      // Teachers can read violations for their quizzes; students cannot read
+      // Teachers can read violations for their quizzes (by checking the attempt's quizId)
       allow read: if isAuthenticated() && 
-                     isQuizCreator(resource.data.quizId);
+                     isQuizCreator(get(/databases/$(database)/documents/attempts/$(resource.data.attemptId)).data.quizId);
       
       // Service account or backend only (restrict in production)
       // For now, allow attempts service to log violations

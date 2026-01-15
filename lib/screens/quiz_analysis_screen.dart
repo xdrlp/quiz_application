@@ -73,7 +73,9 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
         _users = usersMap;
         _violationsByAttempt = violations;
       });
-    } catch (_) {
+    } catch (e, st) {
+      // ignore: avoid_print
+      print('[QuizAnalysisScreen] _loadAll error: $e\n$st');
       // ignore; show whatever we have
     } finally {
       if (mounted) setState(() => _loading = false);

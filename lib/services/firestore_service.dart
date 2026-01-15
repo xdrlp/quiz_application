@@ -253,7 +253,7 @@ class FirestoreService {
       final querySnapshot = await _firestore
           .collection(attemptsCollection)
           .where('quizId', isEqualTo: quizId)
-          .orderBy('submittedAt', descending: true)
+          .orderBy('startedAt', descending: true)
           .get();
       return querySnapshot.docs
           .map((doc) => AttemptModel.fromFirestore(doc))
