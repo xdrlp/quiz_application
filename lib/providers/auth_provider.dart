@@ -171,19 +171,7 @@ class AuthProvider with ChangeNotifier {
 
   Future<bool> requestPasswordReset({required String email}) async {
     try {
-      // 1. Try client-side fetch (fastest)
-      // Note: fetching sign-in methods might return empty if email enumeration protection is on,
-      // even for valid users. So an empty list is inconclusive.
-      try {
-        final methods = await _authService.fetchSignInMethods(email);
-        if (methods.isNotEmpty) {
-          // If we see methods, the user definitely exists.
-          await _authService.resetPassword(email);
-          return true;
-        }
-      } catch (_) {
-        // Platform or network error, proceed to next check.
-      }
+      // 1. Removed fetchSignInMethods check (deprecated/removed in Firebase Auth 6.x)
 
       // 2. Try Firestore check (if rules allow it)
       // Note: Rules typically block this for unauthenticated users, returning false/error.

@@ -61,7 +61,6 @@ class _LoginScreenState extends State<LoginScreen> {
   void _showTopToast(String message) {
     _topToastEntry?.remove();
     final overlay = Overlay.of(context);
-    if (overlay == null) return;
     final entry = OverlayEntry(
       builder: (context) {
         final topPadding = MediaQuery.of(context).padding.top + 8;

@@ -176,7 +176,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(color: Colors.white, offset: const Offset(-6, -6), blurRadius: 12),
-                          BoxShadow(color: const Color(0xFFB0B8C1).withOpacity(0.6), offset: const Offset(6, 6), blurRadius: 12),
+                          BoxShadow(color: const Color(0xFFB0B8C1).withValues(alpha: 0.6), offset: const Offset(6, 6), blurRadius: 12),
                         ],
                       ),
                       child: const Text('No recent activity', style: TextStyle(color: Color(0xFF7F8C8D))),

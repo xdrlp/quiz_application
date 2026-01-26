@@ -1,5 +1,4 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
 
 class AuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
@@ -47,12 +46,6 @@ class AuthService {
   Future<void> resetPassword(String email) async {
     await _firebaseAuth.sendPasswordResetEmail(email: email);
   }
-
-  Future<List<String>> fetchSignInMethods(String email) async {
-    return await FirebaseAuthPlatform.instance.fetchSignInMethodsForEmail(email);
-  }
-
-
 
   // Reload current user from Firebase
   Future<User?> reloadCurrentUser() async {

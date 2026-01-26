@@ -44,7 +44,7 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
     super.dispose();
   }
 
-  Future<void> _submitReport(BuildContext context) async {
+  Future<void> _submitReport() async {
     final messenger = ScaffoldMessenger.of(context);
     final name = _nameCtrl.text.trim();
     final email = _emailCtrl.text.trim();
@@ -96,7 +96,8 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
       );
 
       await Future.delayed(duration);
-      if (mounted) Navigator.of(context).pop();
+      if (!mounted) return;
+      Navigator.of(context).pop();
 
     } on FirebaseFunctionsException catch (e) {
       final message = e.message ?? 'Unable to send the bug report.';
@@ -277,7 +278,7 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
                                                 ? null
                                                 : () async {
                                                     FocusScope.of(msgContext).unfocus();
-                                                    await _submitReport(msgContext);
+                                                    await _submitReport();
                                                   },
                                             borderRadius: BorderRadius.circular(8),
                                             splashColor: Colors.black26,
