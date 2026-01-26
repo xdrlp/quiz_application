@@ -7,41 +7,36 @@ import 'report_bug_dialog.dart';
 // ==========================================
 
 // --- Colors ---
-const Color _kBackgroundColor = Color.fromARGB(255, 255, 255, 255); // Main background (Light Grey)
 const Color _kTextColor = Color(0xFF4A4A4A);       // Primary text color (Dark Grey)
 const Color _kRedAccentColor = Color(0xFFFF3B30);  // Primary accent (Red)
 
 // Neumorphism Shadows
-const Color _kShadowLight = Colors.white;          // Light highlight
-const Color _kShadowDark = Color(0xFFA3B1C6);      // Dark shadow
-
-// Gradient Button Colors
-const Color _kGradientStart = Color(0xFFFF3B30);   
-const Color _kGradientEnd = Color(0xFFFF5E3A);     
+// Neumorphism shadows and gradient colors removed (unused)
 
 // --- Dimensions & Sizes ---
 const double _kHorizontalPadding = 32.0; // Horizontal padding for whole screen
 const double _kLogoSize = 140.0;
 
 // Buttons
-const double _kButtonHeight = 56.0;
-const double _kButtonRadius = 50.0; // Fully rounded (pill shape)
+// Reduced height and corner radius to make buttons less rounded and better sized
+const double _kButtonHeight = 44.0; // slightly smaller
+const double _kButtonRadius = 12.0; // Less rounded
 
 // --- Spacing (Vertical Gaps) ---
-const double _kGapLogoTitle = 40.0;
-const double _kGapTitleSubtitle = 8.0;
-const double _kGapSubtitleBullet = 16.0;
-const double _kGapBulletLogin = 60.0;
-const double _kGapLoginOr = 24.0;
-const double _kGapOrSignup = 24.0;
-const double _kGapSignupFooter = 60.0;
+const double _kGapLogoTitle = 16.0;
+const double _kGapTitleSubtitle = 4.0;
+const double _kGapSubtitleBullet = 8.0;
+const double _kGapBulletLogin = 100.0;
+const double _kGapLoginOr = 12.0;
+const double _kGapOrSignup = 12.0;
+const double _kGapSignupFooter = 30.0;
 
 // --- Typography (Font Sizes) ---
 const double _kTitleFontSize = 32.0;
 const double _kSubtitleFontSize = 16.0;
 const double _kBulletTextFontSize = 14.0;
-const double _kButtonTextFontSize = 18.0;
-const double _kFooterTextFontSize = 14.0;
+// _kButtonTextFontSize removed (unused)
+const double _kFooterTextFontSize = 12.0;
 
 // ==========================================
 
@@ -69,18 +64,44 @@ class StarterScreen extends StatelessWidget {
       );
     }
 
-    return Scaffold(
-      backgroundColor: _kBackgroundColor,
-      body: SafeArea(
-        child: SizedBox.expand(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: _kHorizontalPadding, vertical: 40.0),
+    final mq = MediaQuery.of(context);
+    final bool isWide = mq.size.width >= 700;
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: const [
+            Color(0xFFFFFFFF), // #ffffff (white)
+            Color.fromARGB(255, 175, 175, 175), // #9b9b9b (gray)
+          ],
+        ),
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          actions: [
+            IconButton(
+              tooltip: 'Report a bug',
+              onPressed: () => showReportBugDialog(context),
+              icon: Icon(Icons.bug_report_outlined, color: _kTextColor.withValues(alpha: 0.8)),
+            ),
+          ],
+        ),
+        body: SafeArea(
+          child: Builder(builder: (_) {
+            final Widget content = Padding(
+              padding: const EdgeInsets.symmetric(horizontal: _kHorizontalPadding, vertical: 0),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 0),
                   // Logo
                   Image.asset(
                     'assets/images/logo.png',
@@ -106,89 +127,114 @@ class StarterScreen extends StatelessWidget {
                   Text(
                     'Honest learning, real results',
                     style: TextStyle(
-                      fontSize: _kSubtitleFontSize,
-                      fontWeight: FontWeight.w600,
-                      color: _kTextColor.withValues(alpha: 0.7),
-                      decoration: TextDecoration.underline,
+                    fontSize: _kSubtitleFontSize,
+                    fontWeight: FontWeight.w600,
+                    color: _kTextColor.withValues(alpha: 0.7),
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+                const SizedBox(height: _kGapSubtitleBullet),
+
+                // Bullet Point
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: _kRedAccentColor,
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: _kGapSubtitleBullet),
-
-                  // Bullet Point
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: _kRedAccentColor,
-                          shape: BoxShape.circle,
-                        ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Real-time monitoring',
+                      style: TextStyle(
+                        fontSize: _kBulletTextFontSize,
+                        fontWeight: FontWeight.w500,
+                        color: _kTextColor.withValues(alpha: 0.8),
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Real-time monitoring',
-                        style: TextStyle(
-                          fontSize: _kBulletTextFontSize,
-                          fontWeight: FontWeight.w500,
-                          color: _kTextColor.withValues(alpha: 0.8),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: _kGapBulletLogin),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: _kGapBulletLogin),
 
-                  // Log in Button (Image Asset)
-                  _ImageButton(
-                    onTap: () => Navigator.pushNamed(context, '/login'),
-                    imagePath: 'assets/images/logIn_button.png',
-                  ),
+                // Log in Button (Image Asset)
+                _ImageButton(
+                  onTap: () => Navigator.pushNamed(context, '/login'),
+                  imagePath: 'assets/images/logIn_button.png',
+                ),
 
-                  const SizedBox(height: _kGapLoginOr),
+                const SizedBox(height: _kGapLoginOr),
+                Text(
+                  'or',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: _kTextColor.withValues(alpha: 0.6),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: _kGapOrSignup),
+
+                // Create Account Button (Image Asset)
+                _ImageButton(
+                  onTap: () => Navigator.pushNamed(context, '/signup'),
+                  imagePath: 'assets/images/signUp_button.png',
+                ),
+
+                const SizedBox(height: _kGapSignupFooter),
+              ],
+            ),
+          );
+
+          final Widget footer = GestureDetector(
+            onTap: () => showReportBugDialog(context),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.info_outline, size: _kFooterTextFontSize + 4, color: _kTextColor.withValues(alpha: 0.5)),
+                  const SizedBox(width: 8),
                   Text(
-                    'or',
+                    'Learn more about Quiz Guard',
                     style: TextStyle(
-                      fontSize: 16,
-                      color: _kTextColor.withValues(alpha: 0.6),
-                      fontWeight: FontWeight.w500,
+                      fontSize: _kFooterTextFontSize,
+                      color: _kTextColor.withValues(alpha: 0.5),
+                      decoration: TextDecoration.underline,
+                      decorationColor: const Color.fromARGB(255, 76, 76, 76),
                     ),
                   ),
-                  const SizedBox(height: _kGapOrSignup),
-
-                  // Create Account Button (Image Asset)
-                  _ImageButton(
-                    onTap: () => Navigator.pushNamed(context, '/signup'),
-                    imagePath: 'assets/images/signUp_button.png',
-                  ),
-
-                  const SizedBox(height: _kGapSignupFooter),
-
-                  // Footer Info
-                  GestureDetector(
-                    onTap: () => showReportBugDialog(context),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.info_outline, size: _kFooterTextFontSize + 4, color: _kTextColor.withValues(alpha: 0.5)),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Learn more about Quiz Guard',
-                          style: TextStyle(
-                            fontSize: _kFooterTextFontSize,
-                            color: _kTextColor.withValues(alpha: 0.5),
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
                 ],
               ),
             ),
-          ),
+          );
+
+          final Widget mainContent = Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              Expanded(child: content),
+              footer,
+            ],
+          );
+
+          if (isWide) {
+            return SizedBox.expand(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 900),
+                child: Center(
+                  child: mainContent,
+                ),
+              ),
+            );
+          }
+
+          return SizedBox.expand(child: mainContent);
+          }),
         ),
       ),
     );
@@ -204,22 +250,29 @@ class _ImageButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: _kButtonHeight,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(_kButtonRadius),
-        image: DecorationImage(
-          image: AssetImage(imagePath),
-          fit: BoxFit.cover, // Or BoxFit.fill depending on aspect ratio
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(_kButtonRadius), 
-          child: const SizedBox.expand(),
+    final double available = MediaQuery.of(context).size.width - (_kHorizontalPadding * 2);
+    final double buttonWidth = available > 360.0 ? 360.0 : available;
+
+    return Center(
+      child: SizedBox(
+        width: buttonWidth,
+        height: _kButtonHeight,
+        child: Material(
+          color: const Color.fromARGB(0, 0, 0, 0),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(_kButtonRadius),
+            splashColor: const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.4),
+            highlightColor: const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.2),
+            child: Center(
+              child: Image.asset(
+                imagePath,
+                fit: BoxFit.contain,
+                width: buttonWidth,
+                height: _kButtonHeight,
+              ),
+            ),
+          ),
         ),
       ),
     );
