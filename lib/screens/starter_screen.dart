@@ -189,7 +189,7 @@ class StarterScreen extends StatelessWidget {
           );
 
           final Widget footer = GestureDetector(
-            onTap: () => showReportBugDialog(context),
+            onTap: () {},
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 16.0),
               child: Row(
