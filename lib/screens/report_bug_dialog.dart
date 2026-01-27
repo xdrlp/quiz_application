@@ -151,32 +151,44 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
                       constraints: const BoxConstraints(maxWidth: 400),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
                           colors: [
-                            Color(0xFF8E8E8E), // Lighter metallic grey
-                            Color(0xFF5C5C5C), // Darker metallic grey
+                            Color(0xFF181818), // #181818
+                            Color(0xFFFFFFFF), // #ffffff
+                            Color(0xFFC3B8B8), // #c3b8b8
+                            Color(0xFFFFFFFF), // #ffffff
+                            Color(0xFFFFFFFF), // #ffffff
                           ],
                         ),
                         borderRadius: BorderRadius.circular(24),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.6),
-                          width: 2,
-                        ),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Colors.black45,
-                            blurRadius: 15,
-                            offset: Offset(0, 8),
-                          ),
-                        ],
                       ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const SizedBox(height: 20),
-                          // Bug Icon Circle
-                          Container(
+                      child: Container(
+                        margin: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            begin: Alignment(-1, -1),
+                            end: Alignment(1, 1),
+                            colors: [
+                              Color.fromARGB(130, 255, 255, 255), // White with 49% transparency
+                              Color.fromARGB(228, 155, 155, 155), // #9b9b9b with 10.5% transparency
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(22),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black45,
+                              blurRadius: 15,
+                              offset: Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(height: 20),
+                            // Bug Icon Circle
+                            Container(
                             width: 60,
                             height: 60,
                             decoration: BoxDecoration(
@@ -311,6 +323,7 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
                           ),
                         ],
                       ),
+                      ),
                     ),
                   ),
                 ),
@@ -354,39 +367,42 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
     return Container(
       height: height,
       decoration: BoxDecoration(
-        color: const Color(0xFFB0B0B0).withValues(alpha: 0.5),
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFF000000), // #000000
+            Color(0xFF484848), // #484848
+            Color(0xFFFFFDFD), // #fffdfd
+            Color(0xFFD5D5D5), // #d5d5d5
+            Color(0xFF7C7979), // #7c7979
+            Color(0xFFFFFFFF), // #ffffff
+            Color(0xFFFFFFFF), // #ffffff
+          ],
+        ),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1),
-        boxShadow: const [],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-           // Simulating inner shadow with a gradient or specific color
-          decoration: BoxDecoration(
-             color: const Color.fromARGB(255, 178, 178, 178), // Inner input color
-             border: Border(
-                top: BorderSide(color: Colors.black.withValues(alpha: 0.1), width: 2),
-                left: BorderSide(color: Colors.black.withValues(alpha: 0.1), width: 2),
-                bottom: BorderSide(color: Colors.white.withValues(alpha: 0.2), width: 1),
-                right: BorderSide(color: Colors.white.withValues(alpha: 0.2), width: 1),
-             ),
-          ),
-          child: TextField(
-            controller: controller,
-            keyboardType: keyboardType,
-            maxLines: maxLines,
-            cursorColor: Colors.black54,
-            style: const TextStyle(color: Colors.black87, fontSize: 14),
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              hintText: hint,
-              hintStyle: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Color(0x8A000000),
-              ),
+      padding: const EdgeInsets.all(2),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          maxLines: maxLines,
+          cursorColor: Colors.black54,
+          style: const TextStyle(color: Colors.black87, fontSize: 14),
+          decoration: InputDecoration(
+            border: InputBorder.none,
+            filled: false,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            hintText: hint,
+            hintStyle: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Color(0x8A000000),
             ),
           ),
         ),
