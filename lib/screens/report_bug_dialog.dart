@@ -4,6 +4,32 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 
+class _GradientPainter extends CustomPainter {
+  final double radius;
+  final double strokeWidth;
+  final Gradient gradient;
+
+  _GradientPainter({
+    required this.gradient,
+    required this.radius,
+    required this.strokeWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Rect rect = Rect.fromLTWH(strokeWidth / 2, strokeWidth / 2, size.width - strokeWidth, size.height - strokeWidth);
+    final RRect rRect = RRect.fromRectAndRadius(rect, Radius.circular(radius));
+    final Paint paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..shader = gradient.createShader(rect);
+    canvas.drawRRect(rRect, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => true;
+}
+
 class ReportBugDialog extends StatefulWidget {
   final String screenName;
 
@@ -288,34 +314,22 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
                                 const SizedBox(height: 24),
                                 
                                 // Buttons
-                                _buildButton(
-                                  text: 'Submit',
+                                _buildImageButton(
+                                  imagePath: 'assets/images/submit_button.png',
                                   onTap: _isSubmitting 
                                     ? null 
                                     : () async {
                                         FocusScope.of(msgContext).unfocus();
                                         await _submitReport();
                                       },
-                                  gradient: const LinearGradient(
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                    colors: [Color(0xFFE0E0E0), Color(0xFFAAAAAA)],
-                                  ),
-                                  textColor: Colors.black87,
                                 ),
                                 const SizedBox(height: 12),
-                                _buildButton(
-                                  text: 'Cancel',
+                                _buildImageButton(
+                                  imagePath: 'assets/images/cancel_button.png',
                                   onTap: () {
                                     FocusScope.of(msgContext).unfocus();
                                     Navigator.of(msgContext).pop();
                                   },
-                                  gradient: const LinearGradient(
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                    colors: [Color(0xFFFF3333), Color(0xFFCC0000)],
-                                  ),
-                                  textColor: Colors.white,
                                 ),
                                 const SizedBox(height: 24),
                               ],
@@ -364,9 +378,10 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
     int? maxLines = 1,
     double? height,
   }) {
-    return Container(
-      height: height,
-      decoration: BoxDecoration(
+    return CustomPaint(
+      painter: _GradientPainter(
+        strokeWidth: 2,
+        radius: 10,
         gradient: const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
@@ -380,13 +395,13 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
             Color(0xFFFFFFFF), // #ffffff
           ],
         ),
-        borderRadius: BorderRadius.circular(10),
       ),
-      padding: const EdgeInsets.all(2),
       child: Container(
+        height: height,
+        padding: const EdgeInsets.all(2),
         decoration: BoxDecoration(
           color: Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(10),
         ),
         child: TextField(
           controller: controller,
@@ -410,21 +425,16 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
     );
   }
 
-  Widget _buildButton({
-    required String text,
+  Widget _buildImageButton({
+    required String imagePath,
     required VoidCallback? onTap,
-    required Gradient gradient,
-    required Color textColor,
+    double height = 48,
   }) {
+    // Using a Container to maintain layout dimensions consistent with previous buttons
     return Container(
-      height: 48,
+      height: height,
       decoration: BoxDecoration(
-        gradient: gradient,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.4),
-          width: 1,
-        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.2),
@@ -438,15 +448,10 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(24),
-          child: Center(
-            child: Text(
-              text,
-              style: TextStyle(
-                color: textColor,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+          child: Image.asset(
+            imagePath,
+            height: height,
+            fit: BoxFit.contain,
           ),
         ),
       ),
