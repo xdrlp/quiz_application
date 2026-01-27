@@ -129,197 +129,307 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: Builder(
-          builder: (msgContext) => MediaQuery.removeViewInsets(
-            context: msgContext,
-            removeBottom: true,
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: BackdropFilter(
-                    filter: ui.ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
-                    child: Container(color: Colors.transparent),
-                  ),
+          builder: (msgContext) => Stack(
+            children: [
+              Positioned.fill(
+                child: BackdropFilter(
+                  filter: ui.ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
+                  child: Container(color: Colors.transparent),
                 ),
-                Positioned.fill(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxHeight: MediaQuery.of(msgContext).size.height * 0.85,
+              ),
+              Positioned.fill(
+                child: Center(
+                  child: SingleChildScrollView(
+                    controller: _scrollController,
+                    physics: isKeyboardOpen ? const ClampingScrollPhysics() : const BouncingScrollPhysics(),
+                    padding: EdgeInsets.only(
+                      left: 16, 
+                      right: 16, 
+                      bottom: isKeyboardOpen ? bottomInset + 20 : 20
+                    ),
+                    child: Container(
+                      constraints: const BoxConstraints(maxWidth: 400),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Color(0xFF8E8E8E), // Lighter metallic grey
+                            Color(0xFF5C5C5C), // Darker metallic grey
+                          ],
                         ),
-                        child: Material(
-                        color: Colors.transparent,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: SingleChildScrollView(
-                              controller: _scrollController,
-                              physics: isKeyboardOpen ? const ClampingScrollPhysics() : const NeverScrollableScrollPhysics(),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Stack(
-                                    children: [
-                                      // Background image
-                                      Image.asset(
-                                        'assets/images/report_bug_bg.png',
-                                        fit: BoxFit.contain,
-                                      ),
-                                      
-                                      // Name TextField
-                                      Positioned(
-                                        left: 45,
-                                        right: 39,
-                                        top: 223, // Adjust this value to align with the background image
-                                        height: 40,
-                                        child: Container(
-                                          color: Colors.transparent,
-                                          child: TextField(
-                                            controller: _nameCtrl,
-                                            cursorColor: const Color.fromARGB(89, 0, 0, 0),
-                                            decoration: const InputDecoration(
-                                              border: InputBorder.none,
-                                              hintText: 'Enter your full name',
-                                              hintStyle: TextStyle(
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Color.fromARGB(118, 44, 44, 44)),
-                                            ),
-                                            style: const TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
-                                          ),
-                                        ),
-                                      ),
-                                      
-                                      // Email TextField
-                                      Positioned(
-                                        left: 45,
-                                        right: 39,
-                                        top: 296, // Adjust this value to align with the background image
-                                        height: 35,
-                                        child: Container(
-                                          color: Colors.transparent,
-                                          child: TextField(
-                                            controller: _emailCtrl,
-                                            keyboardType: TextInputType.emailAddress,
-                                            cursorColor: const Color.fromARGB(89, 0, 0, 0),
-                                            decoration: const InputDecoration(
-                                              border: InputBorder.none,
-                                              hintText: 'Enter your email adress',
-                                              hintStyle: TextStyle(
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Color.fromARGB(118, 44, 44, 44)),
-                                            ),
-                                            style: const TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
-                                          ),
-                                        ),
-                                      ),
-
-                                      // Title TextField
-                                      Positioned(
-                                        left: 45,
-                                        right: 39,
-                                        top: 364,
-                                        height: 35,
-                                        child: Container(
-                                          color: const Color.fromARGB(0, 0, 0, 0),
-                                          child: TextField(
-                                            controller: _titleCtrl,
-                                            cursorColor: const Color.fromARGB(89, 0, 0, 0),
-                                            decoration: const InputDecoration(
-                                              border: InputBorder.none,
-                                              hintText: 'Short summary of the problem',
-                                              hintStyle: TextStyle(
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Color.fromARGB(118, 44, 44, 44)),
-                                            ),
-                                            style: const TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
-                                          ),
-                                        ),
-                                      ),
-                                      // Description TextField
-                                      Positioned(
-                                        left: 45,
-                                        right: 39,
-                                        top: 436,
-                                        height: 140,
-                                        child: Container(
-                                          color: const Color.fromARGB(0, 0, 0, 0),
-                                          child: TextField(
-                                            controller: _descCtrl,
-                                            maxLines: null,
-                                            keyboardType: TextInputType.multiline,
-                                            cursorColor: Colors.black,
-                                            decoration: const InputDecoration(
-                                              border: InputBorder.none,
-                                              hintText: 'Provide details about the problem you encountered.',
-                                              hintStyle: TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.bold,
-                                                color: Color.fromARGB(118, 44, 44, 44),
-                                              ),
-                                            ),
-                                            style: const TextStyle(color: Colors.black),
-                                          ),
-                                        ),
-                                      ),
-                                      // Submit button overlay
-                                      Positioned(
-                                        left: 37,
-                                        right: 33,
-                                        top: 610,
-                                        height: 31,
-                                        child: Material(
-                                          color: const Color.fromARGB(0, 0, 0, 0),
-                                          borderRadius: BorderRadius.circular(8),
-                                          child: InkWell(
-                                            onTap: _isSubmitting
-                                                ? null
-                                                : () async {
-                                                    FocusScope.of(msgContext).unfocus();
-                                                    await _submitReport();
-                                                  },
-                                            borderRadius: BorderRadius.circular(8),
-                                            splashColor: Colors.black26,
-                                            child: Container(),
-                                          ),
-                                        ),
-                                      ),
-                                      // Cancel button overlay
-                                      Positioned(
-                                        left: 37,
-                                        right: 36,
-                                        top: 657,
-                                        height: 31,
-                                        child: Material(
-                                          borderRadius: BorderRadius.circular(8),
-                                          color: const Color.fromARGB(0, 0, 0, 0),
-                                          child: InkWell(
-                                            onTap: () {
-                                              FocusScope.of(msgContext).unfocus();
-                                              Navigator.of(msgContext).pop();
-                                            },
-                                            borderRadius: BorderRadius.circular(8),
-                                            splashColor: Colors.black26,
-                                            child: Container(),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  // Extra space at bottom for scrolling when keyboard opens
-                                  const SizedBox(height: 300),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.6),
+                          width: 2,
+                        ),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black45,
+                            blurRadius: 15,
+                            offset: Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(height: 20),
+                          // Bug Icon Circle
+                          Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: const LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Color(0xFF666666),
+                                  Color(0xFF999999),
                                 ],
                               ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.3),
+                                  blurRadius: 4,
+                                  offset: const Offset(2, 2),
+                                  spreadRadius: 0,
+                                ),
+                                BoxShadow(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  blurRadius: 4,
+                                  offset: const Offset(-2, -2),
+                                  spreadRadius: 0,
+                                ),
+                              ],
+                            ),
+                            child: const Center(
+                              child: Icon(Icons.bug_report, size: 32, color: Colors.black54),
                             ),
                           ),
-                        ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Report a bug',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Please tell us what went wrong.',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.black54,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          // Dashed Line
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: Row(
+                              children: List.generate(30, (index) => Expanded(
+                                child: Container(
+                                  height: 1,
+                                  margin: const EdgeInsets.symmetric(horizontal: 2),
+                                  color: Colors.black26,
+                                ),
+                              )),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          
+                          // Form Fields
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _buildLabel('Name*'),
+                                _buildTextField(
+                                  controller: _nameCtrl,
+                                  hint: 'Enter your full name',
+                                ),
+                                const SizedBox(height: 12),
+                                _buildLabel('Email*'),
+                                _buildTextField(
+                                  controller: _emailCtrl,
+                                  hint: 'Enter your email address',
+                                  keyboardType: TextInputType.emailAddress,
+                                ),
+                                const SizedBox(height: 12),
+                                _buildLabel('Title*'),
+                                _buildTextField(
+                                  controller: _titleCtrl,
+                                  hint: 'Short summary of the problem',
+                                ),
+                                const SizedBox(height: 12),
+                                _buildLabel('Description*'),
+                                _buildTextField(
+                                  controller: _descCtrl,
+                                  hint: 'Provide details about the problem you encountered.',
+                                  maxLines: 5,
+                                  height: 120,
+                                ),
+                                const SizedBox(height: 24),
+                                
+                                // Buttons
+                                _buildButton(
+                                  text: 'Submit',
+                                  onTap: _isSubmitting 
+                                    ? null 
+                                    : () async {
+                                        FocusScope.of(msgContext).unfocus();
+                                        await _submitReport();
+                                      },
+                                  gradient: const LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [Color(0xFFE0E0E0), Color(0xFFAAAAAA)],
+                                  ),
+                                  textColor: Colors.black87,
+                                ),
+                                const SizedBox(height: 12),
+                                _buildButton(
+                                  text: 'Cancel',
+                                  onTap: () {
+                                    FocusScope.of(msgContext).unfocus();
+                                    Navigator.of(msgContext).pop();
+                                  },
+                                  gradient: const LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [Color(0xFFFF3333), Color(0xFFCC0000)],
+                                  ),
+                                  textColor: Colors.white,
+                                ),
+                                const SizedBox(height: 24),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ),
-              ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4, left: 4),
+      child: RichText(
+        text: TextSpan(
+          text: text.substring(0, text.length - 1),
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF333333),
+          ),
+          children: [
+            TextSpan(
+              text: text.substring(text.length - 1),
+              style: const TextStyle(color: Colors.red),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    TextInputType? keyboardType,
+    int? maxLines = 1,
+    double? height,
+  }) {
+    return Container(
+      height: height,
+      decoration: BoxDecoration(
+        color: const Color(0xFFB0B0B0).withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1),
+        boxShadow: const [],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+           // Simulating inner shadow with a gradient or specific color
+          decoration: BoxDecoration(
+             color: const Color.fromARGB(255, 178, 178, 178), // Inner input color
+             border: Border(
+                top: BorderSide(color: Colors.black.withValues(alpha: 0.1), width: 2),
+                left: BorderSide(color: Colors.black.withValues(alpha: 0.1), width: 2),
+                bottom: BorderSide(color: Colors.white.withValues(alpha: 0.2), width: 1),
+                right: BorderSide(color: Colors.white.withValues(alpha: 0.2), width: 1),
+             ),
+          ),
+          child: TextField(
+            controller: controller,
+            keyboardType: keyboardType,
+            maxLines: maxLines,
+            cursorColor: Colors.black54,
+            style: const TextStyle(color: Colors.black87, fontSize: 14),
+            decoration: InputDecoration(
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              hintText: hint,
+              hintStyle: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Color(0x8A000000),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildButton({
+    required String text,
+    required VoidCallback? onTap,
+    required Gradient gradient,
+    required Color textColor,
+  }) {
+    return Container(
+      height: 48,
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.4),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(24),
+          child: Center(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: textColor,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ),
