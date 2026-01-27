@@ -144,6 +144,7 @@ flutter:
   # Register image assets. Place your logo at `assets/images/logo.png`.
   assets:
     - assets/images/
+    # Ensure all images are included
 
 flutter_launcher_icons:
   android: "launcher_icon"
