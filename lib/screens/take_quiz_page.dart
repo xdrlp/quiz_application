@@ -116,10 +116,12 @@ class _TakeQuizPageState extends State<TakeQuizPage>
           // Fallback to single-package description when openedApps not present
           extras.add('Detected switch to: $target.');
         }
-        if (sequence != null && sequence.isNotEmpty)
+        if (sequence != null && sequence.isNotEmpty) {
           extras.add('Observed sequence: $sequence.');
-        if (trigger != null && trigger.isNotEmpty)
+        }
+        if (trigger != null && trigger.isNotEmpty) {
           extras.add('Likely action: $trigger.');
+        }
         if (accessibilityPath != null && accessibilityPath.isNotEmpty) {
           extras.add('Accessibility trace: $accessibilityPath.');
         }
@@ -142,7 +144,9 @@ class _TakeQuizPageState extends State<TakeQuizPage>
       'localEvents': events,
     };
     final pretty = const JsonEncoder.withIndent('  ').convert(payload);
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     await showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -320,7 +324,9 @@ class _TakeQuizPageState extends State<TakeQuizPage>
     setState(() => _loading = true);
     final quiz = await _firestore.getQuiz(widget.quizId);
     if (quiz == null) {
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
       return;
     }
 
@@ -476,7 +482,9 @@ class _TakeQuizPageState extends State<TakeQuizPage>
       // Debug: log that the UI callback was invoked
       // ignore: avoid_print
       print('[TakeQuizPage] onViolation callback invoked: ${violation.type}');
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       final isCurrentRoute = ModalRoute.of(context)?.isCurrent ?? false;
       if (isCurrentRoute) {
         // Show a single, descriptive alert dialog for the violation.
@@ -492,13 +500,14 @@ class _TakeQuizPageState extends State<TakeQuizPage>
 
     _antiCheat.startAntiCheat(id, user.uid);
     // quick confirmation so tester knows monitoring is active
-    if (mounted)
+    if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Anti-cheat monitoring enabled'),
           duration: Duration(seconds: 1),
         ),
       );
+    }
     await _refreshMonitoringPrereqs();
 
     final quiz = await _firestore.getQuiz(widget.quizId);
@@ -716,75 +725,93 @@ class _TakeQuizPageState extends State<TakeQuizPage>
     bool ready,
     Future<void> Function()? onPressed,
   ) {
-    final icon = ready ? Icons.check_circle : Icons.warning_amber_outlined;
-    final color = ready ? Colors.green : Colors.orange;
-    return Row(
-      children: [
-        Icon(icon, color: color, size: 20),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            label,
-            style: const TextStyle(fontWeight: FontWeight.bold),
+    final icon = ready ? Icons.check_circle : Icons.warning_amber_rounded;
+    final color = ready ? const Color(0xFF2C3E50) : Colors.orange;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2C3E50)),
+            ),
           ),
-        ),
-        if (!ready)
-          TextButton(
-            onPressed: onPressed == null
-                ? null
-                : () async {
-                    await onPressed();
-                  },
-            child: const Text('Open settings'),
-          ),
-      ],
+          if (!ready)
+            TextButton(
+              onPressed: onPressed == null
+                  ? null
+                  : () async {
+                      await onPressed();
+                    },
+              style: TextButton.styleFrom(foregroundColor: const Color(0xFF2C3E50)),
+              child: const Text('Open settings'),
+            ),
+        ],
+      ),
     );
   }
 
   Widget _buildMonitoringBanner() {
     final usageReady = _usageAccessGranted == true;
     final accessibilityReady = _accessibilityServiceEnabled == true;
-    return Card(
-      color: Theme.of(context).cardColor,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.shield_outlined, color: Colors.orange),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Enable monitoring protections',
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F5F5),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          const BoxShadow(
+            color: Colors.white,
+            offset: Offset(-4, -4),
+            blurRadius: 10,
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            offset: const Offset(4, 4),
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.shield_outlined, color: Colors.orange),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Enable monitoring protections',
+                  style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF2C3E50)),
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Usage access and accessibility monitoring must be enabled before starting the quiz.',
-            ),
-            const SizedBox(height: 12),
-            _monitoringStatusRow(
-              'Usage access permission',
-              usageReady,
-              () async {
-                await _openUsageAccessSettings();
-              },
-            ),
-            const SizedBox(height: 6),
-            _monitoringStatusRow(
-              'Accessibility service',
-              accessibilityReady,
-              () async {
-                await _openAccessibilitySettings();
-              },
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Usage access and accessibility monitoring must be enabled before starting the quiz.',
+            style: TextStyle(color: Color(0xFF7F8C8D)),
+          ),
+          const SizedBox(height: 12),
+          _monitoringStatusRow(
+            'Usage access permission',
+            usageReady,
+            () async {
+              await _openUsageAccessSettings();
+            },
+          ),
+          const SizedBox(height: 6),
+          _monitoringStatusRow(
+            'Accessibility service',
+            accessibilityReady,
+            () async {
+              await _openAccessibilitySettings();
+            },
+          ),
+        ],
       ),
     );
   }
@@ -1046,7 +1073,9 @@ class _TakeQuizPageState extends State<TakeQuizPage>
   }
 
   Future<void> _submitAttempt() async {
-    if (_attemptId == null) return;
+    if (_attemptId == null) {
+      return;
+    }
 
     int score = 0;
     final answersList = <AttemptAnswerModel>[];
@@ -1073,8 +1102,9 @@ class _TakeQuizPageState extends State<TakeQuizPage>
             expected.difference(actual).isEmpty;
       } else if (q.type == QuestionType.multipleChoice ||
           q.type == QuestionType.dropdown) {
-        if (q.correctAnswers.isNotEmpty)
+        if (q.correctAnswers.isNotEmpty) {
           correct = userResp == q.correctAnswers.first;
+        }
       } else if (q.type == QuestionType.shortAnswer ||
           q.type == QuestionType.paragraph) {
         if (q.correctAnswers.isNotEmpty) {
@@ -1086,7 +1116,9 @@ class _TakeQuizPageState extends State<TakeQuizPage>
         }
       }
 
-      if (correct) score += q.points;
+      if (correct) {
+        score += q.points;
+      }
 
       if (existing != null) {
         // If the answer was force-marked incorrect due to a policy violation,
@@ -1176,268 +1208,383 @@ class _TakeQuizPageState extends State<TakeQuizPage>
       }
     });
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_quizTitle ?? 'Quiz Guard'),
-        actions: kDebugMode
-            ? [
-                IconButton(
-                  icon: const Icon(Icons.bug_report),
-                  onPressed: _showDebugInfoDialog,
-                  tooltip: 'Debug state',
-                ),
-              ]
-            : null,
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(217, 255, 255, 255)],
+        ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
-                children: [
-                  if (_remainingSeconds != null)
-                    Text('Time left: ${_formatRemaining(_remainingSeconds!)}'),
-                  if ((_usageAccessGranted ?? false) == false ||
-                      (_accessibilityServiceEnabled ?? false) == false)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12.0),
-                      child: _buildMonitoringBanner(),
-                    ),
-                  Expanded(
-                    child: _questions.isEmpty
-                        ? const SizedBox.shrink()
-                        : Builder(
-                            builder: (context) {
-                              final q = _questions[_currentQuestionIndex];
-                              final started = _attemptId != null;
-                              return Stack(
-                                children: [
-                                  // The interactive content; blocked by IgnorePointer when not started
-                                  IgnorePointer(
-                                    ignoring: !started,
-                                    child: Opacity(
-                                      opacity: started ? 1.0 : 0.95,
-                                      child: Card(
-                                        margin: const EdgeInsets.symmetric(
-                                          vertical: 8,
-                                        ),
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(12.0),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                'Question ${_currentQuestionIndex + 1} of ${_questions.length}',
-                                                style: const TextStyle(
-                                                  color: Colors.grey,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 6),
-                                              Text(
-                                                q.prompt,
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 8),
-                                              if (q.type ==
-                                                      QuestionType
-                                                          .multipleChoice ||
-                                                  q.type ==
-                                                      QuestionType.dropdown)
-                                                Column(
-                                                  children: q.choices.map((c) {
-                                                    final selected =
-                                                        _answers[q.id] == c.id;
-                                                    final locked =
-                                                        _lockedQuestionIds
-                                                            .contains(q.id);
-                                                    return ListTile(
-                                                      title: Text(c.text),
-                                                      leading: IconButton(
-                                                        icon: Icon(
-                                                          selected
-                                                              ? Icons
-                                                                    .radio_button_checked
-                                                              : Icons
-                                                                    .radio_button_unchecked,
-                                                        ),
-                                                        onPressed: locked
-                                                            ? null
-                                                            : () =>
-                                                                  _answerSingle(
-                                                                    q.id,
-                                                                    c.id,
-                                                                  ),
-                                                      ),
-                                                      onTap: locked
-                                                          ? null
-                                                          : () => _answerSingle(
-                                                              q.id,
-                                                              c.id,
-                                                            ),
-                                                    );
-                                                  }).toList(),
-                                                ),
-                                              if (q.type ==
-                                                  QuestionType.checkbox)
-                                                Column(
-                                                  children: q.choices.map((c) {
-                                                    final locked =
-                                                        _lockedQuestionIds
-                                                            .contains(q.id);
-                                                    return CheckboxListTile(
-                                                      title: Text(c.text),
-                                                      value:
-                                                          (_multiAnswers[q
-                                                                      .id] ??
-                                                                  [])
-                                                              .contains(c.id),
-                                                      onChanged: locked
-                                                          ? null
-                                                          : (v) =>
-                                                                _answerCheckbox(
-                                                                  q.id,
-                                                                  c.id,
-                                                                  v ?? false,
-                                                                ),
-                                                    );
-                                                  }).toList(),
-                                                ),
-                                              if (q.type ==
-                                                      QuestionType
-                                                          .shortAnswer ||
-                                                  q.type ==
-                                                      QuestionType.paragraph)
-                                                TextField(
-                                                  controller: _textController,
-                                                  onChanged: (v) =>
-                                                      _answerText(q.id, v),
-                                                  readOnly: _lockedQuestionIds
-                                                      .contains(q.id),
-                                                  keyboardType:
-                                                      TextInputType.multiline,
-                                                  textInputAction:
-                                                      TextInputAction.newline,
-                                                  minLines:
-                                                      q.type ==
-                                                          QuestionType.paragraph
-                                                      ? 3
-                                                      : 1,
-                                                  maxLines:
-                                                      q.type ==
-                                                          QuestionType.paragraph
-                                                      ? null
-                                                      : 1,
-                                                  decoration: InputDecoration(
-                                                    border:
-                                                        const OutlineInputBorder(),
-                                                    suffix:
-                                                        _lockedQuestionIds
-                                                            .contains(q.id)
-                                                        ? const Text('Flagged')
-                                                        : null,
-                                                  ),
-                                                ),
-
-                                              const SizedBox(height: 12),
-                                              if (q.type ==
-                                                      QuestionType.checkbox ||
-                                                  q.type ==
-                                                      QuestionType
-                                                          .shortAnswer ||
-                                                  q.type ==
-                                                      QuestionType.paragraph)
-                                                Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.end,
-                                                  children: [
-                                                    ElevatedButton(
-                                                      onPressed: () {
-                                                        final ok =
-                                                            (q.type ==
-                                                                    QuestionType
-                                                                        .checkbox &&
-                                                                (_multiAnswers[q
-                                                                            .id] ??
-                                                                        [])
-                                                                    .isNotEmpty) ||
-                                                            ((q.type ==
-                                                                        QuestionType
-                                                                            .shortAnswer ||
-                                                                    q.type ==
-                                                                        QuestionType
-                                                                            .paragraph) &&
-                                                                (_answers[q.id] ??
-                                                                        '')
-                                                                    .trim()
-                                                                    .isNotEmpty);
-                                                        if (ok) {
-                                                          _recordCurrentAnswerIfNeeded();
-                                                          _nextQuestion();
-                                                        }
-                                                      },
-                                                      child: Text(
-                                                        _currentQuestionIndex +
-                                                                    1 <
-                                                                _questions
-                                                                    .length
-                                                            ? 'Next'
-                                                            : 'Submit',
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-
-                                  // Overlay when not started: blurred and with centered Start button
-                                  if (!started)
-                                    Positioned.fill(
-                                      child: ClipRect(
-                                        child: BackdropFilter(
-                                          filter: ImageFilter.blur(
-                                            sigmaX: 4.0,
-                                            sigmaY: 4.0,
-                                          ),
-                                          child: Container(
-                                            color: const Color.fromRGBO(
-                                              0,
-                                              0,
-                                              0,
-                                              0.25,
-                                            ),
-                                            alignment: Alignment.center,
-                                            child: ElevatedButton(
-                                              style: ElevatedButton.styleFrom(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 24,
-                                                      vertical: 12,
-                                                    ),
-                                              ),
-                                              onPressed: _confirmStartAttempt,
-                                              child: const Text(
-                                                'Start Attempt',
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              );
-                            },
-                          ),
-                  ),
-                ],
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight),
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: [Color.fromARGB(255, 169, 169, 169), Color.fromARGB(255, 255, 255, 255)],
               ),
             ),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 2),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [Color.fromARGB(108, 244, 244, 244), Color.fromARGB(205, 223, 223, 223)],
+                ),
+              ),
+              child: AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                centerTitle: true,
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.black),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                title: Text(_quizTitle ?? 'Quiz Guard', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20)),
+                actions: kDebugMode
+                    ? [
+                        IconButton(
+                          icon: const Icon(Icons.bug_report, color: Colors.black),
+                          onPressed: _showDebugInfoDialog,
+                          tooltip: 'Debug state',
+                        ),
+                      ]
+                    : null,
+              ),
+            ),
+          ),
+        ),
+        body: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  children: [
+                    if (_remainingSeconds != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2C3E50),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          'Time left: ${_formatRemaining(_remainingSeconds!)}',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    if ((_usageAccessGranted ?? false) == false ||
+                        (_accessibilityServiceEnabled ?? false) == false)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
+                        child: _buildMonitoringBanner(),
+                      ),
+                    Expanded(
+                      child: _questions.isEmpty
+                          ? const SizedBox.shrink()
+                          : Builder(
+                              builder: (context) {
+                                final q = _questions[_currentQuestionIndex];
+                                final started = _attemptId != null;
+                                return Stack(
+                                  children: [
+                                    // The interactive content; blocked by IgnorePointer when not started
+                                    IgnorePointer(
+                                      ignoring: !started,
+                                      child: Opacity(
+                                        opacity: started ? 1.0 : 0.95,
+                                        child: Container(
+                                          margin: const EdgeInsets.symmetric(vertical: 8),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFF5F5F5),
+                                            borderRadius: BorderRadius.circular(16),
+                                            boxShadow: [
+                                              const BoxShadow(
+                                                color: Colors.white,
+                                                offset: Offset(-4, -4),
+                                                blurRadius: 10,
+                                              ),
+                                              BoxShadow(
+                                                color: Colors.black.withValues(alpha: 0.1),
+                                                offset: const Offset(4, 4),
+                                                blurRadius: 10,
+                                              ),
+                                            ],
+                                          ),
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(20.0),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'Question ${_currentQuestionIndex + 1} of ${_questions.length}',
+                                                  style: const TextStyle(
+                                                    color: Color(0xFF7F8C8D),
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.bold
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 12),
+                                                Text(
+                                                  q.prompt,
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Color(0xFF2C3E50),
+                                                    fontSize: 18,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 20),
+                                                if (q.type ==
+                                                        QuestionType
+                                                            .multipleChoice ||
+                                                    q.type ==
+                                                        QuestionType.dropdown)
+                                                  Expanded(
+                                                    child: SingleChildScrollView(
+                                                      child: Column(
+                                                        children: q.choices.map((c) {
+                                                          final selected =
+                                                              _answers[q.id] == c.id;
+                                                          final locked =
+                                                              _lockedQuestionIds
+                                                                  .contains(q.id);
+                                                          return Container(
+                                                            margin: const EdgeInsets.only(bottom: 12),
+                                                            decoration: BoxDecoration(
+                                                              color: selected ? const Color(0xFF2C3E50).withValues(alpha: 0.05) : Colors.white,
+                                                              borderRadius: BorderRadius.circular(12),
+                                                              border: Border.all(color: selected ? const Color(0xFF2C3E50) : Colors.transparent),
+                                                            ),
+                                                            child: ListTile(
+                                                              title: Text(c.text, style: TextStyle(color: locked ? Colors.grey : const Color(0xFF2C3E50), fontWeight: selected ? FontWeight.bold : FontWeight.normal)),
+                                                              leading: Icon(
+                                                                selected
+                                                                    ? Icons
+                                                                          .radio_button_checked
+                                                                    : Icons
+                                                                          .radio_button_unchecked,
+                                                                color: locked ? Colors.grey : (selected ? const Color(0xFF2C3E50) : const Color(0xFF7F8C8D)),
+                                                              ),
+                                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                              onTap: locked
+                                                                  ? null
+                                                                  : () =>
+                                                                        _answerSingle(
+                                                                          q.id,
+                                                                          c.id,
+                                                                        ),
+                                                            ),
+                                                          );
+                                                        }).toList(),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                if (q.type ==
+                                                    QuestionType.checkbox)
+                                                  Expanded(
+                                                    child: SingleChildScrollView(
+                                                      child: Column(
+                                                        children: q.choices.map((c) {
+                                                          final locked =
+                                                              _lockedQuestionIds
+                                                                  .contains(q.id);
+                                                          final isSelected = (_multiAnswers[q.id] ?? []).contains(c.id);
+                                                          return Container(
+                                                            margin: const EdgeInsets.only(bottom: 12),
+                                                            decoration: BoxDecoration(
+                                                              color: isSelected ? const Color(0xFF2C3E50).withValues(alpha: 0.05) : Colors.white,
+                                                              borderRadius: BorderRadius.circular(12),
+                                                              border: Border.all(color: isSelected ? const Color(0xFF2C3E50) : Colors.transparent),
+                                                            ),
+                                                            child: CheckboxListTile(
+                                                              title: Text(c.text, style: TextStyle(color: locked ? Colors.grey : const Color(0xFF2C3E50), fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+                                                              value: isSelected,
+                                                              activeColor: const Color(0xFF2C3E50),
+                                                              checkboxShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                              onChanged: locked
+                                                                  ? null
+                                                                  : (v) =>
+                                                                        _answerCheckbox(
+                                                                          q.id,
+                                                                          c.id,
+                                                                          v ?? false,
+                                                                        ),
+                                                            ),
+                                                          );
+                                                        }).toList(),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                if (q.type ==
+                                                        QuestionType
+                                                            .shortAnswer ||
+                                                    q.type ==
+                                                        QuestionType.paragraph)
+                                                  TextField(
+                                                    controller: _textController,
+                                                    onChanged: (v) =>
+                                                        _answerText(q.id, v),
+                                                    readOnly: _lockedQuestionIds
+                                                        .contains(q.id),
+                                                    keyboardType:
+                                                        TextInputType.multiline,
+                                                    textInputAction:
+                                                        TextInputAction.newline,
+                                                    minLines:
+                                                        q.type ==
+                                                            QuestionType.paragraph
+                                                        ? 3
+                                                        : 1,
+                                                    maxLines:
+                                                        q.type ==
+                                                            QuestionType.paragraph
+                                                        ? null
+                                                        : 1,
+                                                    style: const TextStyle(color: Color(0xFF2C3E50)),
+                                                    decoration: InputDecoration(
+                                                      hintText: 'Type your answer here...',
+                                                      hintStyle: const TextStyle(color: Color(0xFF7F8C8D)),
+                                                      filled: true,
+                                                      fillColor: Colors.white,
+                                                      border: OutlineInputBorder(
+                                                        borderRadius: BorderRadius.circular(12),
+                                                        borderSide: BorderSide.none,
+                                                      ),
+                                                      enabledBorder: OutlineInputBorder(
+                                                        borderRadius: BorderRadius.circular(12),
+                                                        borderSide: BorderSide.none,
+                                                      ),
+                                                      focusedBorder: OutlineInputBorder(
+                                                        borderRadius: BorderRadius.circular(12),
+                                                        borderSide: const BorderSide(color: Color(0xFF2C3E50), width: 1.5),
+                                                      ),
+                                                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                                      suffix:
+                                                          _lockedQuestionIds
+                                                              .contains(q.id)
+                                                          ? const Text('Flagged', style: TextStyle(color: Colors.red))
+                                                          : null,
+                                                    ),
+                                                  ),
+                                                const Spacer(),
+                                                const SizedBox(height: 12),
+                                                if (q.type ==
+                                                        QuestionType.checkbox ||
+                                                    q.type ==
+                                                        QuestionType
+                                                            .shortAnswer ||
+                                                    q.type ==
+                                                        QuestionType.paragraph)
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.end,
+                                                    children: [
+                                                      ElevatedButton(
+                                                        style: ElevatedButton.styleFrom(
+                                                          backgroundColor: const Color(0xFF2C3E50),
+                                                          foregroundColor: Colors.white,
+                                                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                          elevation: 5,
+                                                          shadowColor: Colors.black.withValues(alpha: 0.3),
+                                                        ),
+                                                        onPressed: () {
+                                                          final ok =
+                                                              (q.type ==
+                                                                      QuestionType
+                                                                          .checkbox &&
+                                                                  (_multiAnswers[q
+                                                                              .id] ??
+                                                                          [])
+                                                                      .isNotEmpty) ||
+                                                              ((q.type ==
+                                                                          QuestionType
+                                                                              .shortAnswer ||
+                                                                      q.type ==
+                                                                          QuestionType
+                                                                              .paragraph) &&
+                                                                  (_answers[q.id] ??
+                                                                          '')
+                                                                      .trim()
+                                                                      .isNotEmpty);
+                                                          if (ok) {
+                                                            _recordCurrentAnswerIfNeeded();
+                                                            _nextQuestion();
+                                                          }
+                                                        },
+                                                        child: Text(
+                                                          _currentQuestionIndex +
+                                                                      1 <
+                                                                  _questions
+                                                                      .length
+                                                              ? 'Next'
+                                                              : 'Submit',
+                                                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+
+                                    // Overlay when not started: blurred and with centered Start button
+                                    if (!started)
+                                      Positioned.fill(
+                                        child: ClipRect(
+                                          child: BackdropFilter(
+                                            filter: ImageFilter.blur(
+                                              sigmaX: 4.0,
+                                              sigmaY: 4.0,
+                                            ),
+                                            child: Container(
+                                              color: const Color.fromRGBO(
+                                                0,
+                                                0,
+                                                0,
+                                                0.25,
+                                              ),
+                                              alignment: Alignment.center,
+                                              child: ElevatedButton(
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: const Color(0xFF2C3E50),
+                                                  foregroundColor: Colors.white,
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 32,
+                                                        vertical: 16,
+                                                      ),
+                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                                  elevation: 10,
+                                                ),
+                                                onPressed: _confirmStartAttempt,
+                                                child: const Text(
+                                                  'Start Attempt',
+                                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+      ),
     );
   }
 }

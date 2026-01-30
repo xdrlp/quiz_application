@@ -203,128 +203,191 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_quiz?.title ?? 'Edit Quiz'),
-        actions: [
-          if (_quiz != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
-              child: Tooltip(
-                message: (!_quiz!.published && _questions.isEmpty) ? 'Add at least one question before publishing' : '',
-                child: ElevatedButton(
-                  onPressed: (!_quiz!.published && _questions.isEmpty)
-                      ? null
-                      : _quiz!.published
-                          ? () async {
-                              await FirestoreService().publishQuiz(quizId, false);
-                              await _load();
-                            }
-                          : _publishQuiz,
-                  child: Text(_quiz!.published ? 'Unpublish' : 'Publish'),
-                ),
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(217, 255, 255, 255)],
+        ),
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight),
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: [Color.fromARGB(255, 169, 169, 169), Color.fromARGB(255, 255, 255, 255)],
               ),
             ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _addQuestion,
-        tooltip: 'Add question',
-        elevation: 6.0,
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        child: const Icon(Icons.add),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (_quiz != null) Text(_quiz!.description),
-                  if (_quiz != null && !_quiz!.published && _questions.isEmpty)
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 2),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [Color.fromARGB(108, 244, 244, 244), Color.fromARGB(205, 223, 223, 223)],
+                ),
+              ),
+              child: AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                centerTitle: true,
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.black),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                title: Text(_quiz?.title ?? 'Edit Quiz', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20)),
+                actions: [
+                  if (_quiz != null)
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Row(
-                        children: const [
-                          Icon(Icons.info_outline, size: 18, color: Colors.grey),
-                          SizedBox(width: 8),
-                          Expanded(child: Text('Add at least one question to enable Publish. You can publish once the quiz has questions.')),
-                        ],
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+                      child: Tooltip(
+                        message: (!_quiz!.published && _questions.isEmpty) ? 'Add at least one question before publishing' : '',
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _quiz!.published ? const Color(0xFFC0392B) : const Color(0xFF2C3E50),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          onPressed: (!_quiz!.published && _questions.isEmpty)
+                              ? null
+                              : _quiz!.published
+                                  ? () async {
+                                      await FirestoreService().publishQuiz(quizId, false);
+                                      await _load();
+                                    }
+                                  : _publishQuiz,
+                          child: Text(_quiz!.published ? 'Unpublish' : 'Publish'),
+                        ),
                       ),
                     ),
-                  const SizedBox(height: 12),
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
+                ],
+              ),
+            ),
+          ),
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: _addQuestion,
+          tooltip: 'Add question',
+          elevation: 6.0,
+          backgroundColor: const Color(0xFF27AE60),
+          foregroundColor: Colors.white,
+          icon: const Icon(Icons.add),
+          label: const Text('Add Question'),
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+        body: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (_quiz != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: Text(
+                          _quiz!.description,
+                          style: const TextStyle(fontSize: 16, color: Color(0xFF7F8C8D)),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    if (_quiz != null && !_quiz!.published && _questions.isEmpty)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF3CD),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFFFECB5)),
+                        ),
+                        child: Row(
+                          children: const [
+                            Icon(Icons.info_outline, size: 20, color: Color(0xFF856404)),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Add at least one question to enable Publish.',
+                                style: TextStyle(color: Color(0xFF856404)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    // Settings Section
+                    _neumorphicContainer(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Quiz Settings', style: TextStyle(fontWeight: FontWeight.bold)),
+                          const Text('Quiz Settings', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF2C3E50))),
+                          const Divider(),
                           const SizedBox(height: 8),
-                          Row(children: [
-                            const Text('Shuffle questions'),
-                            const Spacer(),
-                            Switch(value: _shuffleQuestions, onChanged: (v) => setState(() => _shuffleQuestions = v)),
-                          ]),
-                          Row(children: [
-                            const Text('Shuffle choices'),
-                            const Spacer(),
-                            Switch(value: _shuffleChoices, onChanged: (v) => setState(() => _shuffleChoices = v)),
-                          ]),
-                          Row(children: [
-                            const Text('Single response per user'),
-                            const Spacer(),
-                            Switch(value: _singleResponse, onChanged: (v) => setState(() => _singleResponse = v)),
-                          ]),
-                          Row(children: [
-                            const Text('Enable Quiz Password'),
-                            const Spacer(),
-                            Switch(value: _enablePassword, onChanged: (v) => setState(() => _enablePassword = v)),
-                          ]),
+                          _settingsSwitch('Shuffle questions', _shuffleQuestions, (v) => setState(() => _shuffleQuestions = v)),
+                          _settingsSwitch('Shuffle choices', _shuffleChoices, (v) => setState(() => _shuffleChoices = v)),
+                          _settingsSwitch('Single response per user', _singleResponse, (v) => setState(() => _singleResponse = v)),
+                          _settingsSwitch('Enable Quiz Password', _enablePassword, (v) => setState(() => _enablePassword = v)),
                           if (_enablePassword)
                             Padding(
-                              padding: const EdgeInsets.only(bottom: 8.0),
+                              padding: const EdgeInsets.symmetric(vertical: 8.0),
                               child: TextField(
                                 controller: _passwordController,
-                                decoration: const InputDecoration(labelText: 'Password', border: OutlineInputBorder()),
+                                decoration: _inputDecoration('Password'),
                               ),
                             ),
-                          Row(children: [
-                            const Text('Time limit (minutes)'),
-                            const Spacer(),
-                            SizedBox(
-                              width: 80,
-                              child: TextFormField(
-                                initialValue: _timeMinutes.toString(),
-                                keyboardType: TextInputType.number,
-                                onChanged: (v) => setState(() => _timeMinutes = int.tryParse(v) ?? 0),
-                              ),
-                            )
-                          ]),
-                          const SizedBox(height: 8),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: Row(children: [
+                              const Expanded(child: Text('Time limit (minutes)', style: TextStyle(color: Color(0xFF2C3E50), fontSize: 16))),
+                              SizedBox(
+                                width: 80,
+                                child: TextFormField(
+                                  initialValue: _timeMinutes.toString(),
+                                  keyboardType: TextInputType.number,
+                                  decoration: _inputDecoration(''),
+                                  onChanged: (v) => setState(() => _timeMinutes = int.tryParse(v) ?? 0),
+                                ),
+                              )
+                            ]),
+                          ),
+                          const SizedBox(height: 16),
                           Align(
                             alignment: Alignment.centerRight,
-                            child: ElevatedButton(onPressed: _saveSettings, child: const Text('Save Settings')),
+                            child: ElevatedButton(
+                              onPressed: _saveSettings,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF2C3E50),
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                              child: const Text('Save Settings'),
+                            ),
                           )
                         ],
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  ReorderableListView.builder(
+                    const SizedBox(height: 24),
+                    const Text('Questions', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Color(0xFF2C3E50))),
+                    const SizedBox(height: 12),
+                    if (_questions.isEmpty)
+                      const Center(child: Padding(padding: EdgeInsets.all(20), child: Text('No questions yet', style: TextStyle(color: Colors.grey)))),
+                    ReorderableListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: _questions.length,
                       onReorder: (oldIndex, newIndex) async {
+                        setState(() {
                         if (newIndex > oldIndex) newIndex -= 1;
                         final item = _questions.removeAt(oldIndex);
                         _questions.insert(newIndex, item);
+                        });
                         for (var i = 0; i < _questions.length; i++) {
                           await FirestoreService().updateQuestion(quizId, _questions[i].id, {'order': i});
                         }
-                        await _load();
+                        // avoid full reload to keep UI smooth, just sync order
                       },
                       itemBuilder: (context, index) {
                         final q = _questions[index];
@@ -338,30 +401,36 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                           correctText = resolved.join(', ');
                         }
 
-                        return Card(
+                        return Container(
                           key: ValueKey(q.id),
-                          elevation: 2,
                           margin: const EdgeInsets.symmetric(vertical: 8),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
+                          child: _neumorphicContainer(
+                            padding: 16,
                             child: Row(
                               children: [
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(q.prompt, style: Theme.of(context).textTheme.titleMedium),
+                                      Text(q.prompt, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2C3E50))),
                                       const SizedBox(height: 8),
                                       Wrap(
                                         spacing: 8,
                                         runSpacing: 6,
                                         children: [
-                                          Chip(label: Text(typeLabel), visualDensity: VisualDensity.compact, materialTapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                                          Chip(
+                                            label: Text(typeLabel, style: const TextStyle(color: Colors.white, fontSize: 12)),
+                                            backgroundColor: const Color(0xFF95A5A6),
+                                            visualDensity: VisualDensity.compact,
+                                            padding: EdgeInsets.zero,
+                                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                          ),
                                           if (correctText != null)
                                             Chip(
-                                              label: Text('Answer: $correctText'),
-                                              backgroundColor: Theme.of(context).colorScheme.secondary.withAlpha((0.12 * 255).round()),
+                                              label: Text('Ans: $correctText', style: const TextStyle(color: Colors.white, fontSize: 12)),
+                                              backgroundColor: const Color(0xFF27AE60),
                                               visualDensity: VisualDensity.compact,
+                                              padding: EdgeInsets.zero,
                                               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                             ),
                                         ],
@@ -372,9 +441,20 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                                 Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    IconButton(tooltip: 'Edit question', icon: const Icon(Icons.settings), onPressed: () => _editQuestion(q)),
-                                    IconButton(tooltip: 'Delete question', icon: const Icon(Icons.delete), onPressed: () => _deleteQuestion(q.id)),
-                                    ReorderableDragStartListener(index: index, child: const Padding(padding: EdgeInsets.symmetric(horizontal: 4.0), child: Icon(Icons.drag_handle))),
+                                    IconButton(
+                                      tooltip: 'Edit',
+                                      icon: const Icon(Icons.edit, color: Color(0xFF2980B9)),
+                                      onPressed: () => _editQuestion(q),
+                                    ),
+                                    IconButton(
+                                      tooltip: 'Delete',
+                                      icon: const Icon(Icons.delete, color: Color(0xFFC0392B)),
+                                      onPressed: () => _deleteQuestion(q.id),
+                                    ),
+                                    ReorderableDragStartListener(
+                                      index: index,
+                                      child: const Padding(padding: EdgeInsets.symmetric(horizontal: 4.0), child: Icon(Icons.drag_handle, color: Color(0xFF7F8C8D))),
+                                    ),
                                   ],
                                 ),
                               ],
@@ -383,11 +463,84 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                         );
                       },
                     ),
-                  const SizedBox(height: 12),
-                ],
+                    const SizedBox(height: 80), // Space for FAB
+                  ],
+                ),
               ),
-            ),
       bottomNavigationBar: null,
+      ),
+    );
+  }
+
+  Widget _neumorphicContainer({required Widget child, double padding = 24}) {
+    return Container(
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Colors.white, Colors.black12],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(4, 4),
+          ),
+          BoxShadow(
+            color: Colors.white.withValues(alpha: 0.8),
+            blurRadius: 10,
+            offset: const Offset(-4, -4),
+          ),
+        ],
+      ),
+      child: Container(
+        padding: EdgeInsets.all(padding),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF5F5F5),
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: child,
+      ),
+    );
+  }
+
+  Widget _settingsSwitch(String label, bool value, ValueChanged<bool> onChanged) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        children: [
+          Expanded(child: Text(label, style: const TextStyle(color: Color(0xFF2C3E50), fontSize: 16))),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeThumbColor: const Color(0xFF2C3E50),
+          ),
+        ],
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String label) {
+    return InputDecoration(
+      labelText: label.isEmpty ? null : label,
+      labelStyle: const TextStyle(color: Color(0xFF7F8C8D)),
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF2C3E50), width: 1.5),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     );
   }
 }

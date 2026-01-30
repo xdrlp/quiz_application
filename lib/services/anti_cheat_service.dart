@@ -54,7 +54,6 @@ class AntiCheatService {
   Size? _lastScreenSize;
   bool _isQuizActive = false;
   DateTime? _lastViolationAt;
-  ViolationType? _lastViolationType;
   DateTime? _pausedAt;
   String? _packageName;
   final Map<String, String> _appLabelCache = {};
@@ -566,7 +565,6 @@ class AntiCheatService {
     
     // Always update timestamp so a continuous stream of violations forms a single "event"
     _lastViolationAt = now;
-    _lastViolationType = type;
 
     if (shouldIncrement) {
       _violationCount++;

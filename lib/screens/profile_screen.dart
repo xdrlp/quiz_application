@@ -117,241 +117,304 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final AuthProvider auth = context.watch<AuthProvider>();
     final UserModel? user = auth.currentUser;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
-      body: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 8),
-                    // Header: if we have a full user model show it, otherwise fall back to auth user
-                    Builder(builder: (ctx) {
-                      if (user != null) {
-                        return Column(
-                          children: [
-                            CircleAvatar(
-                              radius: 56,
-                              backgroundColor: Theme.of(context).colorScheme.primary,
-                              child: Text(_initials(user), style: const TextStyle(fontSize: 28, color: Colors.white)),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              user.displayName.isNotEmpty ? user.displayName : '${user.firstName} ${user.lastName}'.trim(),
-                              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(user.email, style: const TextStyle(color: Colors.grey, fontSize: 14)),
-                            const SizedBox(height: 16),
-                          ],
-                        );
-                      }
-                      final fu = fb.FirebaseAuth.instance.currentUser;
-                      final displayName = fu?.displayName ?? '';
-                      final email = fu?.email ?? '';
-                      final uid = fu?.uid ?? '';
-                      final initials = (displayName.isNotEmpty ? displayName : email.isNotEmpty ? email : uid).trim();
-                      final initialLetter = initials.isNotEmpty ? initials.substring(0, 1).toUpperCase() : '?';
-                      return Column(
-                        children: [
-                          CircleAvatar(
-                            radius: 56,
-                            backgroundColor: Theme.of(context).colorScheme.primary,
-                            child: Text(initialLetter, style: const TextStyle(fontSize: 28, color: Colors.white)),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(displayName.isNotEmpty ? displayName : (email.isNotEmpty ? email.split('@').first : uid), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
-                          const SizedBox(height: 6),
-                          Text(email, style: const TextStyle(color: Colors.grey, fontSize: 14)),
-                          const SizedBox(height: 12),
-                        ],
-                      );
-                    }),
-
-                    // Show a single polished profile details card (prefilled from Firestore or Firebase Auth)
-                    Card(
-                      margin: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text('Profile details', style: TextStyle(fontWeight: FontWeight.bold)),
-                                TextButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      _isEditing = !_isEditing;
-                                      if (!_isEditing) {
-                                        final u = auth.currentUser;
-                                        _firstController.text = u?.firstName ?? _firstController.text;
-                                        _lastController.text = u?.lastName ?? _lastController.text;
-                                        _classController.text = u?.classSection ?? _classController.text;
-                                      }
-                                    });
-                                  },
-                                  child: Text(_isEditing ? 'Cancel' : 'Edit'),
-                                )
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            if (_isEditing)
-                              Form(
-                                key: _formKey,
-                                child: Column(
-                                  children: [
-                                    TextFormField(
-                                      controller: _firstController,
-                                      decoration: const InputDecoration(labelText: 'First name'),
-                                      validator: (v) => v == null || v.trim().isEmpty ? 'Please enter first name' : null,
-                                    ),
-                                    const SizedBox(height: 8),
-                                    TextFormField(
-                                      controller: _lastController,
-                                      decoration: const InputDecoration(labelText: 'Last name'),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    TextFormField(
-                                      controller: _classController,
-                                      decoration: const InputDecoration(labelText: 'Class / Section (optional)'),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    ElevatedButton(
-                                      onPressed: auth.isLoading ? null : _save,
-                                      child: auth.isLoading ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Save'),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            else
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  ListTile(
-                                    contentPadding: EdgeInsets.zero,
-                                    title: const Text('First name'),
-                                    subtitle: Text(user?.firstName.isNotEmpty == true ? user!.firstName : _firstController.text.isNotEmpty ? _firstController.text : '-'),
-                                  ),
-                                  ListTile(
-                                    contentPadding: EdgeInsets.zero,
-                                    title: const Text('Last name'),
-                                    subtitle: Text(user?.lastName.isNotEmpty == true ? user!.lastName : _lastController.text.isNotEmpty ? _lastController.text : '-'),
-                                  ),
-                                  ListTile(
-                                    contentPadding: EdgeInsets.zero,
-                                    title: const Text('Class / Section'),
-                                    subtitle: Text(user?.classSection ?? (_classController.text.isNotEmpty ? _classController.text : '-')),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  OutlinedButton(
-                                    onPressed: _handleSignOut,
-                                    child: const Text('Sign out'),
-                                  ),
-                                ],
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    // If we DO have a full model, show the editable details card below
-                    if (user != null)
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text('Profile details', style: TextStyle(fontWeight: FontWeight.bold)),
-                                  TextButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        _isEditing = !_isEditing;
-                                        if (!_isEditing) {
-                                          // refresh controllers from model
-                                          _firstController.text = user.firstName;
-                                          _lastController.text = user.lastName;
-                                          _classController.text = user.classSection ?? '';
-                                        }
-                                      });
-                                    },
-                                    child: Text(_isEditing ? 'Cancel' : 'Edit'),
-                                  )
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              if (_isEditing)
-                                Form(
-                                  key: _formKey,
-                                  child: Column(
-                                    children: [
-                                      TextFormField(
-                                        controller: _firstController,
-                                        decoration: const InputDecoration(labelText: 'First name'),
-                                        validator: (v) => v == null || v.trim().isEmpty ? 'Please enter first name' : null,
-                                      ),
-                                      const SizedBox(height: 8),
-                                      TextFormField(
-                                        controller: _lastController,
-                                        decoration: const InputDecoration(labelText: 'Last name'),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      TextFormField(
-                                        controller: _classController,
-                                        decoration: const InputDecoration(labelText: 'Class / Section (optional)'),
-                                      ),
-                                      const SizedBox(height: 12),
-                                      ElevatedButton(
-                                        onPressed: auth.isLoading ? null : _save,
-                                        child: auth.isLoading ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Save'),
-                                      ),
-                                    ],
-                                  ),
-                                )
-                              else
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    ListTile(
-                                      contentPadding: EdgeInsets.zero,
-                                      title: const Text('First name'),
-                                      subtitle: Text(user.firstName.isNotEmpty ? user.firstName : '-'),
-                                    ),
-                                    ListTile(
-                                      contentPadding: EdgeInsets.zero,
-                                      title: const Text('Last name'),
-                                      subtitle: Text(user.lastName.isNotEmpty ? user.lastName : '-'),
-                                    ),
-                                    ListTile(
-                                      contentPadding: EdgeInsets.zero,
-                                      title: const Text('Class / Section'),
-                                      subtitle: Text(user.classSection ?? '-'),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    OutlinedButton(
-                                      onPressed: _handleSignOut,
-                                      child: const Text('Sign out'),
-                                    ),
-                                  ],
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(217, 255, 255, 255)],
+        ),
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight),
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: [Color.fromARGB(255, 169, 169, 169), Color.fromARGB(255, 255, 255, 255)],
               ),
             ),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 2),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [Color.fromARGB(108, 244, 244, 244), Color.fromARGB(205, 223, 223, 223)],
+                ),
+              ),
+              child: AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                centerTitle: true,
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.black),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                title: const Text('Profile', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20)),
+              ),
+            ),
+          ),
+        ),
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(height: 16),
+                // Profile Header
+                Builder(builder: (ctx) {
+                  final u = user;
+                  String initial = '?';
+                  String name = '';
+                  String email = '';
+
+                  if (u != null) {
+                    initial = _initials(u);
+                    name = u.displayName.isNotEmpty ? u.displayName : '${u.firstName} ${u.lastName}'.trim();
+                    email = u.email;
+                  } else {
+                    final fu = fb.FirebaseAuth.instance.currentUser;
+                    email = fu?.email ?? '';
+                    final d = fu?.displayName ?? '';
+                    name = d.isNotEmpty ? d : (email.isNotEmpty ? email.split('@').first : '');
+                    initial = name.isNotEmpty ? name.substring(0, 1).toUpperCase() : '?';
+                  }
+
+                  return Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF2C3E50), Color(0xFFBDC3C7)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.2),
+                              blurRadius: 10,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: CircleAvatar(
+                          radius: 60,
+                          backgroundColor: Colors.white,
+                          child: Text(
+                            initial,
+                            style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Color(0xFF2C3E50)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        name,
+                        style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF2C3E50)),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(email, style: const TextStyle(color: Color(0xFF7F8C8D), fontSize: 16)),
+                      const SizedBox(height: 32),
+                    ],
+                  );
+                }),
+
+                // Profile Details Section
+                _neumorphicContainer(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Profile details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black)),
+                          IconButton(
+                            icon: Icon(_isEditing ? Icons.close : Icons.edit, color: Colors.black54),
+                            onPressed: () {
+                              setState(() {
+                                _isEditing = !_isEditing;
+                                if (!_isEditing) {
+                                  // Reset fields if canceling
+                                  if (user != null) {
+                                    _firstController.text = user.firstName;
+                                    _lastController.text = user.lastName;
+                                    _classController.text = user.classSection ?? '';
+                                  }
+                                } else {
+                                  // Populate fields if starting edit
+                                  if (user != null) {
+                                    _firstController.text = user.firstName;
+                                    _lastController.text = user.lastName;
+                                    _classController.text = user.classSection ?? '';
+                                  }
+                                }
+                              });
+                            },
+                          )
+                        ],
+                      ),
+                      const Divider(color: Colors.black12),
+                      const SizedBox(height: 16),
+                      if (_isEditing)
+                        Form(
+                          key: _formKey,
+                          child: Column(
+                            children: [
+                              TextFormField(
+                                controller: _firstController,
+                                decoration: _inputDecoration('First name'),
+                                validator: (v) => v == null || v.trim().isEmpty ? 'Please enter first name' : null,
+                              ),
+                              const SizedBox(height: 16),
+                              TextFormField(
+                                controller: _lastController,
+                                decoration: _inputDecoration('Last name'),
+                              ),
+                              const SizedBox(height: 16),
+                              TextFormField(
+                                controller: _classController,
+                                decoration: _inputDecoration('Class / Section'),
+                              ),
+                              const SizedBox(height: 24),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  onPressed: auth.isLoading ? null : _save,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF2C3E50),
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    elevation: 2,
+                                  ),
+                                  child: auth.isLoading
+                                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                      : const Text('Save Changes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      else
+                        Column(
+                          children: [
+                            _infoRow('First name', user?.firstName.isNotEmpty == true ? user!.firstName : (_firstController.text.isNotEmpty ? _firstController.text : '-')),
+                            _infoRow('Last name', user?.lastName.isNotEmpty == true ? user!.lastName : (_lastController.text.isNotEmpty ? _lastController.text : '-')),
+                            _infoRow('Class / Section', user?.classSection ?? (_classController.text.isNotEmpty ? _classController.text : '-')),
+                            const SizedBox(height: 24),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton(
+                                onPressed: _handleSignOut,
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Color(0xFFC0392B)),
+                                  foregroundColor: const Color(0xFFC0392B),
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                                child: const Text('Sign Out', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
-    
+  Widget _neumorphicContainer({required Widget child}) {
+    return Container(
+      padding: const EdgeInsets.all(2), // Thinner border
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Colors.white, Colors.black12], // Subtle border gradient
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(4, 4),
+          ),
+          BoxShadow(
+            color: Colors.white.withValues(alpha: 0.8),
+            blurRadius: 10,
+            offset: const Offset(-4, -4),
+          ),
+        ],
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF5F5F5), // Solid light background for the card itself
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: child,
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Color(0xFF7F8C8D)),
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF2C3E50), width: 1.5),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    );
+  }
+
+  Widget _infoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: const TextStyle(color: Color(0xFF7F8C8D), fontSize: 14),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              style: const TextStyle(color: Color(0xFF2C3E50), fontSize: 16, fontWeight: FontWeight.w500),
+              textAlign: TextAlign.right,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   String _initials(UserModel user) {
     final String f = user.firstName.trim();

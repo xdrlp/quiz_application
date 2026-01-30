@@ -178,19 +178,28 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
   }
 
   Widget _sectionHeader(String title, int count) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700))),
-            Text('($count)', style: TextStyle(color: Colors.grey.shade700)),
-          ],
-        ),
-        const SizedBox(height: 6),
-        Divider(height: 1, thickness: 1, color: Colors.grey.shade200),
-        const SizedBox(height: 8),
-      ],
+    if (count == 0) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2C3E50)))),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2C3E50).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text('$count', style: const TextStyle(color: Color(0xFF2C3E50), fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+        ],
+      ),
     );
   }
 
@@ -214,149 +223,243 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Quizzes'),
-        actions: [
-          if (_selected.isNotEmpty) ...[
-            IconButton(onPressed: () => setState(() => _selected.clear()), tooltip: 'Cancel selection', icon: const Icon(Icons.close)),
-            IconButton(onPressed: _batchPublishSelected, tooltip: 'Publish selected', icon: const Icon(Icons.publish)),
-            IconButton(onPressed: _batchDeleteSelected, tooltip: 'Delete selected', icon: const Icon(Icons.delete_forever)),
-          ]
-        ],
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(217, 255, 255, 255)],
+        ),
       ),
-      floatingActionButton: _selected.isNotEmpty ? FloatingActionButton.extended(
-        onPressed: () {},
-        icon: const Icon(Icons.check_box),
-        label: Text('${_selected.length} selected'),
-      ) : null,
-      body: FutureBuilder<List<QuizModel>>(
-        future: _future,
-        builder: (context, snap) {
-          if (snap.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snap.hasError) {
-            final err = snap.error.toString();
-            // Try to extract an index creation URL from the error message
-            final urlRegex = RegExp(r'https?://[^\s)]+');
-            final match = urlRegex.firstMatch(err);
-            if (match != null) {
-              final url = match.group(0)!;
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text('Firestore query requires a composite index.'),
-                      const SizedBox(height: 8),
-                      const Text('Create the index using the link below, then refresh this screen.'),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(child: SelectableText(url)),
-                          IconButton(
-                            tooltip: 'Copy index URL',
-                            icon: const Icon(Icons.copy),
-                            onPressed: () async {
-                              await _copyWithCooldown(url, url, 'Index URL copied');
-                            },
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }
-            return Center(child: Text('Error: $err'));
-          }
-          final quizzes = snap.data ?? [];
-          final drafts = quizzes.where((q) => q.published == false).toList();
-          final published = quizzes.where((q) => q.published == true).toList();
-          if (quizzes.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  const Icon(Icons.quiz, size: 84, color: Colors.blueAccent),
-                  const SizedBox(height: 16),
-                  const Text('No quizzes yet', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  const Text('Create your first quiz to get started. It will appear here and you can publish or share it.' , textAlign: TextAlign.center),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () async {
-                      await Navigator.of(context).pushNamed('/create_quiz');
-                      if (mounted) setState(() => _load());
-                    },
-                    icon: const Icon(Icons.add),
-                    label: const Text('Create Quiz'),
-                  ),
-                ]),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight),
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: [Color.fromARGB(255, 169, 169, 169), Color.fromARGB(255, 255, 255, 255)],
               ),
-            );
-          }
-
-          return Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              children: [
-                // Search & controls
-                Row(children: [
-                  Expanded(
-                    child: TextField(
-                      decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Search quizzes'),
-                        onChanged: (v) => setState(() => _searchQuery = v),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  DropdownButton<String>(
-                    value: _sortBy,
-                    items: const [DropdownMenuItem(value: 'updated', child: Text('Sort: Recent')), DropdownMenuItem(value: 'name', child: Text('Sort: Name')), DropdownMenuItem(value: 'created', child: Text('Sort: Created'))],
-                    onChanged: (v) => setState(() => _sortBy = v ?? 'updated'),
-                  ),
-                ]),
-                const SizedBox(height: 8),
-                // Quick filters
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(children: [
-                    ChoiceChip(label: const Text('All'), selected: _filter == 'All', onSelected: (_) => setState(() => _filter = 'All')),
-                    const SizedBox(width: 8),
-                    ChoiceChip(label: const Text('Recent'), selected: _filter == 'Recent', onSelected: (_) => setState(() => _filter = 'Recent')),
-                    const SizedBox(width: 8),
-                    ChoiceChip(label: const Text('Incomplete'), selected: _filter == 'Incomplete', onSelected: (_) => setState(() => _filter = 'Incomplete')),
-                    const SizedBox(width: 8),
-                    ChoiceChip(label: const Text('Popular'), selected: _filter == 'Popular', onSelected: (_) => setState(() => _filter = 'Popular')),
-                  ]),
+            ),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 2),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [Color.fromARGB(108, 244, 244, 244), Color.fromARGB(205, 223, 223, 223)],
                 ),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: () async {
-                      _load();
-                      // wait for future
-                      await _future;
-                    },
-                    child: ListView(
+              ),
+              child: AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                centerTitle: true,
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.black),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                title: const Text('My Quizzes', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20)),
+                actions: [
+                  if (_selected.isNotEmpty) ...[
+                    IconButton(onPressed: () => setState(() => _selected.clear()), tooltip: 'Cancel selection', icon: const Icon(Icons.close, color: Colors.black54)),
+                    IconButton(onPressed: _batchPublishSelected, tooltip: 'Publish selected', icon: const Icon(Icons.publish, color: Colors.black54)),
+                    IconButton(onPressed: _batchDeleteSelected, tooltip: 'Delete selected', icon: const Icon(Icons.delete_forever, color: Colors.black54)),
+                  ]
+                ],
+              ),
+            ),
+          ),
+        ),
+        floatingActionButton: _selected.isNotEmpty ? FloatingActionButton.extended(
+          onPressed: () {},
+          backgroundColor: const Color(0xFF2C3E50),
+          foregroundColor: Colors.white,
+          icon: const Icon(Icons.check_box),
+          label: Text('${_selected.length} selected'),
+        ) : null,
+        body: FutureBuilder<List<QuizModel>>(
+          future: _future,
+          builder: (context, snap) {
+            if (snap.connectionState != ConnectionState.done) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snap.hasError) {
+              final err = snap.error.toString();
+              // Try to extract an index creation URL from the error message
+              final urlRegex = RegExp(r'https?://[^\s)]+');
+              final match = urlRegex.firstMatch(err);
+              if (match != null) {
+                final url = match.group(0)!;
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        _sectionHeader('Drafts', drafts.length),
-                        for (var q in _applyQuery(drafts)) _buildQuizCard(q, isPublished: false),
+                        const Text('Firestore query requires a composite index.'),
+                        const SizedBox(height: 8),
+                        const Text('Create the index using the link below, then refresh this screen.'),
                         const SizedBox(height: 12),
-                        _sectionHeader('Published', published.length),
-                        for (var q in _applyQuery(published)) _buildQuizCard(q, isPublished: true),
-                        const SizedBox(height: 24),
+                        Row(
+                          children: [
+                            Expanded(child: SelectableText(url)),
+                            IconButton(
+                              tooltip: 'Copy index URL',
+                              icon: const Icon(Icons.copy),
+                              onPressed: () async {
+                                await _copyWithCooldown(url, url, 'Index URL copied');
+                              },
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
+                );
+              }
+              return Center(child: Text('Error: $err'));
+            }
+            final quizzes = snap.data ?? [];
+            final drafts = quizzes.where((q) => q.published == false).toList();
+            final published = quizzes.where((q) => q.published == true).toList();
+            if (quizzes.isEmpty) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.quiz, size: 84, color: Colors.blueAccent),
+                    const SizedBox(height: 16),
+                    const Text('No quizzes yet', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF2C3E50))),
+                    const SizedBox(height: 8),
+                    const Text('Create your first quiz to get started. It will appear here and you can publish or share it.' , textAlign: TextAlign.center, style: TextStyle(color: Color(0xFF7F8C8D))),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        await Navigator.of(context).pushNamed('/create_quiz');
+                        if (mounted) setState(() => _load());
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2C3E50),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Create Quiz'),
+                    ),
+                  ]),
                 ),
-              ],
-            ),
-          );
-        },
+              );
+            }
+
+            return Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                children: [
+                  // Search & controls
+                  Row(children: [
+                    Expanded(
+                      child: TextField(
+                        decoration: _inputDecoration('Search quizzes', icon: Icons.search),
+                          onChanged: (v) => setState(() => _searchQuery = v),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.transparent),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _sortBy,
+                          icon: const Icon(Icons.sort, color: Color(0xFF7F8C8D)),
+                          items: const [DropdownMenuItem(value: 'updated', child: Text('Recent')), DropdownMenuItem(value: 'name', child: Text('Name')), DropdownMenuItem(value: 'created', child: Text('Created'))],
+                          onChanged: (v) => setState(() => _sortBy = v ?? 'updated'),
+                        ),
+                      ),
+                    ),
+                  ]),
+                  const SizedBox(height: 12),
+                  // Quick filters
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(children: [
+                      _filterChip('All'),
+                      const SizedBox(width: 8),
+                      _filterChip('Recent'),
+                      const SizedBox(width: 8),
+                      _filterChip('Incomplete'),
+                      const SizedBox(width: 8),
+                      _filterChip('Popular'),
+                    ]),
+                  ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: () async {
+                        _load();
+                        // wait for future
+                        await _future;
+                      },
+                      child: ListView(
+                        children: [
+                          _sectionHeader('Drafts', drafts.length),
+                          for (var q in _applyQuery(drafts)) _buildQuizCard(q, isPublished: false),
+                          const SizedBox(height: 12),
+                          _sectionHeader('Published', published.length),
+                          for (var q in _applyQuery(published)) _buildQuizCard(q, isPublished: true),
+                          const SizedBox(height: 24),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String hint, {IconData? icon}) {
+    return InputDecoration(
+      hintText: hint,
+      prefixIcon: icon != null ? Icon(icon, color: const Color(0xFF7F8C8D)) : null,
+      hintStyle: const TextStyle(color: Color(0xFF7F8C8D)),
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF2C3E50), width: 1.5),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+    );
+  }
+
+  Widget _filterChip(String label) {
+    final selected = _filter == label;
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: (_) => setState(() => _filter = label),
+      selectedColor: const Color(0xFF2C3E50),
+      labelStyle: TextStyle(color: selected ? Colors.white : const Color(0xFF2C3E50)),
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: selected ? Colors.transparent : Colors.grey.shade300)),
     );
   }
 
@@ -422,70 +525,101 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
 
   Widget _buildQuizCard(QuizModel q, {required bool isPublished}) {
     final messenger = ScaffoldMessenger.of(context);
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      color: Colors.white,
-      margin: const EdgeInsets.symmetric(vertical: 10),
-      child: InkWell(
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F5F5),
         borderRadius: BorderRadius.circular(16),
-        onTap: () {
-          if (_selected.isNotEmpty) {
-            setState(() {
-              if (_selected.contains(q.id)) {
-                _selected.remove(q.id);
-              } else {
-                _selected.add(q.id);
-              }
-            });
-            return;
-          }
-          Navigator.of(context).push(MaterialPageRoute(builder: (_) => QuizAnalysisScreen(quizId: q.id, initialTab: 'summary')));
-        },
-        onLongPress: () {
-          setState(() => _selected.add(q.id));
-        },
-        child: Stack(children: [
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Row(children: [
-              if (_selected.contains(q.id))
-                Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: Checkbox(
-                    value: true,
-                    onChanged: (_) => setState(() {
-                      if (_selected.contains(q.id)) {
-                        _selected.remove(q.id);
-                      } else {
-                        _selected.add(q.id);
-                      }
-                    }),
+        boxShadow: [
+          const BoxShadow(
+            color: Colors.white,
+            offset: Offset(-4, -4),
+            blurRadius: 10,
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            offset: const Offset(4, 4),
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            if (_selected.isNotEmpty) {
+              setState(() {
+                if (_selected.contains(q.id)) {
+                  _selected.remove(q.id);
+                } else {
+                  _selected.add(q.id);
+                }
+              });
+              return;
+            }
+            Navigator.of(context).push(MaterialPageRoute(builder: (_) => QuizAnalysisScreen(quizId: q.id, initialTab: 'summary')));
+          },
+          onLongPress: () {
+            setState(() => _selected.add(q.id));
+          },
+          child: Stack(children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(children: [
+                if (_selected.contains(q.id))
+                  Padding(
+                    padding: const EdgeInsets.only(right: 12.0),
+                    child: Icon(Icons.check_circle, color: const Color(0xFF2C3E50), size: 24),
+                  ),
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE0E0E0),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      const BoxShadow(
+                        color: Colors.white,
+                        offset: Offset(-2, -2),
+                        blurRadius: 5,
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        offset: const Offset(2, 2),
+                        blurRadius: 5,
+                      ),
+                    ],
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    q.title.isEmpty ? '?' : q.title[0].toUpperCase(), 
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF2C3E50))
                   ),
                 ),
-              CircleAvatar(radius: 28, backgroundColor: Colors.grey.shade100, child: Text(q.title.isEmpty ? '?' : q.title[0].toUpperCase(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700))),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Row(children: [
-                    Expanded(child: Text(q.title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18))),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Row(children: [
+                      Expanded(child: Text(q.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF2C3E50)))),
+                    ]),
+                    const SizedBox(height: 4),
+                    Text(q.description.isEmpty ? 'No description' : q.description, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, color: Color(0xFF7F8C8D))),
+                    const SizedBox(height: 8),
+                    Row(children: [
+                      const Icon(Icons.calendar_today, size: 12, color: Color(0xFF7F8C8D)),
+                      const SizedBox(width: 4),
+                      Text(_relativeTime(q.createdAt), style: const TextStyle(fontSize: 11, color: Color(0xFF7F8C8D))),
+                      const SizedBox(width: 12),
+                      const Icon(Icons.format_list_bulleted, size: 12, color: Color(0xFF7F8C8D)),
+                      const SizedBox(width: 4),
+                      Text('${q.totalQuestions} Qs', style: const TextStyle(fontSize: 11, color: Color(0xFF7F8C8D))),
+                    ])
                   ]),
-                  const SizedBox(height: 6),
-                  Text(q.description.isEmpty ? 'This quiz has no description' : q.description, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 14, color: Colors.grey.shade700)),
-                  const SizedBox(height: 10),
-                  Row(children: [
-                    Icon(Icons.calendar_today, size: 14, color: Colors.grey.shade500),
-                    const SizedBox(width: 6),
-                    Text(_relativeTime(q.createdAt), style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-                    const SizedBox(width: 12),
-                    Icon(Icons.note, size: 14, color: Colors.grey.shade500),
-                    const SizedBox(width: 6),
-                    Text('${q.totalQuestions} questions', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-                  ])
-                ]),
-              ),
-              PopupMenuButton<String>(
-                onSelected: (v) async {
+                ),
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert, color: Color(0xFF7F8C8D)),
+                  onSelected: (v) async {
                   switch (v) {
                     case 'edit':
                       final res = await Navigator.of(context).pushNamed('/edit_quiz', arguments: q.id);
@@ -557,6 +691,7 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
           ),
           // status badge removed per UX request
         ]),
+      ),
       ),
     );
   }

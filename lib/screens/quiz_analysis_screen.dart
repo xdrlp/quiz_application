@@ -90,14 +90,59 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_quiz?.title ?? 'Quiz analysis'),
-        bottom: TabBar(controller: _tabController, tabs: const [Tab(text: 'Summary'), Tab(text: 'Insights'), Tab(text: 'Individual')]),
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(217, 255, 255, 255)],
+        ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : TabBarView(controller: _tabController, children: [_buildSummary(), _buildInsights(), _buildIndividual()]),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight + 48), // Height for Title + TabBar
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: [Color.fromARGB(255, 169, 169, 169), Color.fromARGB(255, 255, 255, 255)],
+              ),
+            ),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 2),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [Color.fromARGB(108, 244, 244, 244), Color.fromARGB(205, 223, 223, 223)],
+                ),
+              ),
+              child: AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                centerTitle: true,
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.black),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                title: Text(_quiz?.title ?? 'Quiz Analysis', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20)),
+                bottom: TabBar(
+                  controller: _tabController,
+                  labelColor: const Color(0xFF2C3E50),
+                  unselectedLabelColor: const Color(0xFF7F8C8D),
+                  indicatorColor: const Color(0xFF2C3E50),
+                  tabs: const [Tab(text: 'Summary'), Tab(text: 'Insights'), Tab(text: 'Individual')],
+                ),
+              ),
+            ),
+          ),
+        ),
+        body: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : TabBarView(controller: _tabController, children: [_buildSummary(), _buildInsights(), _buildIndividual()]),
+      ),
     );
   }
 
@@ -125,27 +170,40 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
     // Dashboard tiles
     final maxPoints = _attempts.isEmpty ? 0 : _attempts.first.totalPoints;
     Widget buildTile({required IconData icon, required String title, required List<Widget> children, Color? accent}) {
-      return Card(
-        elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              Container(
-                decoration: BoxDecoration(color: (accent ?? Theme.of(context).colorScheme.primary).withAlpha(20), borderRadius: BorderRadius.circular(8)),
-                padding: const EdgeInsets.all(8),
-                child: Icon(icon, color: accent ?? Theme.of(context).colorScheme.primary),
-              ),
-              const SizedBox(width: 12),
-              Expanded(child: Text(title, style: Theme.of(context).textTheme.titleMedium)),
-            ]),
-            const SizedBox(height: 12),
-            ...children,
-          ]),
+      return Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF5F5F5),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            const BoxShadow(
+              color: Colors.white,
+              offset: Offset(-4, -4),
+              blurRadius: 10,
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              offset: const Offset(4, 4),
+              blurRadius: 10,
+            ),
+          ],
         ),
+        padding: const EdgeInsets.all(20.0),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Container(
+              decoration: BoxDecoration(color: (accent ?? const Color(0xFF2C3E50)).withAlpha(20), borderRadius: BorderRadius.circular(8)),
+              padding: const EdgeInsets.all(8),
+              child: Icon(icon, color: accent ?? const Color(0xFF2C3E50)),
+            ),
+            const SizedBox(width: 12),
+            Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF2C3E50)))),
+          ]),
+          const SizedBox(height: 12),
+          ...children,
+        ]),
       );
     }
+
 
     // Participation tile
     final participationTile = buildTile(
@@ -153,16 +211,16 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
       title: 'Participation',
       accent: Colors.blue,
       children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Attempts', style: TextStyle(color: Theme.of(context).colorScheme.secondary)), Text('$attemptCount', style: const TextStyle(fontWeight: FontWeight.bold))]),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Attempts', style: TextStyle(color: Color(0xFF7F8C8D))), Text('$attemptCount', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2C3E50)))]),
         const SizedBox(height: 12),
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Submitted', style: TextStyle(color: Theme.of(context).colorScheme.secondary)), Text('$submittedCount', style: const TextStyle(fontWeight: FontWeight.bold))]),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Submitted', style: TextStyle(color: Color(0xFF7F8C8D))), Text('$submittedCount', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2C3E50)))]),
         const SizedBox(height: 12),
-        Text('Completion rate', style: TextStyle(color: Theme.of(context).colorScheme.secondary)),
+        const Text('Completion rate', style: TextStyle(color: Color(0xFF7F8C8D))),
         const SizedBox(height: 8),
         Row(children: [
-          Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(8), child: LinearProgressIndicator(value: completionRate / 100.0, minHeight: 10, color: Colors.blue, backgroundColor: Colors.grey.shade200))),
+          Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(8), child: LinearProgressIndicator(value: completionRate / 100.0, minHeight: 10, color: Colors.blue, backgroundColor: Colors.grey.shade300))),
           const SizedBox(width: 12),
-          Text('${completionRate.toStringAsFixed(1)}%', style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text('${completionRate.toStringAsFixed(1)}%', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2C3E50))),
         ]),
       ],
     );
@@ -177,11 +235,11 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
       icon: Icons.bar_chart, title: 'Performance', accent: Colors.green, children: [
         // Compact flow: label, then a single row with score on the left and a progress bar to the right.
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Average score', style: TextStyle(color: Theme.of(context).colorScheme.secondary)),
+          const Text('Average score', style: TextStyle(color: Color(0xFF7F8C8D))),
           const SizedBox(height: 6),
           Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
             // Score value
-            Text('${avgScore.toStringAsFixed(1)}/$maxPoints', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
+            Text('${avgScore.toStringAsFixed(1)}/$maxPoints', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF2C3E50))),
             const SizedBox(width: 12),
             // Progress bar next to score
             Expanded(
@@ -191,18 +249,18 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
                   value: (maxPoints == 0) ? 0.0 : (avgScore / maxPoints).clamp(0.0, 1.0),
                   minHeight: 12,
                   color: perfColor(),
-                  backgroundColor: Colors.grey.shade200,
+                  backgroundColor: Colors.grey.shade300,
                 ),
               ),
             ),
             const SizedBox(width: 12),
-            SizedBox(width: 44, child: Text('${((maxPoints == 0) ? 0 : ((avgScore / maxPoints) * 100)).toStringAsFixed(0)}%', textAlign: TextAlign.right, style: const TextStyle(fontWeight: FontWeight.bold))),
+            SizedBox(width: 44, child: Text('${((maxPoints == 0) ? 0 : ((avgScore / maxPoints) * 100)).toStringAsFixed(0)}%', textAlign: TextAlign.right, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2C3E50)))),
           ]),
           const SizedBox(height: 12),
           // Small stats row: Highest and Lowest side-by-side
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Highest', style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 12)), const SizedBox(height: 4), Text('$highest', style: const TextStyle(fontWeight: FontWeight.bold))]),
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Lowest', style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 12)), const SizedBox(height: 4), Text('$lowest', style: const TextStyle(fontWeight: FontWeight.bold))]),
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Highest', style: TextStyle(color: Color(0xFF7F8C8D), fontSize: 12)), const SizedBox(height: 4), Text('$highest', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2C3E50)))]),
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Lowest', style: TextStyle(color: Color(0xFF7F8C8D), fontSize: 12)), const SizedBox(height: 4), Text('$lowest', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2C3E50)))]),
           ])
         ])
       ],
@@ -211,9 +269,9 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
     // Behavior & Time tile
     final behaviorTile = buildTile(
       icon: Icons.schedule, title: 'Behavior & Time', accent: Colors.orange, children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Average time', style: TextStyle(color: Theme.of(context).colorScheme.secondary)), Text('${avgTimeFormatted.inMinutes}:${(avgTimeFormatted.inSeconds % 60).toString().padLeft(2, '0')}', style: const TextStyle(fontWeight: FontWeight.w600))]),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Average time', style: TextStyle(color: Color(0xFF7F8C8D))), Text('${avgTimeFormatted.inMinutes}:${(avgTimeFormatted.inSeconds % 60).toString().padLeft(2, '0')}', style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF2C3E50)))]),
         const SizedBox(height: 12),
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Total violations', style: TextStyle(color: Theme.of(context).colorScheme.secondary)), Row(children: [totalViolations == 0 ? Icon(Icons.check_circle, color: Colors.green, size: 18) : const SizedBox(width: 18), const SizedBox(width: 8), Text('$totalViolations', style: const TextStyle(fontWeight: FontWeight.w600))])]),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Total violations', style: TextStyle(color: Color(0xFF7F8C8D))), Row(children: [totalViolations == 0 ? const Icon(Icons.check_circle, color: Colors.green, size: 18) : const SizedBox(width: 18), const SizedBox(width: 8), Text('$totalViolations', style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF2C3E50)))])]),
       ],
     );
 
@@ -241,9 +299,9 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
           final scoreTile = buildTile(
             icon: Icons.insert_chart_outlined,
             title: 'Score distribution',
-            accent: Theme.of(ctx).colorScheme.primary,
+            accent: const Color(0xFF2C3E50),
             children: [
-              Center(child: Text('Total attempts: $totalAttempts', style: Theme.of(ctx).textTheme.bodySmall?.copyWith(color: Theme.of(ctx).colorScheme.secondary))),
+              Center(child: Text('Total attempts: $totalAttempts', style: const TextStyle(color: Color(0xFF7F8C8D), fontSize: 13))),
               const SizedBox(height: 8),
                   LayoutBuilder(builder: (c, cc) {
                     final available = cc.maxHeight.isFinite ? cc.maxHeight : double.infinity;
@@ -370,7 +428,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
                                             width: thickBarWidth,
                                             height: barHeight,
                                             decoration: BoxDecoration(
-                                              color: Theme.of(context).colorScheme.primary,
+                                              color: const Color(0xFF2C3E50),
                                               borderRadius: BorderRadius.circular(6),
                                             ),
                                           ),
@@ -397,12 +455,11 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
 
                                             // compute compact label width and font size; ensure enough room for "100%"
                                             final labelW = math.min(56.0, math.max(42.0, spacing * 0.85));
-                                            final fontSize = 11.0;
                                             final x = chartMarginLeft + idx * spacing;
                                             final unconstrainedLeft = x - (labelW / 2);
-                                            final minLabelLeft = chartMarginLeft - (labelW * 0.6);
-                                            final maxLabelLeft = plotWidth - chartMarginRight - (labelW * 0.4);
-                                            final left = unconstrainedLeft.clamp(minLabelLeft, maxLabelLeft);
+                                            final minLeft = chartMarginLeft - (labelW * 0.6);
+                                            final maxLeft = plotWidth - chartMarginRight - (labelW * 0.4);
+                                            final left = unconstrainedLeft.clamp(minLeft, maxLeft);
                                             return Positioned(
                                               left: left,
                                               width: labelW,
@@ -413,7 +470,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
                                                   alignment: Alignment.center,
                                                   child: SizedBox(
                                                     width: labelW,
-                                                    child: Text('${bins[idx]}%', textAlign: TextAlign.center, softWrap: false, maxLines: 1, overflow: TextOverflow.clip, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black, fontSize: fontSize)),
+                                                    child: Text('${bins[idx]}%', textAlign: TextAlign.center, softWrap: false, maxLines: 1, overflow: TextOverflow.clip, style: const TextStyle(color: Color(0xFF7F8C8D), fontSize: 11)),
                                                   ),
                                                 ),
                                               ),
@@ -441,7 +498,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
                 ),
               ),
               const SizedBox(height: 2),
-              Text('Score (%)', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey)),
+              const Text('Score (%)', style: TextStyle(color: Color(0xFF7F8C8D), fontSize: 12)),
             ],
           ),
         );
@@ -610,11 +667,21 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
       }),
       const SizedBox(height: 12),
       // Easy items with clearer labels and badges
-      ListTile(
-        title: const Text('Most correctly answered', style: TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: sortedByEasy.take(5).map((id) {
+      Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF5F5F5),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            const BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 8),
+            BoxShadow(color: Colors.black.withAlpha(25), offset: const Offset(4, 4), blurRadius: 8),
+          ],
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('Most correctly answered', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 12),
+          ...sortedByEasy.take(5).map((id) {
             final q = _questions.firstWhere((x) => x.id == id);
             final st = qStats[id]!;
             final correct = st['correct'] as int;
@@ -622,29 +689,39 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
             final pctDouble = perQuestionRates[id] ?? 0.0;
             final badgeColor = pctDouble >= 80
                 ? Colors.green
-                : (pctDouble <= 40 ? Colors.red : Theme.of(context).colorScheme.primary);
+                : (pctDouble <= 40 ? Colors.red : const Color(0xFF2C3E50));
             return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6.0),
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: Row(children: [
-                Expanded(child: Text(q.prompt, maxLines: 2, overflow: TextOverflow.ellipsis)),
+                Expanded(child: Text(q.prompt, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14))),
                 const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(color: badgeColor.withAlpha((0.12 * 255).round()), borderRadius: BorderRadius.circular(14)),
-                  child: Text('$correct/$total', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: badgeColor, fontWeight: FontWeight.w600)),
+                  child: Text('$correct/$total', style: TextStyle(color: badgeColor, fontWeight: FontWeight.w600, fontSize: 12)),
                 ),
               ]),
             );
-          }).toList(),
-        ),
+          }),
+        ]),
       ),
-      const Divider(),
+      
       // Difficult items
-      ListTile(
-        title: const Text('Least correctly answered', style: TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: sortedByHard.take(5).map((id) {
+      Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF5F5F5),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            const BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 8),
+            BoxShadow(color: Colors.black.withAlpha(25), offset: const Offset(4, 4), blurRadius: 8),
+          ],
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('Least correctly answered', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 12),
+          ...sortedByHard.take(5).map((id) {
             final q = _questions.firstWhere((x) => x.id == id);
             final st = qStats[id]!;
             final correct = st['correct'] as int;
@@ -652,51 +729,61 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
             final pctDouble = perQuestionRates[id] ?? 0.0;
             final badgeColor = pctDouble >= 80
                 ? Colors.green
-                : (pctDouble <= 40 ? Colors.red : Theme.of(context).colorScheme.primary);
+                : (pctDouble <= 40 ? Colors.red : const Color(0xFF2C3E50));
             return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6.0),
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: Row(children: [
-                Expanded(child: Text(q.prompt, maxLines: 2, overflow: TextOverflow.ellipsis)),
+                Expanded(child: Text(q.prompt, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14))),
                 const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(color: badgeColor.withAlpha((0.12 * 255).round()), borderRadius: BorderRadius.circular(14)),
-                  child: Text('$correct/$total', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: badgeColor, fontWeight: FontWeight.w600)),
+                  child: Text('$correct/$total', style: TextStyle(color: badgeColor, fontWeight: FontWeight.w600, fontSize: 12)),
                 ),
               ]),
             );
-          }).toList(),
-        ),
+          }),
+        ]),
       ),
-      const Divider(),
+
       // High violation items with counts
-      ListTile(
-        title: const Text('High violation items', style: TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: highViolation.take(5).map((id) {
+      Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF5F5F5),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            const BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 8),
+            BoxShadow(color: Colors.black.withAlpha(25), offset: const Offset(4, 4), blurRadius: 8),
+          ],
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('High violation items', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 12),
+          ...highViolation.take(5).map((id) {
             final q = _questions.firstWhere((x) => x.id == id);
             final st = qStats[id]!;
             final viol = st['violations'] as int;
             final total = st['total'] as int;
             final violPct = violationRates[id] ?? 0.0;
-            final badgeColor = violPct >= 50 ? Colors.orange : Theme.of(context).colorScheme.primary;
+            final badgeColor = violPct >= 50 ? Colors.orange : const Color(0xFF2C3E50);
             return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6.0),
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: Row(children: [
-                Expanded(child: Text(q.prompt, maxLines: 2, overflow: TextOverflow.ellipsis)),
+                Expanded(child: Text(q.prompt, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14))),
                 const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(color: badgeColor.withAlpha((0.12 * 255).round()), borderRadius: BorderRadius.circular(14)),
-                  child: Text('$viol/$total', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: badgeColor, fontWeight: FontWeight.bold)),
+                  child: Text('$viol/$total', style: TextStyle(color: badgeColor, fontWeight: FontWeight.bold, fontSize: 12)),
                 ),
               ]),
             );
-          }).toList(),
-        ),
+          }),
+        ]),
       ),
-      const Divider(),
+
       // Visual: Violations vs performance & Time-based patterns
       Builder(builder: (context) {
         // helper to render a labeled progress bar with trailing value
@@ -705,7 +792,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 6.0),
             child: Row(children: [
-              SizedBox(width: 150, child: Text(label, style: Theme.of(context).textTheme.bodySmall)),
+              SizedBox(width: 150, child: Text(label, style: const TextStyle(fontSize: 13, color: Color(0xFF7F8C8D)))),
               const SizedBox(width: 8),
               Expanded(
                 child: SizedBox(
@@ -722,39 +809,73 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
                 ),
               ),
               const SizedBox(width: 8),
-              SizedBox(width: 44, child: Text(value.toStringAsFixed(1), textAlign: TextAlign.right, style: Theme.of(context).textTheme.bodySmall)),
+              SizedBox(width: 44, child: Text(value.toStringAsFixed(1), textAlign: TextAlign.right, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold))),
             ]),
           );
         }
 
         final maxScore = [avgWithViol, avgWithoutViol, avgFastScore, avgSlowScore].fold<double>(0.0, (p, e) => e > p ? e : p);
 
-        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Violations vs performance', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          scoreRow('With violations', avgWithViol, maxScore == 0 ? 1.0 : maxScore, Colors.orange),
-          scoreRow('Without violations', avgWithoutViol, maxScore == 0 ? 1.0 : maxScore, Colors.green),
-          const SizedBox(height: 12),
-          Text('Time-based patterns', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          scoreRow('Fast group (avg)', avgFastScore, maxScore == 0 ? 1.0 : maxScore, Colors.blue),
-          scoreRow('Slow group (avg)', avgSlowScore, maxScore == 0 ? 1.0 : maxScore, Colors.purple),
-        ]);
+        return Container(
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF5F5F5),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              const BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 8),
+              BoxShadow(color: Colors.black.withAlpha(25), offset: const Offset(4, 4), blurRadius: 8),
+            ],
+          ),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('Violations vs performance', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const SizedBox(height: 12),
+            scoreRow('With violations', avgWithViol, maxScore == 0 ? 1.0 : maxScore, Colors.orange),
+            scoreRow('Without violations', avgWithoutViol, maxScore == 0 ? 1.0 : maxScore, Colors.green),
+            const SizedBox(height: 16),
+            const Text('Time-based patterns', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const SizedBox(height: 12),
+            scoreRow('Fast group (avg)', avgFastScore, maxScore == 0 ? 1.0 : maxScore, Colors.blue),
+            scoreRow('Slow group (avg)', avgSlowScore, maxScore == 0 ? 1.0 : maxScore, Colors.purple),
+          ]),
+        );
       }),
-      const Divider(),
-      ListTile(title: const Text('Flagged students (>=3 violations)'), subtitle: Text(flaggedUsers.isEmpty ? 'None' : flaggedUsers.map((u) => _users[u]?.displayName ?? u).join(', '))),
-      ListTile(title: const Text('Frequent app-switchers'), subtitle: Text(frequentAppSwitchers.isEmpty ? 'None' : frequentAppSwitchers.map((u) => _users[u]?.displayName ?? u).join(', '))),
-      const Divider(),
-      ListTile(title: const Text('Overall impact of anti-cheating'), subtitle: Text('${percentFlagged.toStringAsFixed(1)}% of attempts had at least one violation.')),
-      const SizedBox(height: 12),
-      const Text('Notes', style: TextStyle(fontWeight: FontWeight.bold)),
-      const Text('These insights are automated heuristics. Review flagged attempts and context before taking action.'),
+      
+      Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF5F5F5),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            const BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 8),
+            BoxShadow(color: Colors.black.withAlpha(25), offset: const Offset(4, 4), blurRadius: 8),
+          ],
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('Flagged students (>=3 violations)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+          const SizedBox(height: 4),
+          Text(flaggedUsers.isEmpty ? 'None' : flaggedUsers.map((u) => _users[u]?.displayName ?? u).join(', '), style: const TextStyle(color: Color(0xFF7F8C8D), fontSize: 14)),
+          const SizedBox(height: 16),
+          const Text('Frequent app-switchers', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+          const SizedBox(height: 4),
+          Text(frequentAppSwitchers.isEmpty ? 'None' : frequentAppSwitchers.map((u) => _users[u]?.displayName ?? u).join(', '), style: const TextStyle(color: Color(0xFF7F8C8D), fontSize: 14)),
+          const Divider(height: 24),
+          const Text('Overall impact of anti-cheating', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+          const SizedBox(height: 4),
+          Text('${percentFlagged.toStringAsFixed(1)}% of attempts had at least one violation.', style: const TextStyle(color: Color(0xFF7F8C8D), fontSize: 14)),
+          const SizedBox(height: 16),
+          const Text('Notes', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+          const SizedBox(height: 4),
+          const Text('These insights are automated heuristics. Review flagged attempts and context before taking action.', style: TextStyle(color: Color(0xFF7F8C8D), fontStyle: FontStyle.italic, fontSize: 13)),
+        ]),
+      ),
     ]);
   }
 
   // Individual attempts list
   Widget _buildIndividual() {
-    if (_attempts.isEmpty) return const Center(child: Padding(padding: EdgeInsets.all(24.0), child: Text('No attempts')));
+    if (_attempts.isEmpty) return const Center(child: Padding(padding: EdgeInsets.all(24.0), child: Text('No attempts', style: TextStyle(color: Color(0xFF7F8C8D), fontSize: 16))));
 
     return ListView.builder(
       itemCount: _attempts.length,
@@ -762,29 +883,48 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
         final a = _attempts[i];
         final user = _users[a.userId];
         final violations = _violationsByAttempt[a.id] ?? [];
-        return Card(
-          margin: const EdgeInsets.all(8.0),
-          child: ListTile(
-            title: Text(user?.displayName ?? a.userId),
-            subtitle: Text('Score: ${a.score}/${a.totalPoints} — Violations: ${violations.length}'),
-            trailing: IconButton(
-              icon: const Icon(Icons.open_in_new),
+        return Container(
+          margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF5F5F5),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              const BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 8),
+              BoxShadow(color: Colors.black.withAlpha(25), offset: const Offset(4, 4), blurRadius: 8),
+            ],
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(user?.displayName ?? a.userId, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF2C3E50))),
+                    const SizedBox(height: 6),
+                    Text('Score: ${a.score}/${a.totalPoints} • Violations: ${violations.length}', style: const TextStyle(color: Color(0xFF7F8C8D), fontSize: 13)),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.arrow_forward_ios, size: 16, color: Color(0xFF7F8C8D)),
                 onPressed: () async {
-                // show interactive attempt viewer
-                await showDialog(
-                  context: context,
-                  builder: (_) => _AttemptDetailViewer(
-                    attempt: a,
-                    questions: _questions,
-                    violations: violations,
-                    user: user,
-                  ),
-                );
-                // reload after dialog (in case of save)
-                if (!mounted) return;
-                await _loadAll();
-              },
-            ),
+                  // show interactive attempt viewer
+                  await showDialog(
+                    context: context,
+                    builder: (_) => _AttemptDetailViewer(
+                      attempt: a,
+                      questions: _questions,
+                      violations: violations,
+                      user: user,
+                    ),
+                  );
+                  // reload after dialog (in case of save)
+                  if (!mounted) return;
+                  await _loadAll();
+                },
+              ),
+            ],
           ),
         );
       },
@@ -970,48 +1110,79 @@ class _AttemptDetailViewerState extends State<_AttemptDetailViewer> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text('Attempt by ${widget.user?.displayName ?? _attempt.userId}'),
-      content: SizedBox(
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(16),
+      child: Container(
         width: double.maxFinite,
+        constraints: const BoxConstraints(maxWidth: 800, maxHeight: 800),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF5F5F5),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            const BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 8),
+            BoxShadow(color: Colors.black.withAlpha(25), offset: const Offset(4, 4), blurRadius: 8),
+          ],
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(children: [ElevatedButton.icon(onPressed: _recalculate, icon: const Icon(Icons.refresh), label: const Text('Recalculate')), const SizedBox(width: 8), ElevatedButton.icon(onPressed: _saving ? null : _saveChanges, icon: const Icon(Icons.save), label: _saving ? const Text('Saving...') : const Text('Save'))]),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: MediaQuery.of(context).size.height * 0.6,
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  Expanded(child: Text('Attempt by ${widget.user?.displayName ?? _attempt.userId}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2C3E50)))),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Color(0xFF7F8C8D)),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            // Actions
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+              child: Row(
+                children: [
+                  _NeumorphicButton(
+                    onPressed: _recalculate,
+                    icon: Icons.refresh,
+                    label: 'Recalculate',
+                  ),
+                  const SizedBox(width: 12),
+                  _NeumorphicButton(
+                    onPressed: _saving ? null : _saveChanges,
+                    icon: Icons.save,
+                    label: _saving ? 'Saving...' : 'Save',
+                    isPrimary: true,
+                  ),
+                ],
+              ),
+            ),
+            
+            Expanded(
               child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 itemCount: _attempt.answers.length + 1,
                 itemBuilder: (context, i) {
                   if (i == _attempt.answers.length) {
                     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      const SizedBox(height: 24),
+                      const Text('Violations', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF2C3E50))),
                       const SizedBox(height: 12),
-                      const Text('Violations', style: TextStyle(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
                       if (widget.violations.isEmpty)
-                        ListTile(
-                          leading: const Icon(Icons.check_circle_outline, color: Colors.green),
-                          title: const Text('No violations detected'),
-                          subtitle: const Text('This respondent had 0 anti-cheating flags.'),
-                        )
+                        _buildInfoTile(Icons.check_circle_outline, Colors.green, 'No violations detected', 'This respondent had 0 anti-cheating flags.')
                       else
                         for (var v in widget.violations)
-                          ListTile(
-                            leading: const Icon(Icons.warning_amber_rounded, color: Colors.deepOrange),
-                            title: Text(_violationTypeLabel(v.type)),
-                            subtitle: Text(_violationSubtitle(v)),
-                          )
-                      ,
+                          _buildInfoTile(Icons.warning_amber_rounded, Colors.deepOrange, _violationTypeLabel(v.type), _violationSubtitle(v)),
+                      const SizedBox(height: 24),
+                      const Text('Opened apps timeline', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF2C3E50))),
                       const SizedBox(height: 12),
-                      const Text('Opened apps timeline', style: TextStyle(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
                       if ((_attempt.openedApps).isEmpty)
-                        ListTile(
-                          leading: const Icon(Icons.check_circle_outline, color: Colors.green),
-                          title: const Text('No opened apps recorded'),
-                          subtitle: const Text('No app switches were recorded for this attempt.'),
-                        )
+                        _buildInfoTile(Icons.check_circle_outline, Colors.green, 'No opened apps recorded', 'No app switches recorded.')
                       else
                         Column(
                           children: _attempt.openedApps.map((e) {
@@ -1022,13 +1193,10 @@ class _AttemptDetailViewerState extends State<_AttemptDetailViewer> {
                             try {
                               tsFormatted = _formatTimestamp(DateTime.parse(tsRaw));
                             } catch (_) {}
-                            return ListTile(
-                              leading: const Icon(Icons.phone_iphone_outlined),
-                              title: Text(label),
-                              subtitle: Text('$pkg • $tsFormatted'),
-                            );
+                            return _buildInfoTile(Icons.phone_iphone_outlined, const Color(0xFF7F8C8D), label, '$pkg • $tsFormatted');
                           }).toList(),
-                        )
+                        ),
+                      const SizedBox(height: 24),
                     ]);
                   }
 
@@ -1068,21 +1236,43 @@ class _AttemptDetailViewerState extends State<_AttemptDetailViewer> {
                   }
 
                   final respLabel = formatResponse(rawResp, q);
+                  final isCorrect = ans.isCorrect;
+                  final timeLabel = 'Time: ${time}s';
+                  final answeredLabel = answeredAt != null ? ' • ${formatAnsweredAt(answeredAt)}' : '';
 
-                  return ListTile(
-                    title: Text(q?.prompt ?? ans.questionId),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Response: $respLabel'),
-                        Text('Time taken: ${time}s'),
-                        if (answeredAt != null) Text('Answered at: ${formatAnsweredAt(answeredAt)}'),
-                        Text('Status: ${ans.isCorrect ? 'Correct' : 'Incorrect'}'),
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5F5F5),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white.withAlpha(150)),
+                      boxShadow: [
+                        const BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
+                        BoxShadow(color: Colors.black.withAlpha(15), offset: const Offset(2, 2), blurRadius: 4),
                       ],
                     ),
-                    trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                      IconButton(icon: Icon(ans.isCorrect ? Icons.check_circle : Icons.check_circle_outline, color: ans.isCorrect ? Colors.green : null), onPressed: () => _toggleCorrect(i)),
-                    ]),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(q?.prompt ?? ans.questionId, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                              const SizedBox(height: 4),
+                              Text('Response: $respLabel', style: const TextStyle(fontSize: 13, color: Color(0xFF7F8C8D))),
+                              Text('$timeLabel$answeredLabel • ${isCorrect ? 'Correct' : 'Incorrect'}', style: TextStyle(fontSize: 12, color: isCorrect ? Colors.green : Colors.red)),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(isCorrect ? Icons.check_circle : Icons.check_circle_outline, color: isCorrect ? Colors.green : Colors.grey),
+                          onPressed: () => _toggleCorrect(i),
+                          tooltip: 'Toggle correct status',
+                        ),
+                      ],
+                    ),
                   );
                 },
               ),
@@ -1090,7 +1280,67 @@ class _AttemptDetailViewerState extends State<_AttemptDetailViewer> {
           ],
         ),
       ),
-      actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Close'))],
+    );
+  }
+
+  Widget _buildInfoTile(IconData icon, Color iconColor, String title, String subtitle) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: iconColor, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
+                const SizedBox(height: 2),
+                Text(subtitle, style: const TextStyle(fontSize: 12, color: Color(0xFF7F8C8D))),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NeumorphicButton extends StatelessWidget {
+  final VoidCallback? onPressed;
+  final IconData icon;
+  final String label;
+  final bool isPrimary;
+
+  const _NeumorphicButton({required this.onPressed, required this.icon, required this.label, this.isPrimary = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Opacity(
+        opacity: onPressed == null ? 0.5 : 1.0,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            color: isPrimary ? const Color(0xFF2C3E50) : const Color(0xFFF5F5F5),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: onPressed == null ? [] : [
+              const BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 6),
+              BoxShadow(color: Colors.black.withAlpha(25), offset: const Offset(3, 3), blurRadius: 6),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 18, color: isPrimary ? Colors.white : const Color(0xFF2C3E50)),
+              const SizedBox(width: 8),
+              Text(label, style: TextStyle(fontWeight: FontWeight.w600, color: isPrimary ? Colors.white : const Color(0xFF2C3E50))),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
