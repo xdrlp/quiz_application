@@ -216,8 +216,7 @@ class _AuthGateState extends State<AuthGate> {
       try {
         precacheImage(const AssetImage('assets/images/background.png'), context);
         precacheImage(const AssetImage('assets/images/starter_elements.png'), context);
-        precacheImage(const AssetImage('assets/images/login_elements.png'), context);
-        precacheImage(const AssetImage('assets/images/sign_up_elements.png'), context);
+        precacheImage(const AssetImage('assets/images/create_account_button.png'), context);
       } catch (_) {
         // ignore precache failures
       }

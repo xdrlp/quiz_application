@@ -14,11 +14,6 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == uid;
     }
     
-    function isTeacher(uid) {
-      return isAuthenticated() && request.auth.uid == uid && 
-             get(/databases/$(database)/documents/users/$(uid)).data.role == 0;
-    }
-    
     function getUser(uid) {
       return get(/databases/$(database)/documents/users/$(uid)).data;
     }
@@ -141,7 +136,7 @@ service cloud.firestore {
                       (getQuiz(quizId).published && 
                        getQuiz(quizId).classIds.size() == 0) ||
                       (getQuiz(quizId).published && 
-                       any(getQuiz(quizId).classIds, classId, classId in getUser(request.auth.uid).classes)));
+                       hasClassAccess(getQuiz(quizId).classIds)));
       
       // Create: Only quiz creator can add questions
       allow create: if isQuizCreator(quizId) && 
@@ -175,8 +170,8 @@ service cloud.firestore {
                        request.resource.data.userId == resource.data.userId &&
                        request.resource.data.quizId == resource.data.quizId;
       
-      // No deletes (audit trail)
-      allow delete: if false;
+      // Allow delete if quiz creator (for cleanup)
+      allow delete: if isQuizCreator(resource.data.quizId);
     }
 
     // ========== VIOLATIONS COLLECTION ==========
@@ -192,9 +187,23 @@ service cloud.firestore {
                        request.resource.data.type >= 0 &&
                        request.resource.data.type <= 8; // Extended enum range
       
-      // No updates or deletes (immutable audit trail)
+      // No updates (immutable audit trail)
       allow update: if false;
-      allow delete: if false;
+
+      // Allow delete if related to a quiz owned by the user
+      allow delete: if isAuthenticated() && 
+                       isQuizCreator(get(/databases/$(database)/documents/attempts/$(resource.data.attemptId)).data.quizId);
+    }
+
+    // ========== QUIZ BACKUPS COLLECTION ==========
+    match /quiz_backups/{backupId} {
+      // Allow create if backup belongs to a quiz created by the user
+      allow create: if isAuthenticated() && 
+                       request.resource.data.quiz.createdBy == request.auth.uid;
+
+      // Allow read/delete if user owns the backup
+      allow read, delete: if isAuthenticated() && 
+                             resource.data.quiz.createdBy == request.auth.uid;
     }
 
     // ========== DEFAULT DENY ==========

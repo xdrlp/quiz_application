@@ -28,7 +28,8 @@ class TakeQuizPage extends StatefulWidget {
   State<TakeQuizPage> createState() => _TakeQuizPageState();
 }
 
-class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver {
+class _TakeQuizPageState extends State<TakeQuizPage>
+    with WidgetsBindingObserver {
   final FirestoreService _firestore = FirestoreService();
   final AntiCheatService _antiCheat = AntiCheatService();
 
@@ -84,13 +85,17 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
     return value;
   }
 
-  String? _extractSwitchPath(String? details) => _extractDetailValue(details, 'switchPath');
+  String? _extractSwitchPath(String? details) =>
+      _extractDetailValue(details, 'switchPath');
 
-  String? _extractTrigger(String? details) => _extractDetailValue(details, 'trigger');
+  String? _extractTrigger(String? details) =>
+      _extractDetailValue(details, 'trigger');
 
-  String? _extractAccessibilityPath(String? details) => _extractDetailValue(details, 'accessibilityPath');
+  String? _extractAccessibilityPath(String? details) =>
+      _extractDetailValue(details, 'accessibilityPath');
 
-  String? _extractOpenedApps(String? details) => _extractDetailValue(details, 'openedApps');
+  String? _extractOpenedApps(String? details) =>
+      _extractDetailValue(details, 'openedApps');
 
   String _violationMessage(ViolationModel v) {
     switch (v.type) {
@@ -111,8 +116,10 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
           // Fallback to single-package description when openedApps not present
           extras.add('Detected switch to: $target.');
         }
-        if (sequence != null && sequence.isNotEmpty) extras.add('Observed sequence: $sequence.');
-        if (trigger != null && trigger.isNotEmpty) extras.add('Likely action: $trigger.');
+        if (sequence != null && sequence.isNotEmpty)
+          extras.add('Observed sequence: $sequence.');
+        if (trigger != null && trigger.isNotEmpty)
+          extras.add('Likely action: $trigger.');
         if (accessibilityPath != null && accessibilityPath.isNotEmpty) {
           extras.add('Accessibility trace: $accessibilityPath.');
         }
@@ -140,8 +147,16 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Debug: Anti-cheat state'),
-        content: SizedBox(width: double.maxFinite, child: SingleChildScrollView(child: Text(pretty))),
-        actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Close'))],
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(child: Text(pretty)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
       ),
     );
   }
@@ -158,9 +173,11 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
       if (count <= 1) {
         consequence = 'This is a warning. Please remain on the quiz screen.';
       } else if (count == 2) {
-        consequence = 'Second violation: the current question will be flagged as incorrect.';
+        consequence =
+            'Second violation: the current question will be flagged as incorrect.';
       } else {
-        consequence = 'Final violation: your attempt will be automatically submitted.';
+        consequence =
+            'Final violation: your attempt will be automatically submitted.';
       }
       final message = '$base\n\n$consequence';
       await showDialog(
@@ -233,9 +250,14 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Accessibility monitoring required'),
-        content: const Text('To monitor which apps are opened during the quiz, enable the accessibility service for this app, then return here.'),
+        content: const Text(
+          'To monitor which apps are opened during the quiz, enable the accessibility service for this app, then return here.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             child: const Text('Open Settings'),
@@ -253,7 +275,13 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
     await _refreshMonitoringPrereqs();
 
     if (!recheck && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Accessibility service not enabled. Please turn it on and try again.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Accessibility service not enabled. Please turn it on and try again.',
+          ),
+        ),
+      );
     }
 
     return recheck;
@@ -295,6 +323,58 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
       if (mounted) Navigator.of(context).pop();
       return;
     }
+
+    if (quiz.password != null && quiz.password!.isNotEmpty) {
+      // Enforce password for everyone to ensure security and allow creators to test it.
+      if (mounted) {
+        bool authenticated = false;
+        while (!authenticated) {
+          final String? input = await showDialog<String>(
+            context: context,
+            barrierDismissible: false,
+            builder: (ctx) {
+              final ctrl = TextEditingController();
+              return AlertDialog(
+                title: const Text('Password Required'),
+                content: TextField(
+                  controller: ctrl,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    hintText: 'Enter quiz password',
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, null),
+                    child: const Text('Cancel'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(ctx, ctrl.text),
+                    child: const Text('Submit'),
+                  ),
+                ],
+              );
+            },
+          );
+
+          if (input == null) {
+            if (mounted) Navigator.of(context).pop();
+            return;
+          }
+
+          if (input == quiz.password) {
+            authenticated = true;
+          } else {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Incorrect password')),
+              );
+            }
+          }
+        }
+      }
+    }
+
     final qs = await _firestore.getQuizQuestions(widget.quizId);
     setState(() {
       _quizTitle = quiz.title;
@@ -320,10 +400,18 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Usage access required'),
-        content: const Text('To detect app switching, the app needs Usage Access permission. Tap Continue to open system settings, enable the permission for this app, then return to restart the attempt.'),
+        content: const Text(
+          'To detect app switching, the app needs Usage Access permission. Tap Continue to open system settings, enable the permission for this app, then return to restart the attempt.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Continue')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Continue'),
+          ),
         ],
       ),
     );
@@ -341,7 +429,13 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
     }
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Usage Access permission not granted. Please enable it in system settings and then try again.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Usage Access permission not granted. Please enable it in system settings and then try again.',
+          ),
+        ),
+      );
     }
     return false;
   }
@@ -398,7 +492,13 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
 
     _antiCheat.startAntiCheat(id, user.uid);
     // quick confirmation so tester knows monitoring is active
-    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Anti-cheat monitoring enabled'), duration: Duration(seconds: 1)));
+    if (mounted)
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Anti-cheat monitoring enabled'),
+          duration: Duration(seconds: 1),
+        ),
+      );
     await _refreshMonitoringPrereqs();
 
     final quiz = await _firestore.getQuiz(widget.quizId);
@@ -428,58 +528,77 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
     final res = await showDialog<bool>(
       context: context,
       builder: (ctx) {
-        return StatefulBuilder(builder: (ctx, setState) {
-          return AlertDialog(
-            title: const Text('Violation Policy Notice'),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                      'Please read and acknowledge the exam conduct policy before starting. Violations such as collaboration, screen sharing, use of unauthorised resources, or attempting to circumvent monitoring may be detected and penalised.'),
-                  const SizedBox(height: 12),
-                  const Text('If you understand and agree to abide by the policy, check the box below to enable Start.'),
-                  const SizedBox(height: 12),
-                  _monitoringStatusRow('Usage access permission required', _usageAccessGranted == true, () async {
-                    await _openUsageAccessSettings();
-                    await Future.delayed(const Duration(milliseconds: 500));
-                    await _refreshMonitoringPrereqs();
-                    setState(() {});
-                  }),
-                  const SizedBox(height: 6),
-                  _monitoringStatusRow('Accessibility service required', _accessibilityServiceEnabled == true, () async {
-                    await _openAccessibilitySettings();
-                    await Future.delayed(const Duration(milliseconds: 500));
-                    await _refreshMonitoringPrereqs();
-                    setState(() {});
-                  }),
-                  const SizedBox(height: 12),
-                  const Divider(),
-                  const SizedBox(height: 12),
-                  CheckboxListTile(
-                    contentPadding: EdgeInsets.zero,
-                    value: acknowledged,
-                    onChanged: (v) => setState(() => acknowledged = v ?? false),
-                    title: const Text('I have read and agree to the conduct policy'),
-                    controlAffinity: ListTileControlAffinity.leading,
-                  ),
-                ],
+        return StatefulBuilder(
+          builder: (ctx, setState) {
+            return AlertDialog(
+              title: const Text('Violation Policy Notice'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Please read and acknowledge the exam conduct policy before starting. Violations such as collaboration, screen sharing, use of unauthorised resources, or attempting to circumvent monitoring may be detected and penalised.',
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'If you understand and agree to abide by the policy, check the box below to enable Start.',
+                    ),
+                    const SizedBox(height: 12),
+                    _monitoringStatusRow(
+                      'Usage access permission required',
+                      _usageAccessGranted == true,
+                      () async {
+                        await _openUsageAccessSettings();
+                        await Future.delayed(const Duration(milliseconds: 500));
+                        await _refreshMonitoringPrereqs();
+                        setState(() {});
+                      },
+                    ),
+                    const SizedBox(height: 6),
+                    _monitoringStatusRow(
+                      'Accessibility service required',
+                      _accessibilityServiceEnabled == true,
+                      () async {
+                        await _openAccessibilitySettings();
+                        await Future.delayed(const Duration(milliseconds: 500));
+                        await _refreshMonitoringPrereqs();
+                        setState(() {});
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    const Divider(),
+                    const SizedBox(height: 12),
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: acknowledged,
+                      onChanged: (v) =>
+                          setState(() => acknowledged = v ?? false),
+                      title: const Text(
+                        'I have read and agree to the conduct policy',
+                      ),
+                      controlAffinity: ListTileControlAffinity.leading,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            actions: [
-              TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-              ElevatedButton(
-                onPressed: acknowledged
-                    ? () {
-                        Navigator.of(ctx).pop(true);
-                      }
-                    : null,
-                child: const Text('Start Attempt'),
-              ),
-            ],
-          );
-        });
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: acknowledged
+                      ? () {
+                          Navigator.of(ctx).pop(true);
+                        }
+                      : null,
+                  child: const Text('Start Attempt'),
+                ),
+              ],
+            );
+          },
+        );
       },
     );
 
@@ -500,7 +619,9 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
     if (state == AppLifecycleState.resumed) {
       _refreshMonitoringPrereqs();
     }
-    if (state == AppLifecycleState.resumed && _pendingViolations.isNotEmpty && mounted) {
+    if (state == AppLifecycleState.resumed &&
+        _pendingViolations.isNotEmpty &&
+        mounted) {
       // Consolidate pending violations into a single alert to avoid spamming the user.
       final toShow = List<ViolationModel>.from(_pendingViolations);
       _pendingViolations.clear();
@@ -524,7 +645,8 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
       }
       final parts = counts.entries.map((e) => '${e.value}× ${e.key}').toList();
       final summary = parts.join(', ');
-      var message = 'Detected ${list.length} anti-cheat event(s): $summary. Please remain on the quiz screen.';
+      var message =
+          'Detected ${list.length} anti-cheat event(s): $summary. Please remain on the quiz screen.';
       final switchedTargets = list
           .map((v) => _extractSwitchedToApp(v.details))
           .whereType<String>()
@@ -571,7 +693,10 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
           title: const Text('Policy notice'),
           content: Text(message),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Continue')),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Continue'),
+            ),
           ],
         ),
       );
@@ -586,14 +711,23 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
     }
   }
 
-  Widget _monitoringStatusRow(String label, bool ready, Future<void> Function()? onPressed) {
+  Widget _monitoringStatusRow(
+    String label,
+    bool ready,
+    Future<void> Function()? onPressed,
+  ) {
     final icon = ready ? Icons.check_circle : Icons.warning_amber_outlined;
     final color = ready ? Colors.green : Colors.orange;
     return Row(
       children: [
         Icon(icon, color: color, size: 20),
         const SizedBox(width: 8),
-        Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold))),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
         if (!ready)
           TextButton(
             onPressed: onPressed == null
@@ -630,15 +764,25 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
               ],
             ),
             const SizedBox(height: 8),
-            const Text('Usage access and accessibility monitoring must be enabled before starting the quiz.'),
+            const Text(
+              'Usage access and accessibility monitoring must be enabled before starting the quiz.',
+            ),
             const SizedBox(height: 12),
-            _monitoringStatusRow('Usage access permission', usageReady, () async {
-              await _openUsageAccessSettings();
-            }),
+            _monitoringStatusRow(
+              'Usage access permission',
+              usageReady,
+              () async {
+                await _openUsageAccessSettings();
+              },
+            ),
             const SizedBox(height: 6),
-            _monitoringStatusRow('Accessibility service', accessibilityReady, () async {
-              await _openAccessibilitySettings();
-            }),
+            _monitoringStatusRow(
+              'Accessibility service',
+              accessibilityReady,
+              () async {
+                await _openAccessibilitySettings();
+              },
+            ),
           ],
         ),
       ),
@@ -660,12 +804,15 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
   void _syncTextControllerToCurrentQuestion() {
     if (_questions.isEmpty) return;
     final q = _questions[_currentQuestionIndex];
-    if (q.type == QuestionType.shortAnswer || q.type == QuestionType.paragraph) {
+    if (q.type == QuestionType.shortAnswer ||
+        q.type == QuestionType.paragraph) {
       final text = _answers[q.id] ?? '';
       // avoid reassigning if same text to reduce cursor jumps
       if (_textController.text != text) {
         _textController.text = text;
-        _textController.selection = TextSelection.fromPosition(TextPosition(offset: _textController.text.length));
+        _textController.selection = TextSelection.fromPosition(
+          TextPosition(offset: _textController.text.length),
+        );
       }
     } else {
       // clear controller when not a text-type question to avoid visual carryover
@@ -689,9 +836,12 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
     final q = _questions[_currentQuestionIndex];
     final qid = q.id;
     final now = DateTime.now();
-    final duration = _questionStartTime != null ? now.difference(_questionStartTime!).inSeconds : 0;
+    final duration = _questionStartTime != null
+        ? now.difference(_questionStartTime!).inSeconds
+        : 0;
 
-    if (q.type == QuestionType.multipleChoice || q.type == QuestionType.dropdown) {
+    if (q.type == QuestionType.multipleChoice ||
+        q.type == QuestionType.dropdown) {
       // already recorded in _answerSingle
       return;
     }
@@ -710,12 +860,16 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
       timeTakenSeconds: duration,
       answeredAt: now,
       isCorrect: false,
-      forceIncorrect: (existing?.forceIncorrect ?? false) || _flaggedQuestionIds.contains(qid),
+      forceIncorrect:
+          (existing?.forceIncorrect ?? false) ||
+          _flaggedQuestionIds.contains(qid),
     );
     _answerModels[qid] = model;
     // debug: log each write to answer models for diagnostics
     // ignore: avoid_print
-    print('[TakeQuizPage] _recordCurrentAnswerIfNeeded wrote for qid=$qid model=$model flagged=${_flaggedQuestionIds.contains(qid)}');
+    print(
+      '[TakeQuizPage] _recordCurrentAnswerIfNeeded wrote for qid=$qid model=$model flagged=${_flaggedQuestionIds.contains(qid)}',
+    );
   }
 
   // Previously used a MaterialBanner for violations. We now present a single
@@ -734,7 +888,9 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
     if (_flaggedQuestionIds.contains(qid)) return false;
 
     final now = DateTime.now();
-    final duration = _questionStartTime != null ? now.difference(_questionStartTime!).inSeconds : 0;
+    final duration = _questionStartTime != null
+        ? now.difference(_questionStartTime!).inSeconds
+        : 0;
 
     String userResp = '';
     if (q.type == QuestionType.checkbox) {
@@ -758,13 +914,17 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
     });
     // debug: log the penalized model for diagnostics
     // ignore: avoid_print
-    print('[TakeQuizPage] _flagCurrentQuestionIncorrect applied for qid=$qid penalized=$penalized');
+    print(
+      '[TakeQuizPage] _flagCurrentQuestionIncorrect applied for qid=$qid penalized=$penalized',
+    );
     // ignore: avoid_print
     print('[TakeQuizPage] flagged set now=${_flaggedQuestionIds.toList()}');
     // persist flagged id to Firestore so server-side record exists (best-effort)
     try {
       if (_attemptId != null) {
-        _firestore.patchAttempt(_attemptId!, {'flaggedQuestionIds': FieldValue.arrayUnion([qid])});
+        _firestore.patchAttempt(_attemptId!, {
+          'flaggedQuestionIds': FieldValue.arrayUnion([qid]),
+        });
       }
     } catch (e) {
       // ignore persistence failures
@@ -787,7 +947,15 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
     if (count == 2) {
       final flagged = _flagCurrentQuestionIncorrect();
       if (flagged && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Current question flagged as incorrect due to policy violation'), backgroundColor: Colors.red, duration: Duration(seconds: 3)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Current question flagged as incorrect due to policy violation',
+            ),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
         // advance the user automatically so they can't change the flagged answer
         Future.microtask(() {
           if (mounted) _nextQuestion();
@@ -799,7 +967,15 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
     // ensure current question is flagged as incorrect as well
     final flagged = _flagCurrentQuestionIncorrect();
     if (flagged && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Current question flagged as incorrect due to policy violation'), backgroundColor: Colors.red, duration: Duration(seconds: 2)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Current question flagged as incorrect due to policy violation',
+          ),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 2),
+        ),
+      );
     }
     // small delay so the snackbar/changes have a moment to settle
     Future.delayed(const Duration(milliseconds: 300), () {
@@ -833,7 +1009,9 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
     }
     _answers[qid] = choiceId;
     final now = DateTime.now();
-    final duration = _questionStartTime != null ? now.difference(_questionStartTime!).inSeconds : 0;
+    final duration = _questionStartTime != null
+        ? now.difference(_questionStartTime!).inSeconds
+        : 0;
     final existing = _answerModels[qid];
     _answerModels[qid] = AttemptAnswerModel(
       questionId: qid,
@@ -841,11 +1019,15 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
       timeTakenSeconds: duration,
       answeredAt: now,
       isCorrect: false,
-      forceIncorrect: (existing?.forceIncorrect ?? false) || _flaggedQuestionIds.contains(qid),
+      forceIncorrect:
+          (existing?.forceIncorrect ?? false) ||
+          _flaggedQuestionIds.contains(qid),
     );
     // debug: log each write to answer models for diagnostics
     // ignore: avoid_print
-    print('[TakeQuizPage] _answerSingle wrote for qid=$qid model=${_answerModels[qid]} flagged=${_flaggedQuestionIds.contains(qid)}');
+    print(
+      '[TakeQuizPage] _answerSingle wrote for qid=$qid model=${_answerModels[qid]} flagged=${_flaggedQuestionIds.contains(qid)}',
+    );
     _antiCheat.onQuestionAnswered();
     Future.microtask(() {
       if (mounted) _nextQuestion();
@@ -862,8 +1044,6 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
     _answers[qid] = text;
     _antiCheat.onQuestionAnswered();
   }
-
-  
 
   Future<void> _submitAttempt() async {
     if (_attemptId == null) return;
@@ -888,13 +1068,20 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
       if (q.type == QuestionType.checkbox) {
         final expected = q.correctAnswers.toSet();
         final actual = (_multiAnswers[qid] ?? []).toSet();
-        correct = expected.length == actual.length && expected.difference(actual).isEmpty;
-      } else if (q.type == QuestionType.multipleChoice || q.type == QuestionType.dropdown) {
-        if (q.correctAnswers.isNotEmpty) correct = userResp == q.correctAnswers.first;
-      } else if (q.type == QuestionType.shortAnswer || q.type == QuestionType.paragraph) {
+        correct =
+            expected.length == actual.length &&
+            expected.difference(actual).isEmpty;
+      } else if (q.type == QuestionType.multipleChoice ||
+          q.type == QuestionType.dropdown) {
+        if (q.correctAnswers.isNotEmpty)
+          correct = userResp == q.correctAnswers.first;
+      } else if (q.type == QuestionType.shortAnswer ||
+          q.type == QuestionType.paragraph) {
         if (q.correctAnswers.isNotEmpty) {
           final normUser = normalizeAnswerForComparison(userResp);
-          final normCorrect = normalizeAnswerForComparison(q.correctAnswers.first);
+          final normCorrect = normalizeAnswerForComparison(
+            q.correctAnswers.first,
+          );
           correct = normUser == normCorrect;
         }
       }
@@ -906,32 +1093,42 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
         // respect that and do not allow recomputing it as correct. Also
         // consult the independent flagged set to ensure flagging survives
         // intermediate overwrites.
-        final isForced = existing.forceIncorrect || _flaggedQuestionIds.contains(qid);
+        final isForced =
+            existing.forceIncorrect || _flaggedQuestionIds.contains(qid);
         if (isForced) {
-          answersList.add(existing.copyWith(isCorrect: false, forceIncorrect: true));
+          answersList.add(
+            existing.copyWith(isCorrect: false, forceIncorrect: true),
+          );
         } else {
           answersList.add(existing.copyWith(isCorrect: correct));
         }
         // debug: log final answer entry for this question
         // ignore: avoid_print
-        print('[TakeQuizPage] _submitAttempt using existing for qid=$qid entry=${answersList.last} forceIncorrect=$isForced correctComputed=$correct');
+        print(
+          '[TakeQuizPage] _submitAttempt using existing for qid=$qid entry=${answersList.last} forceIncorrect=$isForced correctComputed=$correct',
+        );
       } else {
         final wasFlagged = _flaggedQuestionIds.contains(qid);
-        answersList.add(AttemptAnswerModel(
-          questionId: qid,
-          selectedChoiceId: userResp,
-          timeTakenSeconds: 0,
-          answeredAt: null,
-          isCorrect: wasFlagged ? false : correct,
-          forceIncorrect: wasFlagged,
-        ));
+        answersList.add(
+          AttemptAnswerModel(
+            questionId: qid,
+            selectedChoiceId: userResp,
+            timeTakenSeconds: 0,
+            answeredAt: null,
+            isCorrect: wasFlagged ? false : correct,
+            forceIncorrect: wasFlagged,
+          ),
+        );
       }
     }
 
     final attempt = AttemptModel(
       id: _attemptId!,
       quizId: widget.quizId,
-      userId: Provider.of<AuthProvider>(context, listen: false).currentUser!.uid,
+      userId: Provider.of<AuthProvider>(
+        context,
+        listen: false,
+      ).currentUser!.uid,
       startedAt: _attemptStartedAt ?? DateTime.now(),
       submittedAt: DateTime.now(),
       score: score,
@@ -955,22 +1152,25 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
           title: const Text('Submitted'),
           content: Text('Score: ${attempt.score}/${attempt.totalPoints}'),
           actions: [
-            TextButton(onPressed: () {
-              if (!mounted) return;
-              Navigator.of(context).popUntil((r) => r.isFirst);
-            }, child: const Text('OK')),
+            TextButton(
+              onPressed: () {
+                if (!mounted) return;
+                Navigator.of(context).popUntil((r) => r.isFirst);
+              },
+              child: const Text('OK'),
+            ),
           ],
         ),
       );
+    }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final newSize = MediaQuery.of(context).size;
-      if (_attemptId != null && (_reportedScreenSize == null || _reportedScreenSize != newSize)) {
+      if (_attemptId != null &&
+          (_reportedScreenSize == null || _reportedScreenSize != newSize)) {
         _reportedScreenSize = newSize;
         _antiCheat.onScreenSizeChanged(newSize);
       }
@@ -980,7 +1180,13 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
       appBar: AppBar(
         title: Text(_quizTitle ?? 'Quiz Guard'),
         actions: kDebugMode
-            ? [IconButton(icon: const Icon(Icons.bug_report), onPressed: _showDebugInfoDialog, tooltip: 'Debug state')]
+            ? [
+                IconButton(
+                  icon: const Icon(Icons.bug_report),
+                  onPressed: _showDebugInfoDialog,
+                  tooltip: 'Debug state',
+                ),
+              ]
             : null,
       ),
       body: _loading
@@ -989,8 +1195,10 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
               padding: const EdgeInsets.all(12.0),
               child: Column(
                 children: [
-                  if (_remainingSeconds != null) Text('Time left: ${_formatRemaining(_remainingSeconds!)}'),
-                  if ((_usageAccessGranted ?? false) == false || (_accessibilityServiceEnabled ?? false) == false)
+                  if (_remainingSeconds != null)
+                    Text('Time left: ${_formatRemaining(_remainingSeconds!)}'),
+                  if ((_usageAccessGranted ?? false) == false ||
+                      (_accessibilityServiceEnabled ?? false) == false)
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 12.0),
                       child: _buildMonitoringBanner(),
@@ -998,114 +1206,234 @@ class _TakeQuizPageState extends State<TakeQuizPage> with WidgetsBindingObserver
                   Expanded(
                     child: _questions.isEmpty
                         ? const SizedBox.shrink()
-                        : Builder(builder: (context) {
-                            final q = _questions[_currentQuestionIndex];
-                            final started = _attemptId != null;
-                            return Stack(
-                              children: [
-                                // The interactive content; blocked by IgnorePointer when not started
-                                IgnorePointer(
-                                  ignoring: !started,
-                                  child: Opacity(
-                                    opacity: started ? 1.0 : 0.95,
-                                    child: Card(
-                                      margin: const EdgeInsets.symmetric(vertical: 8),
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(12.0),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text('Question ${_currentQuestionIndex + 1} of ${_questions.length}', style: const TextStyle(color: Colors.grey)),
-                                            const SizedBox(height: 6),
-                                            Text(q.prompt, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                            const SizedBox(height: 8),
-                                            if (q.type == QuestionType.multipleChoice || q.type == QuestionType.dropdown)
-                                              Column(
-                                                children: q.choices.map((c) {
-                                                  final selected = _answers[q.id] == c.id;
-                                                  final locked = _lockedQuestionIds.contains(q.id);
-                                                  return ListTile(
-                                                    title: Text(c.text),
-                                                    leading: IconButton(
-                                                      icon: Icon(selected ? Icons.radio_button_checked : Icons.radio_button_unchecked),
-                                                      onPressed: locked ? null : () => _answerSingle(q.id, c.id),
-                                                    ),
-                                                    onTap: locked ? null : () => _answerSingle(q.id, c.id),
-                                                  );
-                                                }).toList(),
-                                              ),
-                                            if (q.type == QuestionType.checkbox)
-                                              Column(
-                                                children: q.choices.map((c) {
-                                                  final locked = _lockedQuestionIds.contains(q.id);
-                                                  return CheckboxListTile(
-                                                    title: Text(c.text),
-                                                    value: (_multiAnswers[q.id] ?? []).contains(c.id),
-                                                    onChanged: locked ? null : (v) => _answerCheckbox(q.id, c.id, v ?? false),
-                                                  );
-                                                }).toList(),
-                                              ),
-                                            if (q.type == QuestionType.shortAnswer || q.type == QuestionType.paragraph)
-                                              TextField(
-                                                controller: _textController,
-                                                onChanged: (v) => _answerText(q.id, v),
-                                                readOnly: _lockedQuestionIds.contains(q.id),
-                                                keyboardType: TextInputType.multiline,
-                                                textInputAction: TextInputAction.newline,
-                                                minLines: q.type == QuestionType.paragraph ? 3 : 1,
-                                                maxLines: q.type == QuestionType.paragraph ? null : 1,
-                                                decoration: InputDecoration(
-                                                    border: const OutlineInputBorder(),
-                                                    suffix: _lockedQuestionIds.contains(q.id) ? const Text('Flagged') : null),
-                                              ),
-                                            
-
-                                            const SizedBox(height: 12),
-                                            if (q.type == QuestionType.checkbox || q.type == QuestionType.shortAnswer || q.type == QuestionType.paragraph)
-                                              Row(
-                                                mainAxisAlignment: MainAxisAlignment.end,
-                                                children: [
-                                                  ElevatedButton(
-                                                    onPressed: () {
-                                                      final ok = (q.type == QuestionType.checkbox && (_multiAnswers[q.id] ?? []).isNotEmpty) ||
-                                                          ((q.type == QuestionType.shortAnswer || q.type == QuestionType.paragraph) && (_answers[q.id] ?? '').trim().isNotEmpty);
-                                                      if (ok) {
-                                                        _recordCurrentAnswerIfNeeded();
-                                                        _nextQuestion();
-                                                      }
-                                                    },
-                                                    child: Text(_currentQuestionIndex + 1 < _questions.length ? 'Next' : 'Submit'),
-                                                  ),
-                                                ],
-                                              ),
-                                          ],
+                        : Builder(
+                            builder: (context) {
+                              final q = _questions[_currentQuestionIndex];
+                              final started = _attemptId != null;
+                              return Stack(
+                                children: [
+                                  // The interactive content; blocked by IgnorePointer when not started
+                                  IgnorePointer(
+                                    ignoring: !started,
+                                    child: Opacity(
+                                      opacity: started ? 1.0 : 0.95,
+                                      child: Card(
+                                        margin: const EdgeInsets.symmetric(
+                                          vertical: 8,
                                         ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(12.0),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Question ${_currentQuestionIndex + 1} of ${_questions.length}',
+                                                style: const TextStyle(
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 6),
+                                              Text(
+                                                q.prompt,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 8),
+                                              if (q.type ==
+                                                      QuestionType
+                                                          .multipleChoice ||
+                                                  q.type ==
+                                                      QuestionType.dropdown)
+                                                Column(
+                                                  children: q.choices.map((c) {
+                                                    final selected =
+                                                        _answers[q.id] == c.id;
+                                                    final locked =
+                                                        _lockedQuestionIds
+                                                            .contains(q.id);
+                                                    return ListTile(
+                                                      title: Text(c.text),
+                                                      leading: IconButton(
+                                                        icon: Icon(
+                                                          selected
+                                                              ? Icons
+                                                                    .radio_button_checked
+                                                              : Icons
+                                                                    .radio_button_unchecked,
+                                                        ),
+                                                        onPressed: locked
+                                                            ? null
+                                                            : () =>
+                                                                  _answerSingle(
+                                                                    q.id,
+                                                                    c.id,
+                                                                  ),
+                                                      ),
+                                                      onTap: locked
+                                                          ? null
+                                                          : () => _answerSingle(
+                                                              q.id,
+                                                              c.id,
+                                                            ),
+                                                    );
+                                                  }).toList(),
+                                                ),
+                                              if (q.type ==
+                                                  QuestionType.checkbox)
+                                                Column(
+                                                  children: q.choices.map((c) {
+                                                    final locked =
+                                                        _lockedQuestionIds
+                                                            .contains(q.id);
+                                                    return CheckboxListTile(
+                                                      title: Text(c.text),
+                                                      value:
+                                                          (_multiAnswers[q
+                                                                      .id] ??
+                                                                  [])
+                                                              .contains(c.id),
+                                                      onChanged: locked
+                                                          ? null
+                                                          : (v) =>
+                                                                _answerCheckbox(
+                                                                  q.id,
+                                                                  c.id,
+                                                                  v ?? false,
+                                                                ),
+                                                    );
+                                                  }).toList(),
+                                                ),
+                                              if (q.type ==
+                                                      QuestionType
+                                                          .shortAnswer ||
+                                                  q.type ==
+                                                      QuestionType.paragraph)
+                                                TextField(
+                                                  controller: _textController,
+                                                  onChanged: (v) =>
+                                                      _answerText(q.id, v),
+                                                  readOnly: _lockedQuestionIds
+                                                      .contains(q.id),
+                                                  keyboardType:
+                                                      TextInputType.multiline,
+                                                  textInputAction:
+                                                      TextInputAction.newline,
+                                                  minLines:
+                                                      q.type ==
+                                                          QuestionType.paragraph
+                                                      ? 3
+                                                      : 1,
+                                                  maxLines:
+                                                      q.type ==
+                                                          QuestionType.paragraph
+                                                      ? null
+                                                      : 1,
+                                                  decoration: InputDecoration(
+                                                    border:
+                                                        const OutlineInputBorder(),
+                                                    suffix:
+                                                        _lockedQuestionIds
+                                                            .contains(q.id)
+                                                        ? const Text('Flagged')
+                                                        : null,
+                                                  ),
+                                                ),
 
-                                // Overlay when not started: blurred and with centered Start button
-                                if (!started)
-                                  Positioned.fill(
-                                    child: ClipRect(
-                                      child: BackdropFilter(
-                                        filter: ImageFilter.blur(sigmaX: 4.0, sigmaY: 4.0),
-                                        child: Container(
-                                          color: const Color.fromRGBO(0, 0, 0, 0.25),
-                                          alignment: Alignment.center,
-                                          child: ElevatedButton(
-                                            style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12)),
-                                            onPressed: _confirmStartAttempt,
-                                            child: const Text('Start Attempt'),
+                                              const SizedBox(height: 12),
+                                              if (q.type ==
+                                                      QuestionType.checkbox ||
+                                                  q.type ==
+                                                      QuestionType
+                                                          .shortAnswer ||
+                                                  q.type ==
+                                                      QuestionType.paragraph)
+                                                Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.end,
+                                                  children: [
+                                                    ElevatedButton(
+                                                      onPressed: () {
+                                                        final ok =
+                                                            (q.type ==
+                                                                    QuestionType
+                                                                        .checkbox &&
+                                                                (_multiAnswers[q
+                                                                            .id] ??
+                                                                        [])
+                                                                    .isNotEmpty) ||
+                                                            ((q.type ==
+                                                                        QuestionType
+                                                                            .shortAnswer ||
+                                                                    q.type ==
+                                                                        QuestionType
+                                                                            .paragraph) &&
+                                                                (_answers[q.id] ??
+                                                                        '')
+                                                                    .trim()
+                                                                    .isNotEmpty);
+                                                        if (ok) {
+                                                          _recordCurrentAnswerIfNeeded();
+                                                          _nextQuestion();
+                                                        }
+                                                      },
+                                                      child: Text(
+                                                        _currentQuestionIndex +
+                                                                    1 <
+                                                                _questions
+                                                                    .length
+                                                            ? 'Next'
+                                                            : 'Submit',
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                            ],
                                           ),
                                         ),
                                       ),
                                     ),
                                   ),
-                              ],
-                            );
-                          }),
+
+                                  // Overlay when not started: blurred and with centered Start button
+                                  if (!started)
+                                    Positioned.fill(
+                                      child: ClipRect(
+                                        child: BackdropFilter(
+                                          filter: ImageFilter.blur(
+                                            sigmaX: 4.0,
+                                            sigmaY: 4.0,
+                                          ),
+                                          child: Container(
+                                            color: const Color.fromRGBO(
+                                              0,
+                                              0,
+                                              0,
+                                              0.25,
+                                            ),
+                                            alignment: Alignment.center,
+                                            child: ElevatedButton(
+                                              style: ElevatedButton.styleFrom(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 24,
+                                                      vertical: 12,
+                                                    ),
+                                              ),
+                                              onPressed: _confirmStartAttempt,
+                                              child: const Text(
+                                                'Start Attempt',
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              );
+                            },
+                          ),
                   ),
                 ],
               ),

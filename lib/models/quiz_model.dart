@@ -16,6 +16,7 @@ class QuizModel {
   final DateTime createdAt;
   final DateTime? updatedAt;
   final int totalQuestions;
+  final String? password; // Optional password for accessing the quiz
 
   QuizModel({
     required this.id,
@@ -33,6 +34,7 @@ class QuizModel {
     required this.createdAt,
     this.updatedAt,
     this.totalQuestions = 0,
+    this.password,
   });
 
   factory QuizModel.fromFirestore(DocumentSnapshot doc) {
@@ -53,6 +55,7 @@ class QuizModel {
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
       totalQuestions: data['totalQuestions'] ?? 0,
+      password: data['password'],
     );
   }
 
@@ -72,6 +75,7 @@ class QuizModel {
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt ?? DateTime.now()),
       'totalQuestions': totalQuestions,
+      'password': password,
     };
   }
 
@@ -91,6 +95,7 @@ class QuizModel {
     DateTime? createdAt,
     DateTime? updatedAt,
     int? totalQuestions,
+    String? password,
   }) {
     return QuizModel(
       id: id ?? this.id,
@@ -108,6 +113,7 @@ class QuizModel {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       totalQuestions: totalQuestions ?? this.totalQuestions,
+      password: password ?? this.password,
     );
   }
 }

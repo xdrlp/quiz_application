@@ -33,8 +33,11 @@ class _SnackBarTimerState extends State<_SnackBarTimer> {
   @override
   void initState() {
     super.initState();
+    _ticker = Ticker(_onTick);
     _updateProgress();
-    _ticker = Ticker(_onTick)..start();
+    if (_progress < 1.0) {
+      _ticker.start();
+    }
   }
 
   void _onTick(Duration _) => _updateProgress();

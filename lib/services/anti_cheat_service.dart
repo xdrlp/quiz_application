@@ -60,7 +60,7 @@ class AntiCheatService {
   final Map<String, String> _appLabelCache = {};
   final Set<String> _appLabelMisses = {};
 
-  static const Duration _violationDebounce = Duration(seconds: 2);
+  static const Duration _violationDebounce = Duration(seconds: 4);
 
   // Minimum time the app must be backgrounded before counting as an app-switch
   // violation. Short blips (e.g., system overlays or quick sidebars) are
@@ -246,10 +246,19 @@ class AntiCheatService {
           ViolationType.appSwitch,
           'App was backgrounded for ${backgrounded.inSeconds}s during quiz',
           backgroundSince: pauseStarted,
+          incrementCount: false,
         );
         // ignore: avoid_print
         print('[AntiCheat] detected app resumed (backgrounded ${backgrounded.inMilliseconds}ms) - counted as appSwitch');
       } else {
+        // Log transient resumes as non-incrementing violations to shield against
+        // immediate subsequent violations (like screen resize) caused by the restore animation.
+        _logViolation(
+             ViolationType.appSwitch,
+             'App resumed (transient, backgrounded ${backgrounded.inMilliseconds}ms)',
+             backgroundSince: pauseStarted,
+             incrementCount: false,
+        );
         // ignore: avoid_print
         print('[AntiCheat] detected app resumed after ${backgrounded.inMilliseconds}ms - ignored as transient');
       }
@@ -537,7 +546,7 @@ class AntiCheatService {
   }
 
   // Log violation to Firestore
-  void _logViolation(ViolationType type, String details, {DateTime? backgroundSince, bool captureTimeline = true}) async {
+  void _logViolation(ViolationType type, String details, {DateTime? backgroundSince, bool captureTimeline = true, bool incrementCount = true}) async {
     if (_currentAttemptId == null || _currentUserId == null) return;
 
     // Debounce duplicate rapid violations of the same type. If a violation of
@@ -545,19 +554,27 @@ class AntiCheatService {
     // inflating the violation count from lifecycle noise (pause/resume pairs,
     // transient onHide/onPause pairs, etc.).
     final now = DateTime.now();
-    if (_lastViolationType == type && _lastViolationAt != null && now.difference(_lastViolationAt!) < _violationDebounce) {
+    // Use a global debounce for all violation types to prevent cascading violations
+    // (e.g., AppSwitch triggers ScreenResize). If any violation occurred recently,
+    // we don't increment the count again, but we still log it for diagnostics.
+    bool shouldIncrement = incrementCount;
+    if (_lastViolationAt != null && now.difference(_lastViolationAt!) < _violationDebounce) {
       // ignore: avoid_print
-      print('[AntiCheat] Ignoring duplicate violation of type=$type within debounce window');
-      return;
+      print('[AntiCheat] Debouncing violation of type=$type (too close to previous)');
+      shouldIncrement = false;
     }
+    
+    // Always update timestamp so a continuous stream of violations forms a single "event"
     _lastViolationAt = now;
     _lastViolationType = type;
 
-    _violationCount++;
+    if (shouldIncrement) {
+      _violationCount++;
+    }
 
     // Debug log
     // ignore: avoid_print
-    print('[AntiCheat] _logViolation type=$type count=$_violationCount details=$details');
+    print('[AntiCheat] _logViolation type=$type count=$_violationCount (inc=$shouldIncrement) details=$details');
 
     var augmentedDetails = details;
     if (type == ViolationType.appSwitch) {
@@ -700,11 +717,14 @@ class AntiCheatService {
 
     // Notify any UI listener about this violation so it can show an in-app warning.
     // Call the UI callback immediately (don't wait for Firestore) so the app
-    // can react in real-time even if network is slow or unavailable.
-    try {
-      onViolation?.call(violation);
-    } catch (_) {
-      // Swallow UI callback errors; they should be handled by the caller.
+    // Only notify UI if this is a "meaningful" violation (one that increments count).
+    // This prevents showing duplicate alerts for debounced or transient logic events.
+    if (shouldIncrement) {
+      try {
+        onViolation?.call(violation);
+      } catch (_) {
+        // Swallow UI callback errors; they should be handled by the caller.
+      }
     }
 
     // Log to Firestore asynchronously; don't block the UI notification.

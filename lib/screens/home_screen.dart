@@ -75,7 +75,9 @@ class _HomeScreenState extends State<HomeScreen> {
           // Load user quizzes once
           if (!_loaded && authProvider.currentUser != null) {
             _loaded = true;
-            quizProvider.loadUserQuizzes(authProvider.currentUser!.uid);
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              quizProvider.loadUserQuizzes(authProvider.currentUser!.uid);
+            });
           }
 
           final userName = authProvider.currentUser?.displayName ?? 'there';

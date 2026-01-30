@@ -1,8 +1,32 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:quiz_application/providers/auth_provider.dart';
+
+class _GradientPainter extends CustomPainter {
+  final double radius;
+  final double strokeWidth;
+  final Gradient gradient;
+
+  _GradientPainter({
+    required this.gradient,
+    required this.radius,
+    required this.strokeWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Rect rect = Rect.fromLTWH(strokeWidth / 2, strokeWidth / 2, size.width - strokeWidth, size.height - strokeWidth);
+    final RRect rRect = RRect.fromRectAndRadius(rect, Radius.circular(radius));
+    final Paint paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..shader = gradient.createShader(rect);
+    canvas.drawRRect(rRect, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => true;
+}
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -13,78 +37,33 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen> {
   final _emailController = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
-  double _prevBottomInset = 0.0;
   final _firstController = TextEditingController();
   final _lastController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
-  // Focus nodes and keys for ensuring visibility of fields when keyboard opens
-  final FocusNode _emailFocus = FocusNode();
-  final FocusNode _firstFocus = FocusNode();
-  final FocusNode _lastFocus = FocusNode();
-  final FocusNode _passwordFocus = FocusNode();
-  final FocusNode _confirmFocus = FocusNode();
 
-  final GlobalKey _emailKey = GlobalKey();
-  final GlobalKey _firstKey = GlobalKey();
-  final GlobalKey _lastKey = GlobalKey();
-  final GlobalKey _passwordKey = GlobalKey();
-  final GlobalKey _confirmKey = GlobalKey();
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    _emailController.dispose();
-    _firstController.dispose();
-    _lastController.dispose();
-    _passwordController.dispose();
-    _confirmController.dispose();
-    _emailFocus.dispose();
-    _firstFocus.dispose();
-    _lastFocus.dispose();
-    _passwordFocus.dispose();
-    _confirmFocus.dispose();
-    super.dispose();
-  }
   bool _passwordVisible = false;
-  // Tweakable constants for overlay scaling and input positioning
-  final double _overlayScale = 1.1; // 1.0 = native 1920x1080 scale; increase to make art larger
   bool _confirmPasswordVisible = false;
-  static final RegExp _nameRegExp = RegExp(r"^[A-Za-zÀ-ÖØ-öø-ÿ' -]+$");
   bool _isCreatingAccount = false;
-  // Per-widget manual nudges for debug elements (edit these to move the sign-in box)
-
-  // (Create-account position/size are now specified inline at the Positioned widget.)
-
-  bool _isValidName(String value) {
-    final trimmed = value.trim();
-    if (trimmed.isEmpty) return false;
-    return _nameRegExp.hasMatch(trimmed);
-  }
 
   void _showMessage(String message) {
     if (!mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _handleCreateAccount() async {
     if (_isCreatingAccount) return;
     FocusScope.of(context).unfocus();
+    
     final email = _emailController.text.trim();
     final firstName = _firstController.text.trim();
     final lastName = _lastController.text.trim();
     final password = _passwordController.text;
     final confirmPassword = _confirmController.text;
 
-    if ([email, firstName, lastName, password, confirmPassword].any((value) => value.isEmpty)) {
+    if ([email, firstName, lastName, password, confirmPassword].any((v) => v.isEmpty)) {
       _showMessage('All fields are required.');
-      return;
-    }
-    if (!_isValidName(firstName) || !_isValidName(lastName)) {
-      _showMessage('First and last name can include letters, spaces, hyphens or apostrophes only.');
       return;
     }
     if (password.length < 6) {
@@ -106,334 +85,216 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
     if (!mounted) return;
     setState(() => _isCreatingAccount = false);
+
     if (success) {
-      _showMessage('Account created. Welcome!');
+      _showMessage('Account created successfully!');
+      Navigator.pop(context);
     } else {
-      _showMessage(auth.errorMessage ?? 'Create account failed.');
+      _showMessage(auth.errorMessage ?? 'Sign up failed.');
     }
   }
 
   @override
-  void initState() {
-    super.initState();
-    _emailFocus.addListener(() => _handleFocusChange(_emailFocus, _emailKey));
-    _firstFocus.addListener(() => _handleFocusChange(_firstFocus, _firstKey));
-    _lastFocus.addListener(() => _handleFocusChange(_lastFocus, _lastKey));
-    _passwordFocus.addListener(() => _handleFocusChange(_passwordFocus, _passwordKey));
-    _confirmFocus.addListener(() => _handleFocusChange(_confirmFocus, _confirmKey));
+  void dispose() {
+    _emailController.dispose();
+    _firstController.dispose();
+    _lastController.dispose();
+    _passwordController.dispose();
+    _confirmController.dispose();
+    super.dispose();
   }
 
-  void _handleFocusChange(FocusNode node, GlobalKey key) {
-    if (node.hasFocus) _ensureVisible(key);
-  }
-
-  void _ensureVisible(GlobalKey key) {
-    final ctx = key.currentContext;
-    if (ctx == null) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        Scrollable.ensureVisible(ctx, duration: const Duration(milliseconds: 250), alignment: 0.35, curve: Curves.easeInOut);
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      backgroundColor: Colors.black,
-      body: SafeArea(
+  Widget _buildGradientTextField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    bool obscureText = false,
+    VoidCallback? onToggleVisibility,
+    bool isPassword = false,
+  }) {
+    return Container(
+      height: 60,
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: CustomPaint(
+        painter: _GradientPainter(
+          strokeWidth: 2,
+          radius: 12,
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF000000), // #000000
+              Color(0xFF484848), // #484848
+              Color(0xFFFFFDFD), // #fffdfd
+              Color(0xFFD5D5D5), // #d5d5d5
+              Color(0xFF7C7979), // #7c7979
+              Color(0xFFFFFFFF), // #ffffff
+              Color(0xFFFFFFFF), // #ffffff
+            ],
+          ),
+        ),
         child: Center(
-          child: SizedBox(
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom,
-            child: Stack(
-              children: [
-                // Static background image (covers the whole screen)
-                Positioned.fill(
-                  child: Image.asset(
-                    'assets/images/background.png',
-                    fit: BoxFit.cover,
-                    alignment: Alignment.topCenter,
-                    errorBuilder: (ctx, err, stack) => Container(color: Colors.grey.shade900),
-                  ),
-                ),
-
-                // Scrollable form while keeping background static
-                Positioned.fill(
-                  child: LayoutBuilder(builder: (context, constraints) {
-                    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-                    // manage behavior when keyboard opens/closes and only allow user scroll when keyboard open
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (_prevBottomInset > 0 && bottomInset == 0) {
-                        if (_scrollController.hasClients) {
-                          final double minExtent = _scrollController.position.minScrollExtent;
-                          try {
-                            _scrollController.animateTo(minExtent, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
-                          } catch (_) {
-                            _scrollController.jumpTo(minExtent);
-                          }
-                        }
-                      }
-                      _prevBottomInset = bottomInset;
-                    });
-
-                    final bool isKeyboardOpen = bottomInset > 0.0;
-
-                    return SingleChildScrollView(
-                      controller: _scrollController,
-                      physics: isKeyboardOpen ? const ClampingScrollPhysics() : const NeverScrollableScrollPhysics(),
-                      // keep a consistent top spacing so elements don't jump to the very top
-                      padding: const EdgeInsets.only(left: 0, right: 0, top: 30.0, bottom: 0),
-                      child: SizedBox(
-                        width: constraints.maxWidth,
-                        // compute overlay height from 16:9 aspect ratio
-                        child: Builder(builder: (ctx) {
-                          final double overlayHeight = constraints.maxWidth * (1080 / 1920);
-                          // Stack overlay image and input column so inputs appear above the art
-                          return SizedBox(
-                            width: constraints.maxWidth,
-                            height: overlayHeight + 800, // extra space for inputs below
-                            child: Stack(
-                              children: [
-                                Positioned(
-                                  left: 0,
-                                  right: 0,
-                                  top: 0,
-                                  child: Image.asset(
-                                    'assets/images/sign_up_elements.png',
-                                    width: constraints.maxWidth * _overlayScale,
-                                    fit: BoxFit.fitWidth,
-                                    alignment: Alignment.topCenter,
-                                    errorBuilder: (ctx, err, stack) => const SizedBox.shrink(),
-                                  ),
-                                ),
-                                // Absolute-positioned tappable area for Create Account.
-                                // Edit `createButtonLeft`, `createButtonTop`, `createButtonWidth`, `createButtonHeight` at the top of this file.
-                                // Create-account button (edit the numeric values here)
-                                Positioned(
-                                  left: 34,
-                                  top: 576,
-                                  width: 325,
-                                  height: 38,
-                                  child: Material(
-                                    color: const Color.fromARGB(0, 0, 0, 0),
-                                    borderRadius: BorderRadius.circular(5),
-                                    child: InkWell(
-                                      onTap: _isCreatingAccount ? null : _handleCreateAccount,
-                                      splashColor: const Color.fromARGB(53, 50, 50, 50),
-                                      highlightColor: const Color.fromARGB(0, 0, 0, 0),
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: const Color.fromARGB(0, 0, 0, 0),
-                                        ),
-                                        child: const Center(
-                                          child: Text('Create account', style: TextStyle(color: Color.fromARGB(0, 255, 255, 255), fontWeight: FontWeight.w700)),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                // Back action retained but visual back icon hidden.
-                                // Keeps the tappable area so the screen still pops when tapped,
-                                // but the icon is not shown.
-                                Positioned(
-                                  left: 12,
-                                  top: -10,
-                                  width: 48,
-                                  height: 48,
-                                  child: Material(
-                                    color: Colors.transparent,
-                                      child: InkWell(
-                                      onTap: () {
-                                        FocusScope.of(context).unfocus();
-                                        if (Navigator.canPop(context)) Navigator.pop(context);
-                                      },
-                                      borderRadius: BorderRadius.circular(24),
-                                      splashColor: Colors.white24,
-                                      child: Semantics(
-                                        label: 'Back',
-                                        button: true,
-                                        child: Center(child: SizedBox.shrink()),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                // Inputs placed on top of the overlay. Adjust the `top` value to nudge vertically.
-                                Positioned(
-                                  left: 80,
-                                  right: 20,
-                                  top: 227,
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                                    children: [
-                                      Container(
-                                        key: _emailKey,
-                                        child: SizedBox(
-                                          height: 56,
-                                          child: TextField(
-                                            focusNode: _emailFocus,
-                                            controller: _emailController,
-                                            cursorColor: Colors.black,
-                                            decoration: const InputDecoration(
-                                              border: InputBorder.none,
-                                              hintText: 'Email',
-                                              hintStyle: TextStyle(color: Color(0x803E3B36), fontWeight: FontWeight.bold),
-                                            ),
-                                            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold), 
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 12),
-                                      Container(
-                                        key: _firstKey,
-                                        child: SizedBox(
-                                          height: 56,
-                                          child: TextField(
-                                            focusNode: _firstFocus,
-                                            controller: _firstController,
-                                            cursorColor: Colors.black,
-                                            decoration: const InputDecoration(
-                                              border: InputBorder.none,
-                                              hintText: 'First name',
-                                              hintStyle: TextStyle(color: Color(0x803E3B36), fontWeight: FontWeight.bold),
-                                            ),
-                                            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 10),
-                                      Container(
-                                        key: _lastKey,
-                                        child: SizedBox(
-                                          height: 56,
-                                          child: TextField(
-                                            focusNode: _lastFocus,
-                                            controller: _lastController,
-                                            cursorColor: Colors.black,
-                                            decoration: const InputDecoration(
-                                              border: InputBorder.none,
-                                              hintText: 'Last name',
-                                              hintStyle: TextStyle(color: Color(0x803E3B36), fontWeight: FontWeight.bold),
-                                            ),
-                                            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 7),
-                                      Container(
-                                        key: _passwordKey,
-                                        child: SizedBox(
-                                          height: 56,
-                                          child: Row(
-                                            children: [
-                                              Expanded(
-                                                child: TextField(
-                                                  focusNode: _passwordFocus,
-                                                  controller: _passwordController,
-                                                  cursorColor: Colors.black,
-                                                  obscureText: !_passwordVisible,
-                                                  decoration: const InputDecoration(
-                                                    border: InputBorder.none,
-                                                    hintText: 'Password',
-                                                    hintStyle: TextStyle(color: Color(0x803E3B36), fontWeight: FontWeight.bold),
-                                                  ),
-                                                  style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                                                ),
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(right: 18.0),
-                                                child: IconButton(
-                                                  icon: Icon(_passwordVisible ? Icons.visibility_off : Icons.visibility, color: Color.fromRGBO(0, 0, 0, 0.41)),
-                                                  onPressed: () => setState(() => _passwordVisible = !_passwordVisible),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 10),
-                                      Container(
-                                        key: _confirmKey,
-                                        child: SizedBox(
-                                          height: 56,
-                                          child: Row(
-                                            children: [
-                                              Expanded(
-                                                child: TextField(
-                                                  focusNode: _confirmFocus,
-                                                  controller: _confirmController,
-                                                  cursorColor: Colors.black,
-                                                  obscureText: !_confirmPasswordVisible,
-                                                  decoration: const InputDecoration(
-                                                    border: InputBorder.none,
-                                                    hintText: 'Confirm password',
-                                                    hintStyle: TextStyle(color: Color(0x803E3B36), fontWeight: FontWeight.bold),
-                                                  ),
-                                                  style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                                                ),
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(right: 18.0),
-                                                child: IconButton(
-                                                  icon: Icon(_confirmPasswordVisible ? Icons.visibility_off : Icons.visibility, color: Color.fromRGBO(0, 0, 0, 0.41)),
-                                                  onPressed: () => setState(() => _confirmPasswordVisible = !_confirmPasswordVisible),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 24),
-                                      const SizedBox(height: 56),
-                                      const SizedBox(height: 12),
-                                      // tappable overlay moved outside the Column (see below)
-                                      // Debug-visible tappable area for Sign in — fixed width via Align + SizedBox
-                                      Align(
-                                        widthFactor: 1.0,
-                                        alignment: Alignment.centerLeft,
-                                        child: Transform.translate(
-                                          offset: const Offset(30, -18),
-                                          child: SizedBox(
-                                            width: 180, // adjust desired width here
-                                            height: 36,
-                                            child: Material(
-                                              color: Colors.transparent,
-                                              child: InkWell(
-                                                onTap: () {
-                                                  FocusScope.of(context).unfocus();
-                                                  Navigator.pushReplacementNamed(context, '/login');
-                                                },
-                                                borderRadius: BorderRadius.circular(6),
-                                                child: Container(
-                                                  decoration: BoxDecoration(
-                                                    color: const Color.fromARGB(0, 255, 0, 0),
-                                                    border: Border.all(color: const Color.fromARGB(0, 255, 82, 82)),
-                                                    borderRadius: BorderRadius.circular(6),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }),
+          child: TextField(
+            controller: controller,
+            obscureText: obscureText,
+            style: const TextStyle(color: Colors.black87, fontSize: 16),
+            cursorColor: Colors.black87,
+            decoration: InputDecoration(
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+              hintText: hint,
+              hintStyle: const TextStyle(color: Colors.black38),
+              prefixIcon: Icon(icon, color: Colors.black54),
+              suffixIcon: isPassword
+                  ? IconButton(
+                      icon: Icon(
+                        obscureText ? Icons.visibility_off : Icons.visibility,
+                        color: Colors.black54,
                       ),
-                    );
-                  }),
-                ),
-              ],
+                      onPressed: onToggleVisibility,
+                    )
+                  : null,
             ),
           ),
         ),
       ),
     );
   }
-}
 
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.black87),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/background.png',
+              fit: BoxFit.cover,
+            ),
+          ),
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 600),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Let's get started!",
+                      style: TextStyle(
+                        fontFamily: 'MuseoModerno',
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Create an account to get all features',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                    _buildGradientTextField(
+                      controller: _firstController,
+                      hint: 'First Name',
+                      icon: Icons.person_outline,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildGradientTextField(
+                      controller: _lastController,
+                      hint: 'Last Name',
+                      icon: Icons.person_outline,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildGradientTextField(
+                      controller: _emailController,
+                      hint: 'Email',
+                      icon: Icons.email_outlined,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildGradientTextField(
+                      controller: _passwordController,
+                      hint: 'Password',
+                      icon: Icons.lock_outline,
+                      obscureText: !_passwordVisible,
+                      isPassword: true,
+                      onToggleVisibility: () => setState(() => _passwordVisible = !_passwordVisible),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildGradientTextField(
+                      controller: _confirmController,
+                      hint: 'Confirm Password',
+                      icon: Icons.lock_outline,
+                      obscureText: !_confirmPasswordVisible,
+                      isPassword: true,
+                      onToggleVisibility: () => setState(() => _confirmPasswordVisible = !_confirmPasswordVisible),
+                    ),
+                    const SizedBox(height: 40),
+                    InkWell(
+                      onTap: _isCreatingAccount ? null : _handleCreateAccount,
+                      child: _isCreatingAccount
+                          ? const SizedBox(
+                              height: 60,
+                              child: Center(
+                                child: CircularProgressIndicator(color: Colors.white),
+                              ),
+                            )
+                          : Image.asset(
+                              'assets/images/create_account_button.png',
+                            ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          "Already have an account? ",
+                          style: TextStyle(color: Colors.black54),
+                        ),
+                        GestureDetector(
+                          onTap: () => Navigator.pushReplacementNamed(context, '/login'),
+                          child: const Text(
+                            'Login here',
+                            style: TextStyle(
+                              color: Color(0xFFE94057),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+        ],
+      ),
+    );
+  }
+}

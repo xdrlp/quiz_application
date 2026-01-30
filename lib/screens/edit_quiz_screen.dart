@@ -22,6 +22,14 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
   bool _shuffleChoices = false;
   bool _singleResponse = false;
   int _timeMinutes = 0;
+  bool _enablePassword = false;
+  final _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   void didChangeDependencies() {
@@ -48,6 +56,8 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
       _shuffleChoices = q?.randomizeOptions ?? false;
       _singleResponse = (q?.singleResponse) ?? false;
       _timeMinutes = ((q?.timeLimitSeconds ?? 0) / 60).ceil();
+      _enablePassword = (q?.password != null && q!.password!.isNotEmpty);
+      _passwordController.text = q?.password ?? '';
       _loading = false;
     });
   }
@@ -65,12 +75,20 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
   }
 
   Future<void> _saveSettings() async {
+    if (_enablePassword && _passwordController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a password or disable password protection')),
+      );
+      return;
+    }
+    
     await FirestoreService().updateQuiz(quizId, {
       'randomizeQuestions': _shuffleQuestions,
       'randomizeOptions': _shuffleChoices,
       'singleResponse': _singleResponse,
       'timeLimitSeconds': _timeMinutes * 60,
       'scoringType': 'auto',
+      'password': _enablePassword ? _passwordController.text.trim() : null,
       'updatedAt': DateTime.now(),
     });
     await _load();
@@ -260,6 +278,19 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                             const Spacer(),
                             Switch(value: _singleResponse, onChanged: (v) => setState(() => _singleResponse = v)),
                           ]),
+                          Row(children: [
+                            const Text('Enable Quiz Password'),
+                            const Spacer(),
+                            Switch(value: _enablePassword, onChanged: (v) => setState(() => _enablePassword = v)),
+                          ]),
+                          if (_enablePassword)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                              child: TextField(
+                                controller: _passwordController,
+                                decoration: const InputDecoration(labelText: 'Password', border: OutlineInputBorder()),
+                              ),
+                            ),
                           Row(children: [
                             const Text('Time limit (minutes)'),
                             const Spacer(),
