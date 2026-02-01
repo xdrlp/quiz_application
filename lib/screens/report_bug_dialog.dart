@@ -1,4 +1,3 @@
-
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -17,7 +16,12 @@ class _GradientPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final Rect rect = Rect.fromLTWH(strokeWidth / 2, strokeWidth / 2, size.width - strokeWidth, size.height - strokeWidth);
+    final Rect rect = Rect.fromLTWH(
+      strokeWidth / 2,
+      strokeWidth / 2,
+      size.width - strokeWidth,
+      size.height - strokeWidth,
+    );
     final RRect rRect = RRect.fromRectAndRadius(rect, Radius.circular(radius));
     final Paint paint = Paint()
       ..style = PaintingStyle.stroke
@@ -57,7 +61,9 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
     _titleCtrl = TextEditingController();
     _descCtrl = TextEditingController();
     _scrollController = ScrollController();
-    _sendBugReportCallable = FirebaseFunctions.instance.httpsCallable('sendBugReport');
+    _sendBugReportCallable = FirebaseFunctions.instance.httpsCallable(
+      'sendBugReport',
+    );
   }
 
   @override
@@ -76,14 +82,16 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
     final email = _emailCtrl.text.trim();
     final title = _titleCtrl.text.trim();
     final description = _descCtrl.text.trim();
-    
+
     if (name.isEmpty || email.isEmpty || title.isEmpty || description.isEmpty) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Please complete all fields before submitting.')),
+        const SnackBar(
+          content: Text('Please complete all fields before submitting.'),
+        ),
       );
       return;
     }
-    
+
     setState(() => _isSubmitting = true);
     try {
       await _sendBugReportCallable.call({
@@ -111,7 +119,9 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
                 duration: duration,
                 builder: (context, value, _) => LinearProgressIndicator(
                   value: value,
-                  valueColor: const AlwaysStoppedAnimation(Color.fromARGB(255, 0, 0, 0)),
+                  valueColor: const AlwaysStoppedAnimation(
+                    Color.fromARGB(255, 0, 0, 0),
+                  ),
                   backgroundColor: const Color.fromARGB(255, 255, 255, 255),
                   minHeight: 8,
                 ),
@@ -124,12 +134,13 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
       await Future.delayed(duration);
       if (!mounted) return;
       Navigator.of(context).pop();
-
     } on FirebaseFunctionsException catch (e) {
       final message = e.message ?? 'Unable to send the bug report.';
       messenger.showSnackBar(SnackBar(content: Text(message)));
     } catch (e) {
-      messenger.showSnackBar(const SnackBar(content: Text('Unable to send the bug report.')));
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Unable to send the bug report.')),
+      );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -145,7 +156,11 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
       if (!mounted) return;
       if (_prevBottomInset > 0 && bottomInset == 0) {
         if (_scrollController.hasClients) {
-          _scrollController.animateTo(0, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+          _scrollController.animateTo(
+            0,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
+          );
         }
       }
       _prevBottomInset = bottomInset;
@@ -167,176 +182,175 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
                 child: Center(
                   child: SingleChildScrollView(
                     controller: _scrollController,
-                    physics: isKeyboardOpen ? const ClampingScrollPhysics() : const BouncingScrollPhysics(),
+                    physics: isKeyboardOpen
+                        ? const ClampingScrollPhysics()
+                        : const BouncingScrollPhysics(),
                     padding: EdgeInsets.only(
-                      left: 16, 
-                      right: 16, 
-                      bottom: isKeyboardOpen ? bottomInset + 20 : 20
+                      left: 16,
+                      right: 16,
+                      bottom: isKeyboardOpen ? bottomInset + 20 : 20,
                     ),
-                    child: Container(
+                    child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 400),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          begin: Alignment.bottomCenter,
-                          end: Alignment.topCenter,
-                          colors: [
-                            Color(0xFF181818), // #181818
-                            Color(0xFFFFFFFF), // #ffffff
-                            Color(0xFFC3B8B8), // #c3b8b8
-                            Color(0xFFFFFFFF), // #ffffff
-                            Color(0xFFFFFFFF), // #ffffff
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: Container(
-                        margin: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(
+                      child: CustomPaint(
+                        painter: _GradientPainter(
+                          strokeWidth: 2,
+                          radius: 24,
                           gradient: const LinearGradient(
-                            begin: Alignment(-1, -1),
-                            end: Alignment(1, 1),
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
                             colors: [
-                              Color.fromARGB(130, 255, 255, 255), // White with 49% transparency
-                              Color.fromARGB(228, 155, 155, 155), // #9b9b9b with 10.5% transparency
+                              Color(0xFF181818),
+                              Color(0xFFFFFFFF),
+                              Color(0xFFC3B8B8),
+                              Color(0xFFFFFFFF),
+                              Color(0xFFFFFFFF),
                             ],
                           ),
-                          borderRadius: BorderRadius.circular(22),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Colors.black45,
-                              blurRadius: 15,
-                              offset: Offset(0, 8),
-                            ),
-                          ],
                         ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const SizedBox(height: 20),
-                            // Bug Icon Circle
-                            Container(
-                            width: 60,
-                            height: 60,
+                        child: Padding(
+                          padding: const EdgeInsets.all(2),
+                          child: Container(
                             decoration: BoxDecoration(
-                              shape: BoxShape.circle,
                               gradient: const LinearGradient(
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                                 colors: [
-                                  Color(0xFF666666),
-                                  Color(0xFF999999),
+                                  Color.fromARGB(
+                                    228,
+                                    238,
+                                    238,
+                                    238,
+                                  ), // White with 49% transparency
+                                  Color.fromARGB(
+                                    235,
+                                    155,
+                                    155,
+                                    155,
+                                  ), // #9b9b9b with 10.5% transparency
                                 ],
                               ),
-                              boxShadow: [
+                              borderRadius: BorderRadius.circular(22),
+                              boxShadow: const [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.3),
-                                  blurRadius: 4,
-                                  offset: const Offset(2, 2),
-                                  spreadRadius: 0,
-                                ),
-                                BoxShadow(
-                                  color: Colors.white.withValues(alpha: 0.2),
-                                  blurRadius: 4,
-                                  offset: const Offset(-2, -2),
-                                  spreadRadius: 0,
+                                  color: Colors.black45,
+                                  blurRadius: 15,
+                                  offset: Offset(0, 8),
                                 ),
                               ],
                             ),
-                            child: const Center(
-                              child: Icon(Icons.bug_report, size: 32, color: Colors.black54),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'Report a bug',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'Please tell us what went wrong.',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.black54,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          // Dashed Line
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24),
-                            child: Row(
-                              children: List.generate(30, (index) => Expanded(
-                                child: Container(
-                                  height: 1,
-                                  margin: const EdgeInsets.symmetric(horizontal: 2),
-                                  color: Colors.black26,
-                                ),
-                              )),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          
-                          // Form Fields
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24),
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                _buildLabel('Name*'),
-                                _buildTextField(
-                                  controller: _nameCtrl,
-                                  hint: 'Enter your full name',
+                                const SizedBox(height: 32),
+                                const Text(
+                                  'Report a bug',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
                                 ),
-                                const SizedBox(height: 12),
-                                _buildLabel('Email*'),
-                                _buildTextField(
-                                  controller: _emailCtrl,
-                                  hint: 'Enter your email address',
-                                  keyboardType: TextInputType.emailAddress,
+                                const SizedBox(height: 4),
+                                const Text(
+                                  'Please tell us what went wrong.',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black54,
+                                  ),
                                 ),
-                                const SizedBox(height: 12),
-                                _buildLabel('Title*'),
-                                _buildTextField(
-                                  controller: _titleCtrl,
-                                  hint: 'Short summary of the problem',
+                                const SizedBox(height: 16),
+                                // Dashed Line
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                  ),
+                                  child: Row(
+                                    children: List.generate(
+                                      30,
+                                      (index) => Expanded(
+                                        child: Container(
+                                          height: 1,
+                                          margin: const EdgeInsets.symmetric(
+                                            horizontal: 2,
+                                          ),
+                                          color: Colors.black26,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                                const SizedBox(height: 12),
-                                _buildLabel('Description*'),
-                                _buildTextField(
-                                  controller: _descCtrl,
-                                  hint: 'Provide details about the problem you encountered.',
-                                  maxLines: 5,
-                                  height: 120,
+                                const SizedBox(height: 20),
+
+                                // Form Fields
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      _buildLabel('Name*'),
+                                      _buildTextField(
+                                        controller: _nameCtrl,
+                                        hint: 'Enter your full name',
+                                      ),
+                                      const SizedBox(height: 12),
+                                      _buildLabel('Email*'),
+                                      _buildTextField(
+                                        controller: _emailCtrl,
+                                        hint: 'Enter your email address',
+                                        keyboardType:
+                                            TextInputType.emailAddress,
+                                      ),
+                                      const SizedBox(height: 12),
+                                      _buildLabel('Title*'),
+                                      _buildTextField(
+                                        controller: _titleCtrl,
+                                        hint: 'Short summary of the problem',
+                                      ),
+                                      const SizedBox(height: 12),
+                                      _buildLabel('Description*'),
+                                      _buildTextField(
+                                        controller: _descCtrl,
+                                        hint:
+                                            'Provide details about the problem you encountered.',
+                                        maxLines: 5,
+                                        height: 120,
+                                      ),
+                                      const SizedBox(height: 24),
+
+                                      // Buttons
+                                      _buildImageButton(
+                                        imagePath:
+                                            'assets/images/submit_button.png',
+                                        onTap: _isSubmitting
+                                            ? null
+                                            : () async {
+                                                FocusScope.of(
+                                                  msgContext,
+                                                ).unfocus();
+                                                await _submitReport();
+                                              },
+                                      ),
+                                      const SizedBox(height: 12),
+                                      _buildImageButton(
+                                        imagePath:
+                                            'assets/images/cancel_button.png',
+                                        onTap: () {
+                                          FocusScope.of(msgContext).unfocus();
+                                          Navigator.of(msgContext).pop();
+                                        },
+                                      ),
+                                      const SizedBox(height: 24),
+                                    ],
+                                  ),
                                 ),
-                                const SizedBox(height: 24),
-                                
-                                // Buttons
-                                _buildImageButton(
-                                  imagePath: 'assets/images/submit_button.png',
-                                  onTap: _isSubmitting 
-                                    ? null 
-                                    : () async {
-                                        FocusScope.of(msgContext).unfocus();
-                                        await _submitReport();
-                                      },
-                                ),
-                                const SizedBox(height: 12),
-                                _buildImageButton(
-                                  imagePath: 'assets/images/cancel_button.png',
-                                  onTap: () {
-                                    FocusScope.of(msgContext).unfocus();
-                                    Navigator.of(msgContext).pop();
-                                  },
-                                ),
-                                const SizedBox(height: 24),
                               ],
                             ),
                           ),
-                        ],
-                      ),
+                        ),
                       ),
                     ),
                   ),
@@ -412,7 +426,10 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
           decoration: InputDecoration(
             border: InputBorder.none,
             filled: false,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 12,
+            ),
             hintText: hint,
             hintStyle: const TextStyle(
               fontSize: 14,
@@ -448,11 +465,7 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(24),
-          child: Image.asset(
-            imagePath,
-            height: height,
-            fit: BoxFit.contain,
-          ),
+          child: Image.asset(imagePath, height: height, fit: BoxFit.contain),
         ),
       ),
     );

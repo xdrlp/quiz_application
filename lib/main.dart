@@ -206,7 +206,7 @@ class _AuthGateState extends State<AuthGate> {
         );
       } else {
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const SplashScreen()),
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
           (route) => false,
         );
       }
@@ -227,7 +227,8 @@ class _AuthGateState extends State<AuthGate> {
   Widget build(BuildContext context) {
     final user = fb_auth.FirebaseAuth.instance.currentUser;
     if (user == null) return const StarterScreen();
-    return const SplashScreen();
+    // Directly go to HomeScreen instead of showing the SplashScreen
+    return const HomeScreen();
   }
 }
 

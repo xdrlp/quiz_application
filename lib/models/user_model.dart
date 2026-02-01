@@ -7,6 +7,8 @@ class UserModel {
   final String firstName;
   final String lastName;
   final String? classSection;
+  final String? yearLevel;
+  final String? photoUrl;
   final List<String> classes; // classIds
   final DateTime createdAt;
   final DateTime? updatedAt;
@@ -18,6 +20,8 @@ class UserModel {
     this.firstName = '',
     this.lastName = '',
     this.classSection,
+    this.yearLevel,
+    this.photoUrl,
     this.classes = const [],
     required this.createdAt,
     this.updatedAt,
@@ -33,6 +37,8 @@ class UserModel {
       firstName: data['firstName'] ?? '',
       lastName: data['lastName'] ?? '',
       classSection: data['classSection'] as String?,
+      yearLevel: data['yearLevel'] as String?,
+      photoUrl: data['photoUrl'] as String?,
       classes: List<String>.from(data['classes'] ?? []),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
@@ -47,6 +53,8 @@ class UserModel {
       'firstName': firstName,
       'lastName': lastName,
       'classSection': classSection,
+      'yearLevel': yearLevel,
+      'photoUrl': photoUrl,
       'classes': classes,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt ?? DateTime.now()),
@@ -60,6 +68,8 @@ class UserModel {
     String? firstName,
     String? lastName,
     String? classSection,
+    String? yearLevel,
+    String? photoUrl,
     List<String>? classes,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -71,6 +81,8 @@ class UserModel {
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
       classSection: classSection ?? this.classSection,
+      yearLevel: yearLevel ?? this.yearLevel,
+      photoUrl: photoUrl ?? this.photoUrl,
       classes: classes ?? this.classes,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

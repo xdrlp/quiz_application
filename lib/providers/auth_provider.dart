@@ -321,11 +321,12 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  /// Update profile fields: first/last name, class section, and optional photo URL.
+  /// Update profile fields: first/last name, class section, year level, and optional photo URL.
   Future<bool> updateProfile({
     required String firstName,
     required String lastName,
     String? classSection,
+    String? yearLevel,
     String? photoUrl,
   }) async {
     final user = _authService.currentUser;
@@ -358,6 +359,7 @@ class AuthProvider with ChangeNotifier {
         'firstName': normFirst,
         'lastName': normLast,
         'classSection': classSection,
+        'yearLevel': yearLevel,
         'photoUrl': photoUrl,
         'updatedAt': FieldValue.serverTimestamp(),
       };

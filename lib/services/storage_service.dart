@@ -1,14 +1,23 @@
 import 'dart:typed_data';
+import 'package:firebase_storage/firebase_storage.dart';
 
-import 'storage_service_io.dart'
-    if (dart.library.html) 'storage_service_web.dart' as impl;
+class StorageService {
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
-/// Upload raw bytes to storage and return download URL.
-Future<String> uploadBytes(Uint8List data, String path, {String? contentType}) {
-  return impl.uploadBytes(data, path, contentType: contentType);
-}
+  Future<String> uploadProfileImage(String userId, Uint8List iconBytes) async {
+    try {
+      final ref = _storage.ref().child('user_profiles').child('$userId.jpg');
+      
+      // Ensure the file is treated as a JPEG
+      final metadata = SettableMetadata(
+        contentType: 'image/jpeg',
+        customMetadata: {'userId': userId},
+      );
 
-/// Upload a local file (native only) from a path. On web this throws.
-Future<String> uploadFileFromPath(String localPath, String path, {String? contentType}) {
-  return impl.uploadFileFromPath(localPath, path, contentType: contentType);
+      await ref.putData(iconBytes, metadata);
+      return await ref.getDownloadURL();
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

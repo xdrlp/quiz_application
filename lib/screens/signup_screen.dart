@@ -15,7 +15,12 @@ class _GradientPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final Rect rect = Rect.fromLTWH(strokeWidth / 2, strokeWidth / 2, size.width - strokeWidth, size.height - strokeWidth);
+    final Rect rect = Rect.fromLTWH(
+      strokeWidth / 2,
+      strokeWidth / 2,
+      size.width - strokeWidth,
+      size.height - strokeWidth,
+    );
     final RRect rRect = RRect.fromRectAndRadius(rect, Radius.circular(radius));
     final Paint paint = Paint()
       ..style = PaintingStyle.stroke
@@ -49,20 +54,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
   void _showMessage(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _handleCreateAccount() async {
     if (_isCreatingAccount) return;
     FocusScope.of(context).unfocus();
-    
+
     final email = _emailController.text.trim();
     final firstName = _firstController.text.trim();
     final lastName = _lastController.text.trim();
     final password = _passwordController.text;
     final confirmPassword = _confirmController.text;
 
-    if ([email, firstName, lastName, password, confirmPassword].any((v) => v.isEmpty)) {
+    if ([
+      email,
+      firstName,
+      lastName,
+      password,
+      confirmPassword,
+    ].any((v) => v.isEmpty)) {
       _showMessage('All fields are required.');
       return;
     }
@@ -113,15 +126,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
     bool isPassword = false,
   }) {
     return Container(
-      height: 60,
+      height: 48,
       decoration: BoxDecoration(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: CustomPaint(
         painter: _GradientPainter(
           strokeWidth: 2,
-          radius: 12,
+          radius: 8,
           gradient: const LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -144,7 +157,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
             cursorColor: Colors.black87,
             decoration: InputDecoration(
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 18,
+              ),
               hintText: hint,
               hintStyle: const TextStyle(color: Colors.black38),
               prefixIcon: Icon(icon, color: Colors.black54),
@@ -173,7 +189,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black87),
+          icon: const Padding(
+            padding: EdgeInsets.only(left: 6.0),
+            child: Icon(Icons.arrow_back_ios, color: Colors.black87),
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -196,103 +215,135 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Let's get started!",
-                      style: TextStyle(
-                        fontFamily: 'MuseoModerno',
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Create an account to get all features',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.black54,
-                      ),
-                    ),
-                    const SizedBox(height: 40),
-                    _buildGradientTextField(
-                      controller: _firstController,
-                      hint: 'First Name',
-                      icon: Icons.person_outline,
-                    ),
-                    const SizedBox(height: 16),
-                    _buildGradientTextField(
-                      controller: _lastController,
-                      hint: 'Last Name',
-                      icon: Icons.person_outline,
-                    ),
-                    const SizedBox(height: 16),
-                    _buildGradientTextField(
-                      controller: _emailController,
-                      hint: 'Email',
-                      icon: Icons.email_outlined,
-                    ),
-                    const SizedBox(height: 16),
-                    _buildGradientTextField(
-                      controller: _passwordController,
-                      hint: 'Password',
-                      icon: Icons.lock_outline,
-                      obscureText: !_passwordVisible,
-                      isPassword: true,
-                      onToggleVisibility: () => setState(() => _passwordVisible = !_passwordVisible),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildGradientTextField(
-                      controller: _confirmController,
-                      hint: 'Confirm Password',
-                      icon: Icons.lock_outline,
-                      obscureText: !_confirmPasswordVisible,
-                      isPassword: true,
-                      onToggleVisibility: () => setState(() => _confirmPasswordVisible = !_confirmPasswordVisible),
-                    ),
-                    const SizedBox(height: 40),
-                    InkWell(
-                      onTap: _isCreatingAccount ? null : _handleCreateAccount,
-                      child: _isCreatingAccount
-                          ? const SizedBox(
-                              height: 60,
-                              child: Center(
-                                child: CircularProgressIndicator(color: Colors.white),
-                              ),
-                            )
-                          : Image.asset(
-                              'assets/images/create_account_button.png',
-                            ),
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          "Already have an account? ",
-                          style: TextStyle(color: Colors.black54),
-                        ),
-                        GestureDetector(
-                          onTap: () => Navigator.pushReplacementNamed(context, '/login'),
-                          child: const Text(
-                            'Login here',
+                        children: [
+                          const Text(
+                            "Let's get\nstarted!",
                             style: TextStyle(
-                              color: Color(0xFFE94057),
+                              fontFamily: 'MuseoModerno',
+                              fontSize: 54,
                               fontWeight: FontWeight.bold,
+                              color: Colors.black87,
                             ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 8),
+                          const Text(
+                            'First time here? Let’s set up your account.',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.black54,
+                            ),
+                          ),
+                          const SizedBox(height: 40),
+                          _buildGradientTextField(
+                            controller: _firstController,
+                            hint: 'First Name',
+                            icon: Icons.person_outline,
+                          ),
+                          const SizedBox(height: 20),
+                          _buildGradientTextField(
+                            controller: _lastController,
+                            hint: 'Last Name',
+                            icon: Icons.person_outline,
+                          ),
+                          const SizedBox(height: 20),
+                          _buildGradientTextField(
+                            controller: _emailController,
+                            hint: 'Email',
+                            icon: Icons.email_outlined,
+                          ),
+                          const SizedBox(height: 20),
+                          _buildGradientTextField(
+                            controller: _passwordController,
+                            hint: 'Password',
+                            icon: Icons.lock_outline,
+                            obscureText: !_passwordVisible,
+                            isPassword: true,
+                            onToggleVisibility: () => setState(
+                              () => _passwordVisible = !_passwordVisible,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          _buildGradientTextField(
+                            controller: _confirmController,
+                            hint: 'Confirm Password',
+                            icon: Icons.lock_outline,
+                            obscureText: !_confirmPasswordVisible,
+                            isPassword: true,
+                            onToggleVisibility: () => setState(
+                              () => _confirmPasswordVisible =
+                                  !_confirmPasswordVisible,
+                            ),
+                          ),
+                          const SizedBox(height: 40),
+                          Center(
+                            child: SizedBox(
+                              height: 60,
+                              child: _isCreatingAccount
+                                  ? const Center(
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : Stack(
+                                      children: [
+                                        Positioned.fill(
+                                          child: Image.asset(
+                                            'assets/images/create_account_button.png',
+                                            fit: BoxFit.contain,
+                                          ),
+                                        ),
+                                        Positioned.fill(
+                                          child: Material(
+                                            color: Colors.transparent,
+                                            child: InkWell(
+                                              onTap: _handleCreateAccount,
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                              splashColor: Colors.black
+                                                  .withValues(alpha: 0.3),
+                                              highlightColor: Colors.black
+                                                  .withValues(alpha: 0.1),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text(
+                                "Already have an account? ",
+                                style: TextStyle(
+                                  color: Color.fromARGB(206, 0, 0, 0),
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () => Navigator.pushReplacementNamed(
+                                  context,
+                                  '/login',
+                                ),
+                                child: const Text(
+                                  'Login here',
+                                  style: TextStyle(
+                                    color: Color.fromARGB(255, 0, 0, 0),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 20),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ),
-    ),
         ],
       ),
     );

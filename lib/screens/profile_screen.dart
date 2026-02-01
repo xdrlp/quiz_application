@@ -3,10 +3,46 @@ import 'package:provider/provider.dart';
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:quiz_application/providers/auth_provider.dart';
+import 'package:quiz_application/providers/quiz_provider.dart';
 import 'package:quiz_application/models/user_model.dart';
+import 'package:quiz_application/models/quiz_model.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:quiz_application/services/firestore_service.dart';
+import 'package:quiz_application/services/storage_service.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:math' as math;
 import 'starter_screen.dart';
+
+class _GradientPainter extends CustomPainter {
+  final double radius;
+  final double strokeWidth;
+  final Gradient gradient;
+
+  _GradientPainter({
+    required this.gradient,
+    required this.radius,
+    required this.strokeWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Rect rect = Rect.fromLTWH(
+      strokeWidth / 2,
+      strokeWidth / 2,
+      size.width - strokeWidth,
+      size.height - strokeWidth,
+    );
+    final RRect rRect = RRect.fromRectAndRadius(rect, Radius.circular(radius));
+    final Paint paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..shader = gradient.createShader(rect);
+    canvas.drawRRect(rRect, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => true;
+}
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -20,13 +56,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _firstController = TextEditingController();
   final _lastController = TextEditingController();
   final _classController = TextEditingController();
+  final _yearLevelController = TextEditingController();
   bool _isEditing = false;
+  bool _isUploading = false;
+  bool _loaded = false;
 
   @override
   void dispose() {
     _firstController.dispose();
     _lastController.dispose();
     _classController.dispose();
+    _yearLevelController.dispose();
     super.dispose();
   }
 
@@ -39,6 +79,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _firstController.text = user.firstName;
       _lastController.text = user.lastName;
       _classController.text = user.classSection ?? '';
+      _yearLevelController.text = user.yearLevel ?? '';
+      
+      if (!_loaded) {
+        _loaded = true;
+        // Defer to next frame to avoid building during build
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            context.read<QuizProvider>().loadUserQuizzes(user.uid);
+          }
+        });
+      }
     } else {
       // if there is no Firestore-backed profile, prefill from Firebase Auth so UI shows values
       final f = fb.FirebaseAuth.instance.currentUser;
@@ -46,8 +97,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final base = f.displayName ?? f.email?.split('@').first ?? '';
         final parts = base.split(' ');
         _firstController.text = parts.isNotEmpty ? parts.first : '';
-        _lastController.text = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+        _lastController.text = parts.length > 1
+            ? parts.sublist(1).join(' ')
+            : '';
         _classController.text = '';
+        _yearLevelController.text = '';
       }
     }
   }
@@ -60,7 +114,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (auth.currentUser == null) {
       final fuser = fb.FirebaseAuth.instance.currentUser;
       if (fuser == null) {
-        messenger.showSnackBar(const SnackBar(content: Text('No signed-in user')));
+        messenger.showSnackBar(
+          const SnackBar(content: Text('No signed-in user')),
+        );
         return;
       }
       final fs = FirestoreService();
@@ -70,18 +126,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
         displayName: fuser.displayName ?? '',
         firstName: _firstController.text.trim(),
         lastName: _lastController.text.trim(),
-        classSection: _classController.text.trim().isEmpty ? null : _classController.text.trim(),
+        classSection: _classController.text.trim().isEmpty
+            ? null
+            : _classController.text.trim(),
+        yearLevel: _yearLevelController.text.trim().isEmpty
+            ? null
+            : _yearLevelController.text.trim(),
         createdAt: DateTime.now(),
       );
       try {
         await fs.createUser(fuser.uid, newUser);
         if (!mounted) return;
-        messenger.showSnackBar(const SnackBar(content: Text('Profile created')));
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Profile created')),
+        );
         await auth.reloadAndCheckVerified();
         setState(() => _isEditing = false);
       } catch (e) {
         if (!mounted) return;
-        messenger.showSnackBar(SnackBar(content: Text('Failed to create profile: $e')));
+        messenger.showSnackBar(
+          SnackBar(content: Text('Failed to create profile: $e')),
+        );
       }
       return;
     }
@@ -89,14 +154,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final ok = await auth.updateProfile(
       firstName: _firstController.text.trim(),
       lastName: _lastController.text.trim(),
-      classSection: _classController.text.trim().isEmpty ? null : _classController.text.trim(),
+      classSection: _classController.text.trim().isEmpty
+          ? null
+          : _classController.text.trim(),
+      yearLevel: _yearLevelController.text.trim().isEmpty
+          ? null
+          : _yearLevelController.text.trim(),
     );
     if (!mounted) return;
     if (ok) {
       messenger.showSnackBar(const SnackBar(content: Text('Profile updated')));
       setState(() => _isEditing = false);
     } else {
-      messenger.showSnackBar(SnackBar(content: Text(auth.errorMessage ?? 'Failed to update profile')));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(auth.errorMessage ?? 'Failed to update profile'),
+        ),
+      );
     }
   }
 
@@ -110,19 +184,92 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Future<void> _pickAndUploadImage() async {
+    final auth = context.read<AuthProvider>();
+    final user = auth.currentUser;
+    if (user == null) return;
+
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+    if (picked == null) return;
+
+    // Read bytes directly - works on both Web and Mobile
+    final bytes = await picked.readAsBytes();
+    final len = bytes.length;
+    
+    // Validate size (1MB limit)
+    if (len > 1024 * 1024) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Image size must be less than 1MB')),
+      );
+      return;
+    }
+
+    // Validate using magic bytes to be sure it's a JPEG
+    // JPEG starts with FF D8 FF
+    if (len < 3 || bytes[0] != 0xFF || bytes[1] != 0xD8 || bytes[2] != 0xFF) {
+       if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Only .jpeg files are allowed')),
+      );
+      return;
+    }
+
+    setState(() => _isUploading = true);
+
+    try {
+      final storage = StorageService();
+      final url = await storage.uploadProfileImage(user.uid, bytes);
+
+      await auth.updateProfile(
+        firstName: user.firstName,
+        lastName: user.lastName,
+        classSection: user.classSection,
+        yearLevel: user.yearLevel,
+        photoUrl: url,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile picture updated')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to upload image: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
+  }
+
   // Profile picture/upload features removed per user request.
 
   @override
   Widget build(BuildContext context) {
     final AuthProvider auth = context.watch<AuthProvider>();
+    final QuizProvider quizProvider = context.watch<QuizProvider>();
     final UserModel? user = auth.currentUser;
+
+    final quizzes = quizProvider.userQuizzes;
+    final createdCount = quizzes.length;
+    final publishedCount = quizzes.where((q) => q.published).length;
+    final draftsCount = quizzes.where((q) => !q.published).length;
+    final recent = List<QuizModel>.from(quizzes)
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(217, 255, 255, 255)],
+          colors: [
+            Color.fromARGB(255, 255, 255, 255),
+            Color.fromARGB(217, 255, 255, 255),
+          ],
         ),
       ),
       child: Scaffold(
@@ -134,7 +281,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               gradient: LinearGradient(
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
-                colors: [Color.fromARGB(255, 169, 169, 169), Color.fromARGB(255, 255, 255, 255)],
+                colors: [
+                  Color.fromARGB(255, 169, 169, 169),
+                  Color.fromARGB(255, 255, 255, 255),
+                ],
               ),
             ),
             child: Container(
@@ -143,7 +293,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
-                  colors: [Color.fromARGB(108, 244, 244, 244), Color.fromARGB(205, 223, 223, 223)],
+                  colors: [
+                    Color.fromARGB(108, 244, 244, 244),
+                    Color.fromARGB(205, 223, 223, 223),
+                  ],
                 ),
               ),
               child: AppBar(
@@ -154,7 +307,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   icon: const Icon(Icons.arrow_back, color: Colors.black),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
-                title: const Text('Profile', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20)),
+                title: const Text(
+                  'Profile',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                  ),
+                ),
               ),
             ),
           ),
@@ -167,63 +327,98 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 const SizedBox(height: 16),
                 // Profile Header
-                Builder(builder: (ctx) {
-                  final u = user;
-                  String initial = '?';
-                  String name = '';
-                  String email = '';
+                Builder(
+                  builder: (ctx) {
+                    final u = user;
+                    String initial = '?';
+                    String name = '';
+                    String email = '';
 
-                  if (u != null) {
-                    initial = _initials(u);
-                    name = u.displayName.isNotEmpty ? u.displayName : '${u.firstName} ${u.lastName}'.trim();
-                    email = u.email;
-                  } else {
-                    final fu = fb.FirebaseAuth.instance.currentUser;
-                    email = fu?.email ?? '';
-                    final d = fu?.displayName ?? '';
-                    name = d.isNotEmpty ? d : (email.isNotEmpty ? email.split('@').first : '');
-                    initial = name.isNotEmpty ? name.substring(0, 1).toUpperCase() : '?';
-                  }
+                    if (u != null) {
+                      initial = _initials(u);
+                      name = u.displayName.isNotEmpty
+                          ? u.displayName
+                          : '${u.firstName} ${u.lastName}'.trim();
+                      email = u.email;
+                    } else {
+                      final fu = fb.FirebaseAuth.instance.currentUser;
+                      email = fu?.email ?? '';
+                      final d = fu?.displayName ?? '';
+                      name = d.isNotEmpty
+                          ? d
+                          : (email.isNotEmpty ? email.split('@').first : '');
+                      initial = name.isNotEmpty
+                          ? name.substring(0, 1).toUpperCase()
+                          : '?';
+                    }
 
-                  return Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF2C3E50), Color(0xFFBDC3C7)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.2),
-                              blurRadius: 10,
-                              offset: const Offset(0, 5),
+                    return Column(
+                      children: [
+                        GestureDetector(
+                          onTap: _isUploading ? null : _pickAndUploadImage,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF2C3E50), Color(0xFFBDC3C7)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.2),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 5),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        child: CircleAvatar(
-                          radius: 60,
-                          backgroundColor: Colors.white,
-                          child: Text(
-                            initial,
-                            style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Color(0xFF2C3E50)),
+                            child: CircleAvatar(
+                              radius: 60,
+                              backgroundColor: Colors.white,
+                              backgroundImage:
+                                  (u?.photoUrl != null)
+                                      ? NetworkImage(u!.photoUrl!)
+                                      : null,
+                              child: _isUploading
+                                  ? const CircularProgressIndicator(
+                                    color: Colors.black,
+                                  )
+                                  : (u?.photoUrl != null
+                                      ? null
+                                      : Text(
+                                        initial,
+                                        style: const TextStyle(
+                                          fontSize: 40,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF2C3E50),
+                                        ),
+                                      )),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        name,
-                        style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF2C3E50)),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(email, style: const TextStyle(color: Color(0xFF7F8C8D), fontSize: 16)),
-                      const SizedBox(height: 32),
-                    ],
-                  );
-                }),
+                        const SizedBox(height: 16),
+                        Text(
+                          name,
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2C3E50),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          email,
+                          style: const TextStyle(
+                            color: Color(0xFF7F8C8D),
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                      ],
+                    );
+                  },
+                ),
 
                 // Profile Details Section
                 _neumorphicContainer(
@@ -233,9 +428,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Profile details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black)),
+                          const Text(
+                            'Profile details',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                              color: Colors.black,
+                            ),
+                          ),
                           IconButton(
-                            icon: Icon(_isEditing ? Icons.close : Icons.edit, color: Colors.black54),
+                            icon: Icon(
+                              _isEditing ? Icons.close : Icons.edit,
+                              color: Colors.black54,
+                            ),
                             onPressed: () {
                               setState(() {
                                 _isEditing = !_isEditing;
@@ -244,19 +449,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   if (user != null) {
                                     _firstController.text = user.firstName;
                                     _lastController.text = user.lastName;
-                                    _classController.text = user.classSection ?? '';
+                                    _classController.text =
+                                        user.classSection ?? '';
+                                    _yearLevelController.text =
+                                        user.yearLevel ?? '';
                                   }
                                 } else {
                                   // Populate fields if starting edit
                                   if (user != null) {
                                     _firstController.text = user.firstName;
                                     _lastController.text = user.lastName;
-                                    _classController.text = user.classSection ?? '';
+                                    _classController.text =
+                                        user.classSection ?? '';
+                                    _yearLevelController.text =
+                                        user.yearLevel ?? '';
                                   }
                                 }
                               });
                             },
-                          )
+                          ),
                         ],
                       ),
                       const Divider(color: Colors.black12),
@@ -268,18 +479,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             children: [
                               TextFormField(
                                 controller: _firstController,
+                                style: const TextStyle(color: Colors.black),
                                 decoration: _inputDecoration('First name'),
-                                validator: (v) => v == null || v.trim().isEmpty ? 'Please enter first name' : null,
+                                validator: (v) => v == null || v.trim().isEmpty
+                                    ? 'Please enter first name'
+                                    : null,
                               ),
                               const SizedBox(height: 16),
                               TextFormField(
                                 controller: _lastController,
+                                style: const TextStyle(color: Colors.black),
                                 decoration: _inputDecoration('Last name'),
                               ),
                               const SizedBox(height: 16),
                               TextFormField(
                                 controller: _classController,
+                                style: const TextStyle(color: Colors.black),
                                 decoration: _inputDecoration('Class / Section'),
+                              ),
+                              const SizedBox(height: 16),
+                              TextFormField(
+                                controller: _yearLevelController,
+                                style: const TextStyle(color: Colors.black),
+                                decoration: _inputDecoration('Year Level'),
                               ),
                               const SizedBox(height: 24),
                               SizedBox(
@@ -287,15 +509,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 child: ElevatedButton(
                                   onPressed: auth.isLoading ? null : _save,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF2C3E50),
+                                    backgroundColor: const Color.fromARGB(255, 78, 78, 78),
                                     foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
                                     elevation: 2,
                                   ),
                                   child: auth.isLoading
-                                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                      : const Text('Save Changes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                      ? const SizedBox(
+                                          height: 20,
+                                          width: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.black,
+                                          ),
+                                        )
+                                      : const Text(
+                                          'Save Changes',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                 ),
                               ),
                             ],
@@ -304,24 +543,197 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       else
                         Column(
                           children: [
-                            _infoRow('First name', user?.firstName.isNotEmpty == true ? user!.firstName : (_firstController.text.isNotEmpty ? _firstController.text : '-')),
-                            _infoRow('Last name', user?.lastName.isNotEmpty == true ? user!.lastName : (_lastController.text.isNotEmpty ? _lastController.text : '-')),
-                            _infoRow('Class / Section', user?.classSection ?? (_classController.text.isNotEmpty ? _classController.text : '-')),
+                            _infoRow(
+                              'First name',
+                              user?.firstName.isNotEmpty == true
+                                  ? user!.firstName
+                                  : (_firstController.text.isNotEmpty
+                                        ? _firstController.text
+                                        : '-'),
+                            ),
+                            _infoRow(
+                              'Last name',
+                              user?.lastName.isNotEmpty == true
+                                  ? user!.lastName
+                                  : (_lastController.text.isNotEmpty
+                                        ? _lastController.text
+                                        : '-'),
+                            ),
+                            _infoRow(
+                              'Class / Section',
+                              user?.classSection ??
+                                  (_classController.text.isNotEmpty
+                                      ? _classController.text
+                                      : '-'),
+                            ),
+                            _infoRow(
+                              'Year Level',
+                              user?.yearLevel ??
+                                  (_yearLevelController.text.isNotEmpty
+                                      ? _yearLevelController.text
+                                      : '-'),
+                            ),
                             const SizedBox(height: 24),
-                            SizedBox(
-                              width: double.infinity,
-                              child: OutlinedButton(
-                                onPressed: _handleSignOut,
-                                style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: Color(0xFFC0392B)),
-                                  foregroundColor: const Color(0xFFC0392B),
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            Center(
+                              child: SizedBox(
+                                height: 45,
+                                width: double.infinity,
+                                child: Stack(
+                                  children: [
+                                    Positioned.fill(
+                                      child: Image.asset(
+                                        'assets/images/signOut_button.png',
+                                        fit: BoxFit.contain,
+                                      ),
+                                    ),
+                                    Positioned.fill(
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          onTap: _handleSignOut,
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          splashColor: Colors.black.withValues(
+                                            alpha: 0.3,
+                                          ),
+                                          highlightColor: Colors.black
+                                              .withValues(alpha: 0.1),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                child: const Text('Sign Out', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                               ),
                             ),
                           ],
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                _neumorphicContainer(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text(
+                        'Usage / Metrics',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const Divider(color: Colors.black12),
+                      const SizedBox(height: 16),
+                      _infoRow('Quizzes created', '$createdCount Created'),
+                      _infoRow(
+                        'Quizzes published',
+                        '$publishedCount Published',
+                      ),
+                      _infoRow('Drafts', '$draftsCount Drafts'),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Recent activity',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF7F8C8D),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      if (recent.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 8.0),
+                          child: Text(
+                            'No recent activity',
+                            style: TextStyle(color: Colors.black54),
+                          ),
+                        )
+                      else
+                        Column(
+                          children: List.generate(
+                            math.min(5, recent.length),
+                            (i) {
+                              final q = recent[i];
+                              final ago = _relativeTime(q.createdAt);
+                              return GestureDetector(
+                                onTap:
+                                    () => Navigator.of(
+                                      context,
+                                    ).pushNamed('/edit_quiz', arguments: q.id),
+                                child: Container(
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color.fromARGB(
+                                      255,
+                                      110,
+                                      110,
+                                      110,
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              q.title,
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w600,
+                                                color: Color.fromARGB(
+                                                  255,
+                                                  224,
+                                                  224,
+                                                  224,
+                                                ),
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              ago,
+                                              style: const TextStyle(
+                                                fontSize: 13,
+                                                color: Color.fromARGB(
+                                                  255,
+                                                  192,
+                                                  192,
+                                                  192,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const Text(
+                                        'View',
+                                        style: TextStyle(
+                                          color: Color.fromARGB(
+                                            255,
+                                            203,
+                                            203,
+                                            203,
+                                          ),
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                         ),
                     ],
                   ),
@@ -335,35 +747,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _neumorphicContainer({required Widget child}) {
-    return Container(
-      padding: const EdgeInsets.all(2), // Thinner border
-      decoration: BoxDecoration(
+    return CustomPaint(
+      painter: _GradientPainter(
+        strokeWidth: 2,
+        radius: 24,
         gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Colors.white, Colors.black12], // Subtle border gradient
+          begin: Alignment.bottomCenter,
+          end: Alignment.topCenter,
+          colors: [
+            Color.fromARGB(255, 109, 109, 109),
+            Color.fromARGB(255, 197, 197, 197),
+            Color.fromARGB(255, 221, 221, 221),
+            Color.fromARGB(255, 206, 206, 206),
+            Color.fromARGB(255, 165, 165, 165),
+          ],
         ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(4, 4),
-          ),
-          BoxShadow(
-            color: Colors.white.withValues(alpha: 0.8),
-            blurRadius: 10,
-            offset: const Offset(-4, -4),
-          ),
-        ],
       ),
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF5F5F5), // Solid light background for the card itself
-          borderRadius: BorderRadius.circular(18),
+      child: Padding(
+        padding: const EdgeInsets.all(2),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color.fromARGB(228, 238, 238, 238),
+                Color.fromARGB(235, 235, 235, 235),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(22),
+          ),
+          padding: const EdgeInsets.all(24),
+          child: child,
         ),
-        child: child,
       ),
     );
   }
@@ -407,7 +823,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             flex: 3,
             child: Text(
               value,
-              style: const TextStyle(color: Color(0xFF2C3E50), fontSize: 16, fontWeight: FontWeight.w500),
+              style: const TextStyle(
+                color: Color(0xFF2C3E50),
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
               textAlign: TextAlign.right,
             ),
           ),
@@ -422,5 +842,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (f.isEmpty && l.isEmpty) return user.email.substring(0, 1).toUpperCase();
     if (l.isEmpty) return f.substring(0, 1).toUpperCase();
     return (f.substring(0, 1) + l.substring(0, 1)).toUpperCase();
+  }
+
+  String _relativeTime(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 60) return '${diff.inMinutes} minutes ago';
+    if (diff.inHours < 48) return '${diff.inHours} hours ago';
+    return '${diff.inDays} days ago';
   }
 }

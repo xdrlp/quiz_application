@@ -7,8 +7,8 @@ import 'report_bug_dialog.dart';
 // ==========================================
 
 // --- Colors ---
-const Color _kTextColor = Color(0xFF4A4A4A);       // Primary text color (Dark Grey)
-const Color _kRedAccentColor = Color(0xFFFF3B30);  // Primary accent (Red)
+const Color _kTextColor = Color(0xFF4A4A4A); // Primary text color (Dark Grey)
+const Color _kRedAccentColor = Color(0xFFFF3B30); // Primary accent (Red)
 
 // Neumorphism Shadows
 // Neumorphism shadows and gradient colors removed (unused)
@@ -46,10 +46,12 @@ class StarterScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Set status bar to dark icons for light background compatibility
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-    ));
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+      ),
+    );
 
     void showReportBugDialog(BuildContext parentContext) {
       showGeneralDialog(
@@ -88,153 +90,183 @@ class StarterScreen extends StatelessWidget {
             IconButton(
               tooltip: 'Report a bug',
               onPressed: () => showReportBugDialog(context),
-              icon: Icon(Icons.bug_report_outlined, color: _kTextColor.withValues(alpha: 0.8)),
+              icon: Icon(
+                Icons.bug_report_outlined,
+                color: _kTextColor.withValues(alpha: 0.8),
+              ),
             ),
           ],
         ),
         body: SafeArea(
-          child: Builder(builder: (_) {
-            final Widget content = Padding(
-              padding: const EdgeInsets.symmetric(horizontal: _kHorizontalPadding, vertical: 0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: 0),
-                  // Logo
-                  Image.asset(
-                    'assets/images/logo.png',
-                    width: _kLogoSize,
-                    height: _kLogoSize,
-                    fit: BoxFit.contain,
-                  ),
-                  const SizedBox(height: _kGapLogoTitle),
-
-                  // Title
-                  Text(
-                    'Quiz Guard',
-                    style: TextStyle(
-                      fontSize: _kTitleFontSize,
-                      fontWeight: FontWeight.bold,
-                      color: _kTextColor,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: _kGapTitleSubtitle),
-
-                  // Subtitle
-                  Text(
-                    'Honest learning, real results',
-                    style: TextStyle(
-                    fontSize: _kSubtitleFontSize,
-                    fontWeight: FontWeight.w600,
-                    color: _kTextColor.withValues(alpha: 0.7),
-                    decoration: TextDecoration.underline,
-                  ),
+          child: Builder(
+            builder: (_) {
+              final Widget content = Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: _kHorizontalPadding,
+                  vertical: 0,
                 ),
-                const SizedBox(height: _kGapSubtitleBullet),
-
-                // Bullet Point
-                Row(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: _kRedAccentColor,
-                        shape: BoxShape.circle,
-                      ),
+                    const SizedBox(height: 0),
+                    // Logo
+                    Image.asset(
+                      'assets/images/logo.png',
+                      width: _kLogoSize,
+                      height: _kLogoSize,
+                      fit: BoxFit.contain,
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(height: _kGapLogoTitle),
+
+                    // Title
                     Text(
-                      'Real-time monitoring',
+                      'Quiz Guard',
                       style: TextStyle(
-                        fontSize: _kBulletTextFontSize,
-                        fontWeight: FontWeight.w500,
-                        color: _kTextColor.withValues(alpha: 0.8),
+                        fontSize: _kTitleFontSize,
+                        fontWeight: FontWeight.bold,
+                        color: _kTextColor,
+                        letterSpacing: 1.2,
                       ),
                     ),
+                    const SizedBox(height: _kGapTitleSubtitle),
+
+                    // Subtitle
+                    Text(
+                      'Honest learning, real results',
+                      style: TextStyle(
+                        fontSize: _kSubtitleFontSize,
+                        fontWeight: FontWeight.w600,
+                        color: _kTextColor.withValues(alpha: 0.7),
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                    const SizedBox(height: _kGapSubtitleBullet),
+
+                    // Bullet Point
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: _kRedAccentColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Real-time monitoring',
+                          style: TextStyle(
+                            fontSize: _kBulletTextFontSize,
+                            fontWeight: FontWeight.w500,
+                            color: _kTextColor.withValues(alpha: 0.8),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: _kGapBulletLogin),
+
+                    // Log in Button (Image Asset)
+                    _ImageButton(
+                      onTap: () => Navigator.pushNamed(context, '/login'),
+                      imagePath: 'assets/images/logIn_button.png',
+                    ),
+
+                    const SizedBox(height: _kGapLoginOr),
+                    Text(
+                      'or',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: const Color.fromARGB(
+                          255,
+                          43,
+                          43,
+                          43,
+                        ).withValues(alpha: 0.6),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: _kGapOrSignup),
+
+                    // Create Account Button (Image Asset)
+                    _ImageButton(
+                      onTap: () => Navigator.pushNamed(context, '/signup'),
+                      imagePath: 'assets/images/signUp_button.png',
+                    ),
+
+                    const SizedBox(height: _kGapSignupFooter),
                   ],
                 ),
-                const SizedBox(height: _kGapBulletLogin),
+              );
 
-                // Log in Button (Image Asset)
-                _ImageButton(
-                  onTap: () => Navigator.pushNamed(context, '/login'),
-                  imagePath: 'assets/images/logIn_button.png',
-                ),
-
-                const SizedBox(height: _kGapLoginOr),
-                Text(
-                  'or',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: _kTextColor.withValues(alpha: 0.6),
-                    fontWeight: FontWeight.w500,
+              final Widget footer = GestureDetector(
+                onTap: () {},
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        size: _kFooterTextFontSize + 4,
+                        color: const Color.fromARGB(
+                          255,
+                          2,
+                          2,
+                          2,
+                        ).withValues(alpha: 0.5),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Learn more about Quiz Guard',
+                        style: TextStyle(
+                          fontSize: _kFooterTextFontSize,
+                          color: const Color.fromARGB(
+                            255,
+                            0,
+                            0,
+                            0,
+                          ).withValues(alpha: 0.5),
+                          decoration: TextDecoration.underline,
+                          decorationColor: const Color.fromARGB(
+                            255,
+                            41,
+                            41,
+                            41,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: _kGapOrSignup),
+              );
 
-                // Create Account Button (Image Asset)
-                _ImageButton(
-                  onTap: () => Navigator.pushNamed(context, '/signup'),
-                  imagePath: 'assets/images/signUp_button.png',
-                ),
-
-                const SizedBox(height: _kGapSignupFooter),
-              ],
-            ),
-          );
-
-          final Widget footer = GestureDetector(
-            onTap: () {},
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
+              final Widget mainContent = Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisSize: MainAxisSize.max,
                 children: [
-                  Icon(Icons.info_outline, size: _kFooterTextFontSize + 4, color: _kTextColor.withValues(alpha: 0.5)),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Learn more about Quiz Guard',
-                    style: TextStyle(
-                      fontSize: _kFooterTextFontSize,
-                      color: _kTextColor.withValues(alpha: 0.5),
-                      decoration: TextDecoration.underline,
-                      decorationColor: const Color.fromARGB(255, 76, 76, 76),
-                    ),
-                  ),
+                  Expanded(child: content),
+                  footer,
                 ],
-              ),
-            ),
-          );
+              );
 
-          final Widget mainContent = Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              Expanded(child: content),
-              footer,
-            ],
-          );
+              if (isWide) {
+                return SizedBox.expand(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 900),
+                    child: Center(child: mainContent),
+                  ),
+                );
+              }
 
-          if (isWide) {
-            return SizedBox.expand(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 900),
-                child: Center(
-                  child: mainContent,
-                ),
-              ),
-            );
-          }
-
-          return SizedBox.expand(child: mainContent);
-          }),
+              return SizedBox.expand(child: mainContent);
+            },
+          ),
         ),
       ),
     );
@@ -250,32 +282,32 @@ class _ImageButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double available = MediaQuery.of(context).size.width - (_kHorizontalPadding * 2);
+    final double available =
+        MediaQuery.of(context).size.width - (_kHorizontalPadding * 2);
     final double buttonWidth = available > 360.0 ? 360.0 : available;
 
     return Center(
       child: SizedBox(
         width: buttonWidth,
         height: _kButtonHeight,
-        child: Material(
-          color: const Color.fromARGB(0, 0, 0, 0),
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(_kButtonRadius),
-            splashColor: const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.4),
-            highlightColor: const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.2),
-            child: Center(
-              child: Image.asset(
-                imagePath,
-                fit: BoxFit.contain,
-                width: buttonWidth,
-                height: _kButtonHeight,
+        child: Stack(
+          children: [
+            Positioned.fill(child: Image.asset(imagePath, fit: BoxFit.contain)),
+            Positioned.fill(
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onTap,
+                  borderRadius: BorderRadius.circular(_kButtonRadius),
+                  // Stronger ripple to ensure visibility over the image
+                  splashColor: Colors.black.withValues(alpha: 0.3),
+                  highlightColor: Colors.black.withValues(alpha: 0.1),
+                ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
   }
 }
-
