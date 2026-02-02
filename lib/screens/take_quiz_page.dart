@@ -726,7 +726,7 @@ class _TakeQuizPageState extends State<TakeQuizPage>
     Future<void> Function()? onPressed,
   ) {
     final icon = ready ? Icons.check_circle : Icons.warning_amber_rounded;
-    final color = ready ? const Color(0xFF2C3E50) : Colors.orange;
+    final color = ready ? const Color(0xFF222222) : Colors.orange;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -736,7 +736,7 @@ class _TakeQuizPageState extends State<TakeQuizPage>
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2C3E50)),
+              style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF222222)),
             ),
           ),
           if (!ready)
@@ -746,7 +746,7 @@ class _TakeQuizPageState extends State<TakeQuizPage>
                   : () async {
                       await onPressed();
                     },
-              style: TextButton.styleFrom(foregroundColor: const Color(0xFF2C3E50)),
+              style: TextButton.styleFrom(foregroundColor: const Color(0xFF222222)),
               child: const Text('Open settings'),
             ),
         ],
@@ -785,7 +785,7 @@ class _TakeQuizPageState extends State<TakeQuizPage>
               const Expanded(
                 child: Text(
                   'Enable monitoring protections',
-                  style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF2C3E50)),
+                  style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF222222)),
                 ),
               ),
             ],
@@ -1213,7 +1213,10 @@ class _TakeQuizPageState extends State<TakeQuizPage>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(217, 255, 255, 255)],
+          colors: [
+            Color(0xFFFFFFFF),
+            Color.fromARGB(255, 207, 207, 207),
+          ],
         ),
       ),
       child: Scaffold(
@@ -1269,7 +1272,7 @@ class _TakeQuizPageState extends State<TakeQuizPage>
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF2C3E50),
+                          color: const Color(0xFF222222),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -1334,7 +1337,7 @@ class _TakeQuizPageState extends State<TakeQuizPage>
                                                   q.prompt,
                                                   style: const TextStyle(
                                                     fontWeight: FontWeight.bold,
-                                                    color: Color(0xFF2C3E50),
+                                                    color: Color(0xFF222222),
                                                     fontSize: 18,
                                                   ),
                                                 ),
@@ -1356,19 +1359,19 @@ class _TakeQuizPageState extends State<TakeQuizPage>
                                                           return Container(
                                                             margin: const EdgeInsets.only(bottom: 12),
                                                             decoration: BoxDecoration(
-                                                              color: selected ? const Color(0xFF2C3E50).withValues(alpha: 0.05) : Colors.white,
+                                                              color: selected ? const Color(0xFF222222).withValues(alpha: 0.05) : Colors.white,
                                                               borderRadius: BorderRadius.circular(12),
-                                                              border: Border.all(color: selected ? const Color(0xFF2C3E50) : Colors.transparent),
+                                                              border: Border.all(color: selected ? const Color(0xFF222222) : Colors.transparent),
                                                             ),
                                                             child: ListTile(
-                                                              title: Text(c.text, style: TextStyle(color: locked ? Colors.grey : const Color(0xFF2C3E50), fontWeight: selected ? FontWeight.bold : FontWeight.normal)),
+                                                              title: Text(c.text, style: TextStyle(color: locked ? Colors.grey : const Color(0xFF222222), fontWeight: selected ? FontWeight.bold : FontWeight.normal)),
                                                               leading: Icon(
                                                                 selected
                                                                     ? Icons
                                                                           .radio_button_checked
                                                                     : Icons
                                                                           .radio_button_unchecked,
-                                                                color: locked ? Colors.grey : (selected ? const Color(0xFF2C3E50) : const Color(0xFF7F8C8D)),
+                                                                color: locked ? Colors.grey : (selected ? const Color(0xFF222222) : const Color(0xFF7F8C8D)),
                                                               ),
                                                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                                               onTap: locked
@@ -1397,14 +1400,14 @@ class _TakeQuizPageState extends State<TakeQuizPage>
                                                           return Container(
                                                             margin: const EdgeInsets.only(bottom: 12),
                                                             decoration: BoxDecoration(
-                                                              color: isSelected ? const Color(0xFF2C3E50).withValues(alpha: 0.05) : Colors.white,
+                                                              color: isSelected ? const Color(0xFF222222).withValues(alpha: 0.05) : Colors.white,
                                                               borderRadius: BorderRadius.circular(12),
-                                                              border: Border.all(color: isSelected ? const Color(0xFF2C3E50) : Colors.transparent),
+                                                              border: Border.all(color: isSelected ? const Color(0xFF222222) : Colors.transparent),
                                                             ),
                                                             child: CheckboxListTile(
-                                                              title: Text(c.text, style: TextStyle(color: locked ? Colors.grey : const Color(0xFF2C3E50), fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+                                                              title: Text(c.text, style: TextStyle(color: locked ? Colors.grey : const Color(0xFF222222), fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
                                                               value: isSelected,
-                                                              activeColor: const Color(0xFF2C3E50),
+                                                              activeColor: const Color(0xFF222222),
                                                               checkboxShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
                                                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                                               onChanged: locked
@@ -1446,7 +1449,7 @@ class _TakeQuizPageState extends State<TakeQuizPage>
                                                             QuestionType.paragraph
                                                         ? null
                                                         : 1,
-                                                    style: const TextStyle(color: Color(0xFF2C3E50)),
+                                                    style: const TextStyle(color: Color(0xFF222222)),
                                                     decoration: InputDecoration(
                                                       hintText: 'Type your answer here...',
                                                       hintStyle: const TextStyle(color: Color(0xFF7F8C8D)),
@@ -1462,7 +1465,7 @@ class _TakeQuizPageState extends State<TakeQuizPage>
                                                       ),
                                                       focusedBorder: OutlineInputBorder(
                                                         borderRadius: BorderRadius.circular(12),
-                                                        borderSide: const BorderSide(color: Color(0xFF2C3E50), width: 1.5),
+                                                        borderSide: const BorderSide(color: Color(0xFF222222), width: 1.5),
                                                       ),
                                                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                                                       suffix:
@@ -1487,7 +1490,7 @@ class _TakeQuizPageState extends State<TakeQuizPage>
                                                     children: [
                                                       ElevatedButton(
                                                         style: ElevatedButton.styleFrom(
-                                                          backgroundColor: const Color(0xFF2C3E50),
+                                                          backgroundColor: const Color(0xFF222222),
                                                           foregroundColor: Colors.white,
                                                           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                                                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -1556,7 +1559,7 @@ class _TakeQuizPageState extends State<TakeQuizPage>
                                               alignment: Alignment.center,
                                               child: ElevatedButton(
                                                 style: ElevatedButton.styleFrom(
-                                                  backgroundColor: const Color(0xFF2C3E50),
+                                                  backgroundColor: const Color(0xFF222222),
                                                   foregroundColor: Colors.white,
                                                   padding:
                                                       const EdgeInsets.symmetric(

@@ -86,7 +86,10 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(217, 255, 255, 255)],
+          colors: [
+            Color(0xFFFFFFFF),
+            Color.fromARGB(255, 207, 207, 207),
+          ],
         ),
       ),
       child: Scaffold(
@@ -132,7 +135,7 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
                 const SizedBox(height: 16),
                 const Text(
                   'New Quiz Details',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF2C3E50)),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF222222)),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
@@ -193,7 +196,7 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
                           child: ElevatedButton(
                             onPressed: _loading ? null : _submit,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF2C3E50),
+                              backgroundColor: const Color(0xFF222222),
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -232,7 +235,7 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF2C3E50), width: 1.5),
+        borderSide: const BorderSide(color: Color(0xFF222222), width: 1.5),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     );

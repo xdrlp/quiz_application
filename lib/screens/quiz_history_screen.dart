@@ -48,7 +48,10 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(217, 255, 255, 255)],
+          colors: [
+            Color(0xFFFFFFFF),
+            Color.fromARGB(255, 207, 207, 207),
+          ],
         ),
       ),
       child: Scaffold(
@@ -158,16 +161,16 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
                                         ),
                                       ],
                                     ),
-                                    child: const Icon(Icons.assignment_turned_in, color: Color(0xFF2C3E50)),
+                                    child: const Icon(Icons.assignment_turned_in, color: Color.fromARGB(255, 70, 70, 70)),
                                   ),
                                   const SizedBox(width: 16),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2C3E50))),
+                                        Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF222222))),
                                         const SizedBox(height: 4),
-                                        Text(ago, style: const TextStyle(fontSize: 12, color: Color(0xFF7F8C8D))),
+                                        Text(ago, style: const TextStyle(fontSize: 12, color: Color.fromARGB(255, 139, 139, 139))),
                                       ],
                                     ),
                                   ),
@@ -176,13 +179,13 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
                                     children: [
                                       Text(
                                         '${(a.score / (a.totalPoints > 0 ? a.totalPoints : 1) * 100).toStringAsFixed(0)}%',
-                                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2C3E50)),
+                                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color.fromARGB(255, 59, 59, 59)),
                                       ),
                                       Text('${a.score}/${a.totalPoints}', style: const TextStyle(fontSize: 12, color: Color(0xFF7F8C8D))),
                                     ],
                                   ),
                                   const SizedBox(width: 8),
-                                  const Icon(Icons.chevron_right, color: Color(0xFF7F8C8D)),
+                                  const Icon(Icons.chevron_right, color: Color.fromARGB(255, 141, 141, 141)),
                                 ],
                               ),
                             ),

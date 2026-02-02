@@ -20,6 +20,7 @@ import 'package:quiz_application/screens/take_quiz_page.dart' as tqp;
 import 'package:quiz_application/screens/my_quizzes_screen.dart';
 import 'package:quiz_application/screens/profile_screen.dart';
 import 'package:quiz_application/screens/quiz_history_screen.dart';
+import 'package:quiz_application/screens/attempt_detail_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -96,20 +97,19 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Quiz Application',
         theme: (() {
-          // Core colors
-          const absBlack = Color(0xFF050507);
-          const coldSteel = Color(0xFF0F172A);
+          // Core colors - Grayscale / Desaturated
+          const coldSteel = Color(0xFF1F1F1F); // Dark Grey instead of Blue-Black
           const ashWhite = Color(0xFFE5E5E5);
-          const deadGray = Color(0xFF4B5563);
-          const dividerColor = Color(0xFF1F2937);
-          const crimson = Color(0xFF8B0000);
-          const violationColor = Color(0xFFB00020);
+          const deadGray = Color(0xFF4B4B4B); // Neutral Grey
+          const dividerColor = Color(0xFF2A2A2A);
+          const crimson = Color(0xFF404040); // Dark Grey instead of Red
+          const violationColor = Color(0xFFB00020); // Keep violation red as it's a semantic state
 
           final base = ColorScheme.dark().copyWith(
             surface: coldSteel,
             onSurface: ashWhite,
             primary: ashWhite,
-            secondary: const Color(0xFF9CA3AF),
+            secondary: const Color(0xFF9E9E9E), // Neutral Grey
           );
 
           return ThemeData(
@@ -124,10 +124,10 @@ class MyApp extends StatelessWidget {
               TargetPlatform.fuchsia: SlidePageTransitionsBuilder(),
             }),
             colorScheme: base,
-            scaffoldBackgroundColor: absBlack,
-            cardColor: crimson,
+            scaffoldBackgroundColor: const Color(0xFFF5F5F5),
+            cardColor: Colors.white,
             dividerColor: dividerColor,
-            canvasColor: absBlack,
+            canvasColor: const Color(0xFFF5F5F5),
             disabledColor: deadGray,
             appBarTheme: AppBarTheme(
               backgroundColor: crimson,
@@ -139,12 +139,12 @@ class MyApp extends StatelessWidget {
             // Switched to Google Fonts "Inter" for consistent rendering on all devices.
             fontFamily: GoogleFonts.inter().fontFamily,
             textTheme: GoogleFonts.interTextTheme(TextTheme(
-              titleLarge: TextStyle(color: ashWhite),
-              bodyLarge: TextStyle(color: ashWhite),
-              bodyMedium: TextStyle(color: const Color(0xFF9CA3AF)),
-              labelSmall: TextStyle(color: const Color(0xFF9CA3AF)),
+              titleLarge: TextStyle(color: Colors.black),
+              bodyLarge: TextStyle(color: Colors.black),
+              bodyMedium: TextStyle(color: const Color(0xFF4B4B4B)),
+              labelSmall: TextStyle(color: const Color(0xFF6B7280)),
             )),
-            iconTheme: IconThemeData(color: ashWhite),
+            iconTheme: IconThemeData(color: Colors.black),
             elevatedButtonTheme: ElevatedButtonThemeData(
               style: ElevatedButton.styleFrom(backgroundColor: coldSteel, foregroundColor: ashWhite),
             ),
@@ -165,6 +165,11 @@ class MyApp extends StatelessWidget {
           '/my_quizzes': (context) => const MyQuizzesScreen(),
           '/profile': (context) => const ProfileScreen(),
           '/quiz_history': (context) => const QuizHistoryScreen(),
+          '/attempt_review': (context) {
+            final args = ModalRoute.of(context)!.settings.arguments;
+            final attemptId = args is String ? args : '';
+            return AttemptDetailScreen(attemptId: attemptId);
+          },
           '/signup': (context) => const SignUpScreen(),
           '/take_quiz': (context) {
             final args = ModalRoute.of(context)!.settings.arguments;

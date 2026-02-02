@@ -8,6 +8,7 @@ class QuizProvider with ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService();
 
   List<QuizModel> _userQuizzes = [];
+  List<AttemptModel> _userAttempts = []; // Add this
   QuizModel? _currentQuiz;
   List<QuestionModel> _currentQuizQuestions = [];
   AttemptModel? _currentAttempt;
@@ -15,6 +16,7 @@ class QuizProvider with ChangeNotifier {
   String? _errorMessage;
 
   List<QuizModel> get userQuizzes => _userQuizzes;
+  List<AttemptModel> get userAttempts => _userAttempts; // Add this
   QuizModel? get currentQuiz => _currentQuiz;
   List<QuestionModel> get currentQuizQuestions => _currentQuizQuestions;
   AttemptModel? get currentAttempt => _currentAttempt;
@@ -27,6 +29,23 @@ class QuizProvider with ChangeNotifier {
 
     try {
       _userQuizzes = await _firestoreService.getQuizzesByTeacher(userId);
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> loadUserAttempts(String userId) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      _userAttempts = await _firestoreService.getAttemptsByUser(userId);
       _isLoading = false;
       notifyListeners();
       return true;

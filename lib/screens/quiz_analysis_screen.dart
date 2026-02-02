@@ -95,7 +95,10 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(217, 255, 255, 255)],
+          colors: [
+            Color(0xFFFFFFFF),
+            Color.fromARGB(255, 207, 207, 207),
+          ],
         ),
       ),
       child: Scaffold(
@@ -130,9 +133,9 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
                 title: Text(_quiz?.title ?? 'Quiz Analysis', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20)),
                 bottom: TabBar(
                   controller: _tabController,
-                  labelColor: const Color(0xFF2C3E50),
+                  labelColor: const Color(0xFF222222),
                   unselectedLabelColor: const Color(0xFF7F8C8D),
-                  indicatorColor: const Color(0xFF2C3E50),
+                  indicatorColor: const Color(0xFF222222),
                   tabs: const [Tab(text: 'Summary'), Tab(text: 'Insights'), Tab(text: 'Individual')],
                 ),
               ),
@@ -191,12 +194,12 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
             Container(
-              decoration: BoxDecoration(color: (accent ?? const Color(0xFF2C3E50)).withAlpha(20), borderRadius: BorderRadius.circular(8)),
+              decoration: BoxDecoration(color: (accent ?? const Color(0xFF222222)).withAlpha(20), borderRadius: BorderRadius.circular(8)),
               padding: const EdgeInsets.all(8),
-              child: Icon(icon, color: accent ?? const Color(0xFF2C3E50)),
+              child: Icon(icon, color: accent ?? const Color(0xFF222222)),
             ),
             const SizedBox(width: 12),
-            Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF2C3E50)))),
+            Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF222222)))),
           ]),
           const SizedBox(height: 12),
           ...children,
@@ -211,16 +214,16 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
       title: 'Participation',
       accent: Colors.blue,
       children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Attempts', style: TextStyle(color: Color(0xFF7F8C8D))), Text('$attemptCount', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2C3E50)))]),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Attempts', style: TextStyle(color: Color(0xFF7F8C8D))), Text('$attemptCount', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF222222)))]),
         const SizedBox(height: 12),
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Submitted', style: TextStyle(color: Color(0xFF7F8C8D))), Text('$submittedCount', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2C3E50)))]),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Submitted', style: TextStyle(color: Color(0xFF7F8C8D))), Text('$submittedCount', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF222222)))]),
         const SizedBox(height: 12),
         const Text('Completion rate', style: TextStyle(color: Color(0xFF7F8C8D))),
         const SizedBox(height: 8),
         Row(children: [
           Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(8), child: LinearProgressIndicator(value: completionRate / 100.0, minHeight: 10, color: Colors.blue, backgroundColor: Colors.grey.shade300))),
           const SizedBox(width: 12),
-          Text('${completionRate.toStringAsFixed(1)}%', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2C3E50))),
+          Text('${completionRate.toStringAsFixed(1)}%', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF222222))),
         ]),
       ],
     );
@@ -239,7 +242,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
           const SizedBox(height: 6),
           Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
             // Score value
-            Text('${avgScore.toStringAsFixed(1)}/$maxPoints', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF2C3E50))),
+            Text('${avgScore.toStringAsFixed(1)}/$maxPoints', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF222222))),
             const SizedBox(width: 12),
             // Progress bar next to score
             Expanded(
@@ -254,13 +257,13 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
               ),
             ),
             const SizedBox(width: 12),
-            SizedBox(width: 44, child: Text('${((maxPoints == 0) ? 0 : ((avgScore / maxPoints) * 100)).toStringAsFixed(0)}%', textAlign: TextAlign.right, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2C3E50)))),
+            SizedBox(width: 44, child: Text('${((maxPoints == 0) ? 0 : ((avgScore / maxPoints) * 100)).toStringAsFixed(0)}%', textAlign: TextAlign.right, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF222222)))),
           ]),
           const SizedBox(height: 12),
           // Small stats row: Highest and Lowest side-by-side
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Highest', style: TextStyle(color: Color(0xFF7F8C8D), fontSize: 12)), const SizedBox(height: 4), Text('$highest', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2C3E50)))]),
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Lowest', style: TextStyle(color: Color(0xFF7F8C8D), fontSize: 12)), const SizedBox(height: 4), Text('$lowest', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2C3E50)))]),
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Highest', style: TextStyle(color: Color(0xFF7F8C8D), fontSize: 12)), const SizedBox(height: 4), Text('$highest', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF222222)))]),
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Lowest', style: TextStyle(color: Color(0xFF7F8C8D), fontSize: 12)), const SizedBox(height: 4), Text('$lowest', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF222222)))]),
           ])
         ])
       ],
@@ -269,9 +272,9 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
     // Behavior & Time tile
     final behaviorTile = buildTile(
       icon: Icons.schedule, title: 'Behavior & Time', accent: Colors.orange, children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Average time', style: TextStyle(color: Color(0xFF7F8C8D))), Text('${avgTimeFormatted.inMinutes}:${(avgTimeFormatted.inSeconds % 60).toString().padLeft(2, '0')}', style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF2C3E50)))]),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Average time', style: TextStyle(color: Color(0xFF7F8C8D))), Text('${avgTimeFormatted.inMinutes}:${(avgTimeFormatted.inSeconds % 60).toString().padLeft(2, '0')}', style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF222222)))]),
         const SizedBox(height: 12),
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Total violations', style: TextStyle(color: Color(0xFF7F8C8D))), Row(children: [totalViolations == 0 ? const Icon(Icons.check_circle, color: Colors.green, size: 18) : const SizedBox(width: 18), const SizedBox(width: 8), Text('$totalViolations', style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF2C3E50)))])]),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Total violations', style: TextStyle(color: Color(0xFF7F8C8D))), Row(children: [totalViolations == 0 ? const Icon(Icons.check_circle, color: Colors.green, size: 18) : const SizedBox(width: 18), const SizedBox(width: 8), Text('$totalViolations', style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF222222)))])]),
       ],
     );
 
@@ -299,7 +302,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
           final scoreTile = buildTile(
             icon: Icons.insert_chart_outlined,
             title: 'Score distribution',
-            accent: const Color(0xFF2C3E50),
+            accent: const Color(0xFF222222),
             children: [
               Center(child: Text('Total attempts: $totalAttempts', style: const TextStyle(color: Color(0xFF7F8C8D), fontSize: 13))),
               const SizedBox(height: 8),
@@ -428,7 +431,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
                                             width: thickBarWidth,
                                             height: barHeight,
                                             decoration: BoxDecoration(
-                                              color: const Color(0xFF2C3E50),
+                                              color: const Color(0xFF222222),
                                               borderRadius: BorderRadius.circular(6),
                                             ),
                                           ),
@@ -689,7 +692,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
             final pctDouble = perQuestionRates[id] ?? 0.0;
             final badgeColor = pctDouble >= 80
                 ? Colors.green
-                : (pctDouble <= 40 ? Colors.red : const Color(0xFF2C3E50));
+                : (pctDouble <= 40 ? Colors.red : const Color(0xFF222222));
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: Row(children: [
@@ -729,7 +732,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
             final pctDouble = perQuestionRates[id] ?? 0.0;
             final badgeColor = pctDouble >= 80
                 ? Colors.green
-                : (pctDouble <= 40 ? Colors.red : const Color(0xFF2C3E50));
+                : (pctDouble <= 40 ? Colors.red : const Color(0xFF222222));
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: Row(children: [
@@ -767,7 +770,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
             final viol = st['violations'] as int;
             final total = st['total'] as int;
             final violPct = violationRates[id] ?? 0.0;
-            final badgeColor = violPct >= 50 ? Colors.orange : const Color(0xFF2C3E50);
+            final badgeColor = violPct >= 50 ? Colors.orange : const Color(0xFF222222);
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: Row(children: [
@@ -900,7 +903,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(user?.displayName ?? a.userId, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF2C3E50))),
+                    Text(user?.displayName ?? a.userId, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF222222))),
                     const SizedBox(height: 6),
                     Text('Score: ${a.score}/${a.totalPoints} • Violations: ${violations.length}', style: const TextStyle(color: Color(0xFF7F8C8D), fontSize: 13)),
                   ],
@@ -1133,7 +1136,7 @@ class _AttemptDetailViewerState extends State<_AttemptDetailViewer> {
               padding: const EdgeInsets.all(16.0),
               child: Row(
                 children: [
-                  Expanded(child: Text('Attempt by ${widget.user?.displayName ?? _attempt.userId}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2C3E50)))),
+                  Expanded(child: Text('Attempt by ${widget.user?.displayName ?? _attempt.userId}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF222222)))),
                   IconButton(
                     icon: const Icon(Icons.close, color: Color(0xFF7F8C8D)),
                     onPressed: () => Navigator.of(context).pop(),
@@ -1171,7 +1174,7 @@ class _AttemptDetailViewerState extends State<_AttemptDetailViewer> {
                   if (i == _attempt.answers.length) {
                     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       const SizedBox(height: 24),
-                      const Text('Violations', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF2C3E50))),
+                      const Text('Violations', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF222222))),
                       const SizedBox(height: 12),
                       if (widget.violations.isEmpty)
                         _buildInfoTile(Icons.check_circle_outline, Colors.green, 'No violations detected', 'This respondent had 0 anti-cheating flags.')
@@ -1179,7 +1182,7 @@ class _AttemptDetailViewerState extends State<_AttemptDetailViewer> {
                         for (var v in widget.violations)
                           _buildInfoTile(Icons.warning_amber_rounded, Colors.deepOrange, _violationTypeLabel(v.type), _violationSubtitle(v)),
                       const SizedBox(height: 24),
-                      const Text('Opened apps timeline', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF2C3E50))),
+                      const Text('Opened apps timeline', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF222222))),
                       const SizedBox(height: 12),
                       if ((_attempt.openedApps).isEmpty)
                         _buildInfoTile(Icons.check_circle_outline, Colors.green, 'No opened apps recorded', 'No app switches recorded.')
@@ -1324,7 +1327,7 @@ class _NeumorphicButton extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
-            color: isPrimary ? const Color(0xFF2C3E50) : const Color(0xFFF5F5F5),
+            color: isPrimary ? const Color(0xFF222222) : const Color(0xFFF5F5F5),
             borderRadius: BorderRadius.circular(12),
             boxShadow: onPressed == null ? [] : [
               const BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 6),
@@ -1334,9 +1337,9 @@ class _NeumorphicButton extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 18, color: isPrimary ? Colors.white : const Color(0xFF2C3E50)),
+              Icon(icon, size: 18, color: isPrimary ? Colors.white : const Color(0xFF222222)),
               const SizedBox(width: 8),
-              Text(label, style: TextStyle(fontWeight: FontWeight.w600, color: isPrimary ? Colors.white : const Color(0xFF2C3E50))),
+              Text(label, style: TextStyle(fontWeight: FontWeight.w600, color: isPrimary ? Colors.white : const Color(0xFF222222))),
             ],
           ),
         ),

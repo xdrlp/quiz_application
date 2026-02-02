@@ -24,8 +24,8 @@ class _HomeScreenState extends State<HomeScreen> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color.fromARGB(255, 255, 255, 255),
-            Color.fromARGB(217, 255, 255, 255),
+            Color(0xFFFFFFFF), // #ffffff (white)
+            Color.fromARGB(255, 207, 207, 207), // #9b9b9b (gray)
           ],
         ),
       ),
@@ -51,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
                   colors: [
-                    Color.fromARGB(108, 244, 244, 244),
+                    Color.fromARGB(204, 244, 244, 244),
                     Color.fromARGB(205, 223, 223, 223),
                   ],
                 ),
@@ -92,16 +92,35 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         body: Consumer2<AuthProvider, QuizProvider>(
           builder: (context, authProvider, quizProvider, _) {
-            // Load user quizzes once
+            // Load user quizzes and attempts once
             if (!_loaded && authProvider.currentUser != null) {
               _loaded = true;
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                quizProvider.loadUserQuizzes(authProvider.currentUser!.uid);
+                final uid = authProvider.currentUser!.uid;
+                quizProvider.loadUserQuizzes(uid);
+                quizProvider.loadUserAttempts(uid);
               });
             }
 
             final userName = authProvider.currentUser?.displayName ?? 'there';
+            
+            // Stats for Quiz Board
             final quizzes = quizProvider.userQuizzes;
+            final createdCount = quizzes.length;
+            final publishedCount = quizzes.where((q) => q.published).length;
+            final draftsCount = quizzes.where((q) => !q.published).length;
+            
+            // Stats for Quiz Taken
+            final attempts = quizProvider.userAttempts;
+            final submittedCount = attempts.where((a) => a.submittedAt != null).length;
+            double avgScore = 0;
+            if (submittedCount > 0) {
+              final totalPerc = attempts
+                  .where((a) => a.submittedAt != null)
+                  .fold(0.0, (sum, a) => sum + a.scorePercentage);
+               avgScore = totalPerc / submittedCount;
+            }
+
             final recent = List<QuizModel>.from(quizzes)
               ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
@@ -135,7 +154,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           style: const TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF2C3E50),
+                            color: Color(0xFF222222),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -247,7 +266,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    '25 Created 5 Published\n2 drafts',
+                                    '$createdCount Created $publishedCount Published\n$draftsCount drafts',
                                     style: const TextStyle(
                                       fontSize: 12,
                                       color: Color(0xFF7F8C8D),
@@ -281,9 +300,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 4),
-                                  const Text(
-                                    '45 Submitted 89% avg score',
-                                    style: TextStyle(
+                                  Text(
+                                    '$submittedCount Submitted ${avgScore.toStringAsFixed(0)}% avg score',
+                                    style: const TextStyle(
                                       fontSize: 12,
                                       color: Color(0xFF7F8C8D),
                                     ),

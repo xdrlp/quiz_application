@@ -10,7 +10,6 @@ import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:quiz_application/services/firestore_service.dart';
 import 'package:quiz_application/services/storage_service.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:image_cropper/image_cropper.dart';
 import 'package:image/image.dart' as img; // Generic image manipulation
 import 'dart:math' as math;
 import 'starter_screen.dart';
@@ -186,74 +185,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showImageOptions() {
-    final user = context.read<AuthProvider>().currentUser;
-    final hasPhoto = user?.photoUrl != null;
-
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.photo_camera),
-                title: const Text('Upload New Photo'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _pickAndUploadImage();
-                },
-              ),
-              if (hasPhoto)
-                ListTile(
-                  leading: const Icon(Icons.delete, color: Colors.red),
-                  title: const Text(
-                    'Remove Photo',
-                    style: TextStyle(color: Colors.red),
-                  ),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    _removeProfilePhoto();
-                  },
-                ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _removeProfilePhoto() async {
-    final auth = context.read<AuthProvider>();
-    final user = auth.currentUser;
-    if (user == null) return;
-
-    setState(() => _isUploading = true);
-    try {
-      await auth.updateProfile(
-        firstName: user.firstName,
-        lastName: user.lastName,
-        classSection: user.classSection,
-        yearLevel: user.yearLevel,
-        photoUrl: null, // This updates Firestore to remove URL
-      );
-      // NOTE: We do not strictly delete the file from Storage to avoid complex logic,
-      // but you could add that to StorageService if needed.
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to remove photo: $e')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isUploading = false);
-    }
-  }
-
   Future<void> _pickAndUploadImage() async {
     if (_isUploading) return;
     final auth = context.read<AuthProvider>();
@@ -272,39 +203,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return;
       }
 
-      // 1. Crop Image (1:1)
-      CroppedFile? croppedFile = await ImageCropper().cropImage(
-        sourcePath: picked.path,
-        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
-        uiSettings: [
-          AndroidUiSettings(
-            toolbarTitle: 'Crop Image',
-            toolbarColor: const Color(0xFF2C3E50),
-            toolbarWidgetColor: Colors.white,
-            initAspectRatio: CropAspectRatioPreset.square,
-            lockAspectRatio: true,
-          ),
-          IOSUiSettings(
-            title: 'Crop Image',
-            aspectRatioLockEnabled: true,
-            resetAspectRatioEnabled: false,
-          ),
-          WebUiSettings(
-            context: context,
-          ),
-        ],
-      );
-
-      if (croppedFile == null) {
-         // User cancelled crop
-         setState(() => _isUploading = false);
-         return;
-      }
-
       // 2. Read, Convert/Compress to JPEG
-      final bytes = await croppedFile.readAsBytes();
+      final bytes = await picked.readAsBytes();
 
-      
       // Use 'image' package to decode and re-encode as JPEG to ensure format
       // and optional compression.
       final cmd = img.Command()
@@ -375,8 +276,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color.fromARGB(255, 255, 255, 255),
-            Color.fromARGB(217, 255, 255, 255),
+            Color(0xFFFFFFFF),
+            Color.fromARGB(255, 207, 207, 207),
           ],
         ),
       ),
@@ -390,7 +291,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
                 colors: [
-                  Color.fromARGB(255, 169, 169, 169),
+                  Color.fromARGB(255, 124, 124, 124),
                   Color.fromARGB(255, 255, 255, 255),
                 ],
               ),
@@ -476,7 +377,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     shape: BoxShape.circle,
                                     gradient: const LinearGradient(
                                       colors: [
-                                        Color(0xFF2C3E50),
+                                        Color.fromARGB(255, 65, 65, 65),
                                         Color(0xFFBDC3C7),
                                       ],
                                       begin: Alignment.topLeft,
@@ -511,7 +412,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                   style: const TextStyle(
                                                     fontSize: 40,
                                                     fontWeight: FontWeight.bold,
-                                                    color: Color(0xFF2C3E50),
+                                                    color: Color(0xFF222222),
                                                   ),
                                                 )),
                                   ),
@@ -548,7 +449,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           style: const TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF2C3E50),
+                            color: Color(0xFF222222),
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -946,7 +847,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF2C3E50), width: 1.5),
+        borderSide: const BorderSide(color: Color(0xFF222222), width: 1.5),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     );
@@ -970,7 +871,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Text(
               value,
               style: const TextStyle(
-                color: Color(0xFF2C3E50),
+                color: Color(0xFF222222),
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
               ),

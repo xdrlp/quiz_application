@@ -186,14 +186,14 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
         children: [
           Row(
             children: [
-              Expanded(child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2C3E50)))),
+              Expanded(child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF222222)))),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2C3E50).withValues(alpha: 0.1),
+                  color: const Color(0xFF222222).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text('$count', style: const TextStyle(color: Color(0xFF2C3E50), fontWeight: FontWeight.bold)),
+                child: Text('$count', style: const TextStyle(color: Color(0xFF222222), fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -228,7 +228,10 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(217, 255, 255, 255)],
+          colors: [
+            Color(0xFFFFFFFF),
+            Color.fromARGB(255, 207, 207, 207),
+          ],
         ),
       ),
       child: Scaffold(
@@ -274,7 +277,7 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
         ),
         floatingActionButton: _selected.isNotEmpty ? FloatingActionButton.extended(
           onPressed: () {},
-          backgroundColor: const Color(0xFF2C3E50),
+          backgroundColor: const Color(0xFF222222),
           foregroundColor: Colors.white,
           icon: const Icon(Icons.check_box),
           label: Text('${_selected.length} selected'),
@@ -331,7 +334,7 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
                   child: Column(mainAxisSize: MainAxisSize.min, children: [
                     const Icon(Icons.quiz, size: 84, color: Colors.blueAccent),
                     const SizedBox(height: 16),
-                    const Text('No quizzes yet', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF2C3E50))),
+                    const Text('No quizzes yet', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF222222))),
                     const SizedBox(height: 8),
                     const Text('Create your first quiz to get started. It will appear here and you can publish or share it.' , textAlign: TextAlign.center, style: TextStyle(color: Color(0xFF7F8C8D))),
                     const SizedBox(height: 24),
@@ -341,7 +344,7 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
                         if (mounted) setState(() => _load());
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2C3E50),
+                        backgroundColor: const Color(0xFF222222),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -444,7 +447,7 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF2C3E50), width: 1.5),
+        borderSide: const BorderSide(color: Color(0xFF222222), width: 1.5),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
     );
@@ -456,8 +459,8 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
       label: Text(label),
       selected: selected,
       onSelected: (_) => setState(() => _filter = label),
-      selectedColor: const Color(0xFF2C3E50),
-      labelStyle: TextStyle(color: selected ? Colors.white : const Color(0xFF2C3E50)),
+      selectedColor: const Color(0xFF222222),
+      labelStyle: TextStyle(color: selected ? Colors.white : const Color(0xFF222222)),
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: selected ? Colors.transparent : Colors.grey.shade300)),
     );
@@ -570,7 +573,7 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
                 if (_selected.contains(q.id))
                   Padding(
                     padding: const EdgeInsets.only(right: 12.0),
-                    child: Icon(Icons.check_circle, color: const Color(0xFF2C3E50), size: 24),
+                    child: Icon(Icons.check_circle, color: const Color(0xFF222222), size: 24),
                   ),
                 Container(
                   width: 56,
@@ -594,14 +597,14 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
                   alignment: Alignment.center,
                   child: Text(
                     q.title.isEmpty ? '?' : q.title[0].toUpperCase(), 
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF2C3E50))
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF222222))
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Row(children: [
-                      Expanded(child: Text(q.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF2C3E50)))),
+                      Expanded(child: Text(q.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF222222)))),
                     ]),
                     const SizedBox(height: 4),
                     Text(q.description.isEmpty ? 'No description' : q.description, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, color: Color(0xFF7F8C8D))),

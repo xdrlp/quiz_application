@@ -40,9 +40,21 @@ class _FindQuizScreenState extends State<FindQuizScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Find Quiz')),
-      body: Padding(
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFFFFFFF),
+            Color.fromARGB(255, 207, 207, 207),
+          ],
+        ),
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(title: const Text('Find Quiz')),
+        body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
@@ -86,6 +98,7 @@ class _FindQuizScreenState extends State<FindQuizScreen> {
               ),
           ],
         ),
+      ),
       ),
     );
   }

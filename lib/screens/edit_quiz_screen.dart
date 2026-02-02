@@ -208,7 +208,10 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(217, 255, 255, 255)],
+          colors: [
+            Color(0xFFFFFFFF),
+            Color.fromARGB(255, 207, 207, 207),
+          ],
         ),
       ),
       child: Scaffold(
@@ -249,7 +252,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                         message: (!_quiz!.published && _questions.isEmpty) ? 'Add at least one question before publishing' : '',
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: _quiz!.published ? const Color(0xFFC0392B) : const Color(0xFF2C3E50),
+                            backgroundColor: _quiz!.published ? const Color(0xFFC0392B) : const Color(0xFF222222),
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
@@ -323,7 +326,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Quiz Settings', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF2C3E50))),
+                          const Text('Quiz Settings', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF222222))),
                           const Divider(),
                           const SizedBox(height: 8),
                           _settingsSwitch('Shuffle questions', _shuffleQuestions, (v) => setState(() => _shuffleQuestions = v)),
@@ -341,7 +344,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 8.0),
                             child: Row(children: [
-                              const Expanded(child: Text('Time limit (minutes)', style: TextStyle(color: Color(0xFF2C3E50), fontSize: 16))),
+                              const Expanded(child: Text('Time limit (minutes)', style: TextStyle(color: Color(0xFF222222), fontSize: 16))),
                               SizedBox(
                                 width: 80,
                                 child: TextFormField(
@@ -359,7 +362,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                             child: ElevatedButton(
                               onPressed: _saveSettings,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF2C3E50),
+                                backgroundColor: const Color(0xFF222222),
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                               ),
@@ -370,7 +373,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    const Text('Questions', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Color(0xFF2C3E50))),
+                    const Text('Questions', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Color(0xFF222222))),
                     const SizedBox(height: 12),
                     if (_questions.isEmpty)
                       const Center(child: Padding(padding: EdgeInsets.all(20), child: Text('No questions yet', style: TextStyle(color: Colors.grey)))),
@@ -412,7 +415,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(q.prompt, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2C3E50))),
+                                      Text(q.prompt, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF222222))),
                                       const SizedBox(height: 8),
                                       Wrap(
                                         spacing: 8,
@@ -511,11 +514,11 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         children: [
-          Expanded(child: Text(label, style: const TextStyle(color: Color(0xFF2C3E50), fontSize: 16))),
+          Expanded(child: Text(label, style: const TextStyle(color: Color(0xFF222222), fontSize: 16))),
           Switch(
             value: value,
             onChanged: onChanged,
-            activeThumbColor: const Color(0xFF2C3E50),
+            activeThumbColor: const Color(0xFF222222),
           ),
         ],
       ),
@@ -538,7 +541,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF2C3E50), width: 1.5),
+        borderSide: const BorderSide(color: Color(0xFF222222), width: 1.5),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     );

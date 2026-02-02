@@ -7,8 +7,7 @@ import 'report_bug_dialog.dart';
 // ==========================================
 
 // --- Colors ---
-const Color _kTextColor = Color(0xFF4A4A4A); // Primary text color (Dark Grey)
-const Color _kRedAccentColor = Color(0xFFFF3B30); // Primary accent (Red)
+const Color _kTextColor = Color(0xFF222222); // Primary text color (Dark Grey)
 
 // Neumorphism Shadows
 // Neumorphism shadows and gradient colors removed (unused)
@@ -75,8 +74,8 @@ class StarterScreen extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: const [
-            Color(0xFFFFFFFF), // #ffffff (white)
-            Color.fromARGB(255, 175, 175, 175), // #9b9b9b (gray)
+            Color(0xFFFFFFFF),
+            Color.fromARGB(255, 207, 207, 207),
           ],
         ),
       ),
@@ -152,7 +151,7 @@ class StarterScreen extends StatelessWidget {
                           width: 8,
                           height: 8,
                           decoration: const BoxDecoration(
-                            color: _kRedAccentColor,
+                            color: Color.fromARGB(255, 230, 0, 0),
                             shape: BoxShape.circle,
                           ),
                         ),
