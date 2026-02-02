@@ -10,6 +10,8 @@ import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:quiz_application/services/firestore_service.dart';
 import 'package:quiz_application/services/storage_service.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'package:image/image.dart' as img; // Generic image manipulation
 import 'dart:math' as math;
 import 'starter_screen.dart';
 
@@ -184,43 +186,149 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Future<void> _pickAndUploadImage() async {
+  void _showImageOptions() {
+    final user = context.read<AuthProvider>().currentUser;
+    final hasPhoto = user?.photoUrl != null;
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_camera),
+                title: const Text('Upload New Photo'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickAndUploadImage();
+                },
+              ),
+              if (hasPhoto)
+                ListTile(
+                  leading: const Icon(Icons.delete, color: Colors.red),
+                  title: const Text(
+                    'Remove Photo',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _removeProfilePhoto();
+                  },
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _removeProfilePhoto() async {
     final auth = context.read<AuthProvider>();
     final user = auth.currentUser;
     if (user == null) return;
 
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked == null) return;
-
-    // Read bytes directly - works on both Web and Mobile
-    final bytes = await picked.readAsBytes();
-    final len = bytes.length;
-    
-    // Validate size (1MB limit)
-    if (len > 1024 * 1024) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Image size must be less than 1MB')),
+    setState(() => _isUploading = true);
+    try {
+      await auth.updateProfile(
+        firstName: user.firstName,
+        lastName: user.lastName,
+        classSection: user.classSection,
+        yearLevel: user.yearLevel,
+        photoUrl: null, // This updates Firestore to remove URL
       );
-      return;
+      // NOTE: We do not strictly delete the file from Storage to avoid complex logic,
+      // but you could add that to StorageService if needed.
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to remove photo: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
     }
+  }
 
-    // Validate using magic bytes to be sure it's a JPEG
-    // JPEG starts with FF D8 FF
-    if (len < 3 || bytes[0] != 0xFF || bytes[1] != 0xD8 || bytes[2] != 0xFF) {
-       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Only .jpeg files are allowed')),
-      );
-      return;
-    }
+  Future<void> _pickAndUploadImage() async {
+    if (_isUploading) return;
+    final auth = context.read<AuthProvider>();
+    final user = auth.currentUser;
+    if (user == null) return;
 
+    // Prevent double-taps or reentry
     setState(() => _isUploading = true);
 
     try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(source: ImageSource.gallery);
+      
+      if (picked == null) {
+        setState(() => _isUploading = false);
+        return;
+      }
+
+      // 1. Crop Image (1:1)
+      CroppedFile? croppedFile = await ImageCropper().cropImage(
+        sourcePath: picked.path,
+        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Crop Image',
+            toolbarColor: const Color(0xFF2C3E50),
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.square,
+            lockAspectRatio: true,
+          ),
+          IOSUiSettings(
+            title: 'Crop Image',
+            aspectRatioLockEnabled: true,
+            resetAspectRatioEnabled: false,
+          ),
+          WebUiSettings(
+            context: context,
+          ),
+        ],
+      );
+
+      if (croppedFile == null) {
+         // User cancelled crop
+         setState(() => _isUploading = false);
+         return;
+      }
+
+      // 2. Read, Convert/Compress to JPEG
+      final bytes = await croppedFile.readAsBytes();
+
+      
+      // Use 'image' package to decode and re-encode as JPEG to ensure format
+      // and optional compression.
+      final cmd = img.Command()
+        ..decodeImage(bytes)
+        ..encodeJpg(quality: 85); // Compress 85%
+      
+      final processedBytes = await cmd.getBytesThread();
+
+      if (processedBytes == null) {
+        throw Exception('Failed to process image');
+      }
+
+      final len = processedBytes.length;
+      if (len > 1024 * 1024) {
+         if (!mounted) return;
+         ScaffoldMessenger.of(context).showSnackBar(
+           SnackBar(content: Text('Image is too large (${(len / 1024).round()}KB). Max 1MB.')),
+         );
+         return;
+      }
+      
       final storage = StorageService();
-      final url = await storage.uploadProfileImage(user.uid, bytes);
+      // Since we re-encoded, we know it's a JPEG
+      final url = await storage.uploadProfileImage(user.uid, processedBytes);
 
       await auth.updateProfile(
         firstName: user.firstName,
@@ -319,13 +427,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
         ),
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const SizedBox(height: 16),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 16),
                 // Profile Header
                 Builder(
                   builder: (ctx) {
@@ -354,46 +464,81 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                     return Column(
                       children: [
-                        GestureDetector(
-                          onTap: _isUploading ? null : _pickAndUploadImage,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF2C3E50), Color(0xFFBDC3C7)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.2),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 5),
+                        MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: GestureDetector(
+                            onTap: _isUploading ? null : _pickAndUploadImage,
+                            child: Stack(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        Color(0xFF2C3E50),
+                                        Color(0xFFBDC3C7),
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.2,
+                                        ),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 5),
+                                      ),
+                                    ],
+                                  ),
+                                  child: CircleAvatar(
+                                    radius: 60,
+                                    backgroundColor: Colors.white,
+                                    backgroundImage:
+                                        (u?.photoUrl != null)
+                                            ? NetworkImage(u!.photoUrl!)
+                                            : null,
+                                    child:
+                                        _isUploading
+                                            ? const CircularProgressIndicator(
+                                              color: Colors.black,
+                                            )
+                                            : (u?.photoUrl != null
+                                                ? null
+                                                : Text(
+                                                  initial,
+                                                  style: const TextStyle(
+                                                    fontSize: 40,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Color(0xFF2C3E50),
+                                                  ),
+                                                )),
+                                  ),
+                                ),
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black26,
+                                          blurRadius: 4,
+                                        ),
+                                      ],
+                                    ),
+                                    child: const Icon(
+                                      Icons.edit,
+                                      size: 20,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
                                 ),
                               ],
-                            ),
-                            child: CircleAvatar(
-                              radius: 60,
-                              backgroundColor: Colors.white,
-                              backgroundImage:
-                                  (u?.photoUrl != null)
-                                      ? NetworkImage(u!.photoUrl!)
-                                      : null,
-                              child: _isUploading
-                                  ? const CircularProgressIndicator(
-                                    color: Colors.black,
-                                  )
-                                  : (u?.photoUrl != null
-                                      ? null
-                                      : Text(
-                                        initial,
-                                        style: const TextStyle(
-                                          fontSize: 40,
-                                          fontWeight: FontWeight.bold,
-                                          color: Color(0xFF2C3E50),
-                                        ),
-                                      )),
                             ),
                           ),
                         ),
@@ -742,6 +887,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
         ),
+      ),
       ),
     );
   }
