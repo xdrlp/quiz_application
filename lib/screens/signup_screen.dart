@@ -100,7 +100,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
     setState(() => _isCreatingAccount = false);
 
     if (success) {
-      _showMessage('Account created successfully!');
       Navigator.pop(context);
     } else {
       _showMessage(auth.errorMessage ?? 'Sign up failed.');
@@ -149,31 +148,29 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ],
           ),
         ),
-        child: Center(
-          child: TextField(
-            controller: controller,
-            obscureText: obscureText,
-            style: const TextStyle(color: Colors.black87, fontSize: 16),
-            cursorColor: Colors.black87,
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 18,
-              ),
-              hintText: hint,
-              hintStyle: const TextStyle(color: Colors.black38),
-              prefixIcon: Icon(icon, color: Colors.black54),
-              suffixIcon: isPassword
-                  ? IconButton(
-                      icon: Icon(
-                        obscureText ? Icons.visibility_off : Icons.visibility,
-                        color: Colors.black54,
-                      ),
-                      onPressed: onToggleVisibility,
-                    )
-                  : null,
+        child: TextField(
+          controller: controller,
+          obscureText: obscureText,
+          style: const TextStyle(color: Colors.black87, fontSize: 16),
+          cursorColor: Colors.black87,
+          decoration: InputDecoration(
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
             ),
+            hintText: hint,
+            hintStyle: const TextStyle(color: Colors.black38),
+            prefixIcon: Icon(icon, color: Colors.black54),
+            suffixIcon: isPassword
+                ? IconButton(
+                    icon: Icon(
+                      obscureText ? Icons.visibility_off : Icons.visibility,
+                      color: Colors.black54,
+                    ),
+                    onPressed: onToggleVisibility,
+                  )
+                : null,
           ),
         ),
       ),

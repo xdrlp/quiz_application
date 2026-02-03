@@ -155,9 +155,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final ok = await auth.login(email: email, password: password);
     if (!mounted) return;
     if (ok) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Signed in')));
       // navigate home if your app expects that
       // Navigator.pushReplacementNamed(context, '/home');
     } else {
@@ -512,139 +509,136 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Stack(
         children: [
           SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                controller: _scrollController,
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 600),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Hello,\nWelcome\nBack",
-                            style: TextStyle(
-                              fontFamily: 'MuseoModerno',
-                              fontSize: 54,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
+            child: SingleChildScrollView(
+              controller: _scrollController,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 20),
+                      const Text(
+                        "Hello,\nWelcome\nBack",
+                        style: TextStyle(
+                          fontFamily: 'MuseoModerno',
+                          fontSize: 54,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Sign in to pick up where you left off',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+                      _buildTextField(
+                        controller: _emailController,
+                        focusNode: _emailFocus,
+                        hint: 'Email',
+                        icon: Icons.email_outlined,
+                        key: _emailKey,
+                      ),
+                      const SizedBox(height: 20),
+                      _buildTextField(
+                        controller: _passwordController,
+                        focusNode: _passwordFocus,
+                        hint: 'Password',
+                        icon: Icons.lock_outline,
+                        isPassword: true,
+                        key: _passwordKey,
+                      ),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                            top: 8.0,
+                            bottom: 24.0,
                           ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Sign in to pick up where you left off',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.black54,
-                            ),
-                          ),
-                          const SizedBox(height: 40),
-                          _buildTextField(
-                            controller: _emailController,
-                            focusNode: _emailFocus,
-                            hint: 'Email',
-                            icon: Icons.email_outlined,
-                            key: _emailKey,
-                          ),
-                          const SizedBox(height: 20),
-                          _buildTextField(
-                            controller: _passwordController,
-                            focusNode: _passwordFocus,
-                            hint: 'Password',
-                            icon: Icons.lock_outline,
-                            isPassword: true,
-                            key: _passwordKey,
-                          ),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: Padding(
-                              padding: const EdgeInsets.only(
-                                top: 8.0,
-                                bottom: 24.0,
-                              ),
-                              child: GestureDetector(
-                                onTap: () {
-                                  FocusScope.of(context).unfocus();
-                                  _showResetDialog(context);
-                                },
-                                child: const Text(
-                                  'Forgot password?',
-                                  style: TextStyle(
-                                    color: Colors.black54,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
+                          child: GestureDetector(
+                            onTap: () {
+                              FocusScope.of(context).unfocus();
+                              _showResetDialog(context);
+                            },
+                            child: const Text(
+                              'Forgot password?',
+                              style: TextStyle(
+                                color: Colors.black54,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
-                          Center(
-                            child: SizedBox(
-                              height: 60,
-                              child: Stack(
-                                children: [
-                                  Positioned.fill(
-                                    child: Image.asset(
-                                      'assets/images/red_login_button.png',
-                                      fit: BoxFit.contain,
-                                    ),
-                                  ),
-                                  Positioned.fill(
-                                    child: Material(
-                                      color: Colors.transparent,
-                                      child: InkWell(
-                                        onTap: () {
-                                          FocusScope.of(context).unfocus();
-                                          _submit(context);
-                                        },
-                                        borderRadius: BorderRadius.circular(12),
-                                        splashColor: Colors.black.withValues(
-                                          alpha: 0.3,
-                                        ),
-                                        highlightColor: Colors.black.withValues(
-                                          alpha: 0.1,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                        ),
+                      ),
+                      Center(
+                        child: SizedBox(
+                          height: 60,
+                          child: Stack(
                             children: [
-                              const Text(
-                                "Don't have an account? ",
-                                style: TextStyle(
-                                  color: Color.fromARGB(197, 0, 0, 0),
+                              Positioned.fill(
+                                child: Image.asset(
+                                  'assets/images/red_login_button.png',
+                                  fit: BoxFit.contain,
                                 ),
                               ),
-                              GestureDetector(
-                                onTap: () {
-                                  FocusScope.of(context).unfocus();
-                                  Navigator.pushReplacementNamed(
-                                    context,
-                                    '/signup',
-                                  );
-                                },
-                                child: const Text(
-                                  'Sign up',
-                                  style: TextStyle(
-                                    color: Color.fromARGB(255, 0, 0, 0),
-                                    fontWeight: FontWeight.bold,
+                              Positioned.fill(
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () {
+                                      FocusScope.of(context).unfocus();
+                                      _submit(context);
+                                    },
+                                    borderRadius: BorderRadius.circular(12),
+                                    splashColor: Colors.black.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                    highlightColor: Colors.black.withValues(
+                                      alpha: 0.1,
+                                    ),
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 20),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            "Don't have an account? ",
+                            style: TextStyle(
+                              color: Color.fromARGB(197, 0, 0, 0),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              FocusScope.of(context).unfocus();
+                              Navigator.pushReplacementNamed(
+                                context,
+                                '/signup',
+                              );
+                            },
+                            child: const Text(
+                              'Sign up',
+                              style: TextStyle(
+                                color: Color.fromARGB(255, 0, 0, 0),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
-                    ),
+                      const SizedBox(height: 20),
+                    ],
                   ),
                 ),
               ),
@@ -689,38 +683,36 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
           ),
         ),
-        child: Center(
-          child: TextField(
-            controller: controller,
-            focusNode: focusNode,
-            obscureText: isPassword && !_passwordVisible,
-            style: const TextStyle(color: Colors.black87, fontSize: 16),
-            cursorColor: Colors.black87,
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 18,
-              ),
-              hintText: hint,
-              hintStyle: const TextStyle(color: Colors.black38),
-              prefixIcon: Icon(icon, color: Colors.black54),
-              suffixIcon: isPassword
-                  ? IconButton(
-                      icon: Icon(
-                        _passwordVisible
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                        color: Colors.black54,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _passwordVisible = !_passwordVisible;
-                        });
-                      },
-                    )
-                  : null,
+        child: TextField(
+          controller: controller,
+          focusNode: focusNode,
+          obscureText: isPassword && !_passwordVisible,
+          style: const TextStyle(color: Colors.black87, fontSize: 16),
+          cursorColor: Colors.black87,
+          decoration: InputDecoration(
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
             ),
+            hintText: hint,
+            hintStyle: const TextStyle(color: Colors.black38),
+            prefixIcon: Icon(icon, color: Colors.black54),
+            suffixIcon: isPassword
+                ? IconButton(
+                    icon: Icon(
+                      _passwordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                      color: Colors.black54,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _passwordVisible = !_passwordVisible;
+                      });
+                    },
+                  )
+                : null,
           ),
         ),
       ),

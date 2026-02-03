@@ -273,15 +273,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
             ),
           ),
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: _addQuestion,
-          tooltip: 'Add question',
-          elevation: 6.0,
-          backgroundColor: const Color(0xFF27AE60),
-          foregroundColor: Colors.white,
-          icon: const Icon(Icons.add),
-          label: const Text('Add Question'),
-        ),
+        floatingActionButton: null,
         floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
         body: _loading
             ? const Center(child: CircularProgressIndicator())
@@ -466,7 +458,52 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                         );
                       },
                     ),
-                    const SizedBox(height: 80), // Space for FAB
+                    const SizedBox(height: 24),
+                    Center(
+                      child: Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: _addQuestion,
+                            customBorder: const CircleBorder(),
+                            child: Center(
+                              child: Container(
+                                width: 45,
+                                height: 45,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: const Color(0xFFBDBDBD),
+                                    width: 2,
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Icon(
+                                    Icons.add,
+                                    size: 24,
+                                    color: const Color(0xFFBDBDBD),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
@@ -511,14 +548,32 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
 
   Widget _settingsSwitch(String label, bool value, ValueChanged<bool> onChanged) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         children: [
-          Expanded(child: Text(label, style: const TextStyle(color: Color(0xFF222222), fontSize: 16))),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: const Color(0xFF222222),
+          Expanded(child: Text(label, style: const TextStyle(color: Color(0xFF222222), fontSize: 16, fontWeight: FontWeight.w500))),
+          Theme(
+            data: ThemeData(
+              useMaterial3: true,
+              switchTheme: SwitchThemeData(
+                thumbColor: WidgetStateProperty.resolveWith<Color>((Set<WidgetState> states) {
+                  if (states.contains(WidgetState.selected)) {
+                    return Colors.white;
+                  }
+                  return Colors.white;
+                }),
+                trackColor: WidgetStateProperty.resolveWith<Color>((Set<WidgetState> states) {
+                  if (states.contains(WidgetState.selected)) {
+                    return const Color(0xFFFFA500);
+                  }
+                  return const Color(0xFFBDBDBD);
+                }),
+              ),
+            ),
+            child: Switch(
+              value: value,
+              onChanged: onChanged,
+            ),
           ),
         ],
       ),

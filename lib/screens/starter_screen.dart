@@ -138,7 +138,6 @@ class StarterScreen extends StatelessWidget {
                         fontSize: _kSubtitleFontSize,
                         fontWeight: FontWeight.w600,
                         color: _kTextColor.withValues(alpha: 0.7),
-                        decoration: TextDecoration.underline,
                       ),
                     ),
                     const SizedBox(height: _kGapSubtitleBullet),
