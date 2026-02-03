@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:quiz_application/services/firestore_service.dart';
 // Local queueing removed intentionally; use FirestoreService directly.
 import 'package:quiz_application/models/attempt_model.dart';
@@ -33,9 +34,26 @@ class _AttemptsReviewScreenState extends State<AttemptsReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Attempts')),
-      body: FutureBuilder<List<AttemptModel>>(
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFFFFFFF),
+            Color.fromARGB(255, 207, 207, 207),
+          ],
+        ),
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          title: const Text('Attempts'),
+          systemOverlayStyle: SystemUiOverlayStyle.dark,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+        ),
+        body: FutureBuilder<List<AttemptModel>>(
         future: _attemptsFuture,
         builder: (context, snap) {
           if (snap.connectionState != ConnectionState.done) return const Center(child: CircularProgressIndicator());
@@ -63,6 +81,7 @@ class _AttemptsReviewScreenState extends State<AttemptsReviewScreen> {
             },
           );
         },
+      ),
       ),
     );
   }

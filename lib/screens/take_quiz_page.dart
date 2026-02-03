@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
@@ -1241,6 +1242,7 @@ class _TakeQuizPageState extends State<TakeQuizPage>
                 ),
               ),
               child: AppBar(
+                systemOverlayStyle: SystemUiOverlayStyle.dark,
                 backgroundColor: Colors.transparent,
                 elevation: 0,
                 centerTitle: true,

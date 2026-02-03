@@ -5,6 +5,37 @@ import 'package:quiz_application/models/quiz_model.dart';
 import 'package:quiz_application/models/question_model.dart';
 import 'package:quiz_application/screens/question_editor.dart';
 
+class _GradientPainter extends CustomPainter {
+  final double radius;
+  final double strokeWidth;
+  final Gradient gradient;
+
+  _GradientPainter({
+    required this.gradient,
+    required this.radius,
+    required this.strokeWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Rect rect = Rect.fromLTWH(
+      strokeWidth / 2,
+      strokeWidth / 2,
+      size.width - strokeWidth,
+      size.height - strokeWidth,
+    );
+    final RRect rRect = RRect.fromRectAndRadius(rect, Radius.circular(radius));
+    final Paint paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..shader = gradient.createShader(rect);
+    canvas.drawRRect(rRect, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => true;
+}
+
 class EditQuizScreen extends StatefulWidget {
   const EditQuizScreen({super.key});
 
@@ -22,12 +53,14 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
   bool _shuffleChoices = false;
   bool _singleResponse = false;
   int _timeMinutes = 0;
+  final _timeController = TextEditingController();
   bool _enablePassword = false;
   final _passwordController = TextEditingController();
 
   @override
   void dispose() {
     _passwordController.dispose();
+    _timeController.dispose();
     super.dispose();
   }
 
@@ -54,6 +87,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
       _questions = list;
       _shuffleQuestions = q?.randomizeQuestions ?? false;
       _shuffleChoices = q?.randomizeOptions ?? false;
+      _timeController.text = _timeMinutes.toString();
       _singleResponse = (q?.singleResponse) ?? false;
       _timeMinutes = ((q?.timeLimitSeconds ?? 0) / 60).ceil();
       _enablePassword = (q?.password != null && q!.password!.isNotEmpty);
@@ -74,26 +108,32 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
     }
   }
 
-  Future<void> _saveSettings() async {
+  Future<bool> _saveQuizSettings({bool showSnack = true}) async {
     if (_enablePassword && _passwordController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a password or disable password protection')),
-      );
-      return;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter a password or disable password protection')),
+        );
+      }
+      return false;
     }
+
+    final mins = int.tryParse(_timeController.text) ?? 0;
     
     await FirestoreService().updateQuiz(quizId, {
       'randomizeQuestions': _shuffleQuestions,
       'randomizeOptions': _shuffleChoices,
       'singleResponse': _singleResponse,
-      'timeLimitSeconds': _timeMinutes * 60,
+      'timeLimitSeconds': mins * 60,
       'scoringType': 'auto',
       'password': _enablePassword ? _passwordController.text.trim() : null,
       'updatedAt': DateTime.now(),
     });
     await _load();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Settings saved')));
+    if (showSnack && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Settings saved')));
+    }
+    return true;
   }
 
   Future<void> _editQuestion(QuestionModel q) async {
@@ -113,6 +153,9 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
   }
 
   Future<void> _publishQuiz() async {
+    final saved = await _saveQuizSettings(showSnack: false);
+    if (!saved) return;
+
     if (_questions.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Add at least one question before publishing')));
@@ -214,9 +257,11 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
           ],
         ),
       ),
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: PreferredSize(
+      child: WillPopScope(
+        onWillPop: () => _saveQuizSettings(showSnack: false),
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: PreferredSize(
           preferredSize: const Size.fromHeight(kToolbarHeight),
           child: Container(
             decoration: const BoxDecoration(
@@ -236,12 +281,13 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                 ),
               ),
               child: AppBar(
+                systemOverlayStyle: SystemUiOverlayStyle.dark,
                 backgroundColor: Colors.transparent,
                 elevation: 0,
                 centerTitle: true,
                 leading: IconButton(
                   icon: const Icon(Icons.arrow_back, color: Colors.black),
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () => Navigator.of(context).maybePop(),
                 ),
                 title: Text(_quiz?.title ?? 'Edit Quiz', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20)),
                 actions: [
@@ -260,6 +306,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                               ? null
                               : _quiz!.published
                                   ? () async {
+                                      if (!await _saveQuizSettings(showSnack: false)) return;
                                       await FirestoreService().publishQuiz(quizId, false);
                                       await _load();
                                     }
@@ -313,64 +360,38 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                           ],
                         ),
                       ),
-                    // Settings Section
-                    _neumorphicContainer(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Quiz Settings', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF222222))),
-                          const Divider(),
-                          const SizedBox(height: 8),
-                          _settingsSwitch('Shuffle questions', _shuffleQuestions, (v) => setState(() => _shuffleQuestions = v)),
-                          _settingsSwitch('Shuffle choices', _shuffleChoices, (v) => setState(() => _shuffleChoices = v)),
-                          _settingsSwitch('Single response per user', _singleResponse, (v) => setState(() => _singleResponse = v)),
-                          _settingsSwitch('Enable Quiz Password', _enablePassword, (v) => setState(() => _enablePassword = v)),
-                          if (_enablePassword)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8.0),
-                              child: TextField(
-                                controller: _passwordController,
-                                decoration: _inputDecoration('Password'),
-                              ),
-                            ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8.0),
-                            child: Row(children: [
-                              const Expanded(child: Text('Time limit (minutes)', style: TextStyle(color: Color(0xFF222222), fontSize: 16))),
-                              SizedBox(
-                                width: 80,
-                                child: TextFormField(
-                                  initialValue: _timeMinutes.toString(),
-                                  keyboardType: TextInputType.number,
-                                  decoration: _inputDecoration(''),
-                                  onChanged: (v) => setState(() => _timeMinutes = int.tryParse(v) ?? 0),
-                                ),
-                              )
-                            ]),
-                          ),
-                          const SizedBox(height: 16),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: ElevatedButton(
-                              onPressed: _saveSettings,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF222222),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                              ),
-                              child: const Text('Save Settings'),
-                            ),
-                          )
-                        ],
+                    const SizedBox(height: 8),
+                    const Text('Quiz Settings', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF222222))),
+                    const SizedBox(height: 16),
+                    _settingsSwitch('Shuffle questions', _shuffleQuestions, (v) => setState(() => _shuffleQuestions = v)),
+                    _settingsSwitch('Shuffle choices', _shuffleChoices, (v) => setState(() => _shuffleChoices = v)),
+                    _settingsSwitch('Single response per user', _singleResponse, (v) => setState(() => _singleResponse = v)),
+                    _settingsSwitch('Enable Quiz Password', _enablePassword, (v) => setState(() => _enablePassword = v)),
+                    if (_enablePassword)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16.0),
+                        child: _buildGradientTextField(
+                          controller: _passwordController,
+                          hint: 'Enter password',
+                          icon: Icons.lock,
+                        ),
                       ),
+                    const SizedBox(height: 16),
+                    _buildGradientTextField(
+                      controller: _timeController,
+                      hint: 'Time limit (minutes)',
+                      icon: Icons.timer,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(3)],
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 32),
                     const Text('Questions', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Color(0xFF222222))),
                     const SizedBox(height: 12),
                     if (_questions.isEmpty)
-                      const Center(child: Padding(padding: EdgeInsets.all(20), child: Text('No questions yet', style: TextStyle(color: Colors.grey)))),
+                      const Center(child: Padding(padding: EdgeInsets.all(20), child: Text('No questions yet, add some!', style: TextStyle(color: Colors.grey)))),
                     ReorderableListView.builder(
                       shrinkWrap: true,
+                      buildDefaultDragHandles: false,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: _questions.length,
                       onReorder: (oldIndex, newIndex) async {
@@ -383,6 +404,20 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                           await FirestoreService().updateQuestion(quizId, _questions[i].id, {'order': i});
                         }
                         // avoid full reload to keep UI smooth, just sync order
+                      },
+                      proxyDecorator: (child, index, animation) {
+                        return AnimatedBuilder(
+                          animation: animation,
+                          builder: (context, _) {
+                            return Transform.translate(
+                              offset: Offset(0, (animation.value - 1) * 0),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: child,
+                              ),
+                            );
+                          },
+                        );
                       },
                       itemBuilder: (context, index) {
                         final q = _questions[index];
@@ -399,8 +434,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                         return Container(
                           key: ValueKey(q.id),
                           margin: const EdgeInsets.symmetric(vertical: 8),
-                          child: _neumorphicContainer(
-                            padding: 16,
+                          child: _neumorphicQuestionCard(
                             child: Row(
                               children: [
                                 Expanded(
@@ -413,20 +447,36 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                                         spacing: 8,
                                         runSpacing: 6,
                                         children: [
-                                          Chip(
-                                            label: Text(typeLabel, style: const TextStyle(color: Colors.white, fontSize: 12)),
-                                            backgroundColor: const Color(0xFF95A5A6),
-                                            visualDensity: VisualDensity.compact,
-                                            padding: EdgeInsets.zero,
-                                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                          CustomPaint(
+                                            painter: _GradientPainter(
+                                              strokeWidth: 1.5,
+                                              radius: 8,
+                                              gradient: const LinearGradient(
+                                                begin: Alignment.topCenter,
+                                                end: Alignment.bottomCenter,
+                                                colors: [Color.fromARGB(255, 0, 0, 0), Color.fromARGB(255, 248, 248, 248)],
+                                              ),
+                                            ),
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              child: Text(typeLabel, style: const TextStyle(color: Colors.black, fontSize: 12)),
+                                            ),
                                           ),
                                           if (correctText != null)
-                                            Chip(
-                                              label: Text('Ans: $correctText', style: const TextStyle(color: Colors.white, fontSize: 12)),
-                                              backgroundColor: const Color(0xFF27AE60),
-                                              visualDensity: VisualDensity.compact,
-                                              padding: EdgeInsets.zero,
-                                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                            CustomPaint(
+                                              painter: _GradientPainter(
+                                                strokeWidth: 1.5,
+                                                radius: 8,
+                                                gradient: const LinearGradient(
+                                                  begin: Alignment.topCenter,
+                                                  end: Alignment.bottomCenter,
+                                                  colors: [Colors.black, Color.fromARGB(255, 248, 248, 248)],
+                                                ),
+                                              ),
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                child: Text('Ans: $correctText', style: const TextStyle(color: Colors.black, fontSize: 12)),
+                                              ),
                                             ),
                                         ],
                                       ),
@@ -438,17 +488,17 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                                   children: [
                                     IconButton(
                                       tooltip: 'Edit',
-                                      icon: const Icon(Icons.edit, color: Color(0xFF2980B9)),
+                                      icon: const Icon(Icons.edit, color: Color.fromARGB(255, 0, 0, 0)),
                                       onPressed: () => _editQuestion(q),
                                     ),
                                     IconButton(
                                       tooltip: 'Delete',
-                                      icon: const Icon(Icons.delete, color: Color(0xFFC0392B)),
+                                      icon: const Icon(Icons.delete, color: Color.fromARGB(255, 0, 0, 0)),
                                       onPressed: () => _deleteQuestion(q.id),
                                     ),
                                     ReorderableDragStartListener(
                                       index: index,
-                                      child: const Padding(padding: EdgeInsets.symmetric(horizontal: 4.0), child: Icon(Icons.drag_handle, color: Color(0xFF7F8C8D))),
+                                      child: const Padding(padding: EdgeInsets.symmetric(horizontal: 4.0), child: Icon(Icons.drag_handle, color: Color.fromARGB(255, 0, 0, 0))),
                                     ),
                                   ],
                                 ),
@@ -460,42 +510,38 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                     ),
                     const SizedBox(height: 24),
                     Center(
-                      child: Container(
-                        width: 60,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
+                      child: CustomPaint(
+                        painter: _GradientPainter(
+                          strokeWidth: 2,
+                          radius: 22,
+                          gradient: const LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Color(0xFF000000),
+                              Color(0xFFBDBDBD),
+                              Color(0xFFFFFFFF),
+                              Color(0xFFFFFFFF),
+                            ],
+                          ),
                         ),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: _addQuestion,
-                            customBorder: const CircleBorder(),
-                            child: Center(
-                              child: Container(
-                                width: 45,
-                                height: 45,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: const Color(0xFFBDBDBD),
-                                    width: 2,
-                                  ),
-                                ),
-                                child: Center(
-                                  child: Icon(
-                                    Icons.add,
-                                    size: 24,
-                                    color: const Color(0xFFBDBDBD),
-                                  ),
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.transparent,
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: _addQuestion,
+                              customBorder: const CircleBorder(),
+                              child: Center(
+                                child: Icon(
+                                  Icons.add,
+                                  size: 24,
+                                  color: const Color.fromARGB(255, 94, 94, 94),
                                 ),
                               ),
                             ),
@@ -508,97 +554,134 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                 ),
               ),
       bottomNavigationBar: null,
+        ),
       ),
     );
   }
 
-  Widget _neumorphicContainer({required Widget child, double padding = 24}) {
-    return Container(
-      padding: const EdgeInsets.all(2),
-      decoration: BoxDecoration(
+  Widget _neumorphicQuestionCard({required Widget child, double padding = 16}) {
+    return CustomPaint(
+      painter: _GradientPainter(
+        strokeWidth: 2,
+        radius: 16,
         gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Colors.white, Colors.black12],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Colors.black, Colors.white],
         ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(4, 4),
-          ),
-          BoxShadow(
-            color: Colors.white.withValues(alpha: 0.8),
-            blurRadius: 10,
-            offset: const Offset(-4, -4),
-          ),
-        ],
       ),
       child: Container(
         padding: EdgeInsets.all(padding),
         decoration: BoxDecoration(
-          color: const Color(0xFFF5F5F5),
-          borderRadius: BorderRadius.circular(18),
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
         ),
         child: child,
       ),
     );
   }
 
+  Widget _buildGradientTextField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
+  }) {
+    return CustomPaint(
+      painter: _GradientPainter(
+        strokeWidth: 2,
+        radius: 10,
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFF000000),
+            Color(0xFFBDBDBD),
+            Color(0xFFFFFFFF),
+            Color(0xFFFFFFFF),
+          ],
+        ),
+      ),
+      child: Container(
+        height: 48,
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
+          cursorColor: Colors.black54,
+          style: const TextStyle(
+            color: Colors.black87,
+            fontSize: 14,
+          ),
+          decoration: InputDecoration(
+            border: InputBorder.none,
+            prefixIcon: Icon(icon, color: Colors.black54),
+            filled: false,
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 14,
+              horizontal: 8,
+            ),
+            hintText: hint,
+            hintStyle: const TextStyle(
+              fontSize: 14,
+              color: Colors.black26,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _settingsSwitch(String label, bool value, ValueChanged<bool> onChanged) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
         children: [
-          Expanded(child: Text(label, style: const TextStyle(color: Color(0xFF222222), fontSize: 16, fontWeight: FontWeight.w500))),
-          Theme(
-            data: ThemeData(
-              useMaterial3: true,
-              switchTheme: SwitchThemeData(
-                thumbColor: WidgetStateProperty.resolveWith<Color>((Set<WidgetState> states) {
-                  if (states.contains(WidgetState.selected)) {
-                    return Colors.white;
-                  }
-                  return Colors.white;
-                }),
-                trackColor: WidgetStateProperty.resolveWith<Color>((Set<WidgetState> states) {
-                  if (states.contains(WidgetState.selected)) {
-                    return const Color(0xFFFFA500);
-                  }
-                  return const Color(0xFFBDBDBD);
-                }),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFF222222),
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
               ),
             ),
-            child: Switch(
-              value: value,
-              onChanged: onChanged,
+          ),
+          Transform.scale(
+            scale: 0.85,
+            child: Theme(
+              data: ThemeData(
+                useMaterial3: true,
+                switchTheme: SwitchThemeData(
+                  thumbColor: WidgetStateProperty.resolveWith<Color>((Set<WidgetState> states) {
+                    if (states.contains(WidgetState.selected)) {
+                      return Colors.white;
+                    }
+                    return const Color(0xFFE0E0E0);
+                  }),
+                  trackColor: WidgetStateProperty.resolveWith<Color>((Set<WidgetState> states) {
+                    if (states.contains(WidgetState.selected)) {
+                      return const Color(0xFF222222);
+                    }
+                    return const Color(0xFFBDBDBD);
+                  }),
+                  trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+                ),
+              ),
+              child: Switch(
+                value: value,
+                onChanged: onChanged,
+              ),
             ),
           ),
         ],
       ),
     );
   }
-
-  InputDecoration _inputDecoration(String label) {
-    return InputDecoration(
-      labelText: label.isEmpty ? null : label,
-      labelStyle: const TextStyle(color: Color(0xFF7F8C8D)),
-      filled: true,
-      fillColor: Colors.white,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF222222), width: 1.5),
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-    );
-  }
 }
+      

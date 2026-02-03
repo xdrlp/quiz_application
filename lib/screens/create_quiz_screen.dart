@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:quiz_application/models/quiz_model.dart';
 import 'package:quiz_application/providers/auth_provider.dart';
@@ -70,6 +71,14 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
     final title = _titleController.text.trim();
     final desc = _descController.text.trim();
     final minutes = int.tryParse(_timeController.text) ?? 10;
+
+    if (minutes > 999) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Maximum time limit is 999 minutes')),
+      );
+      return;
+    }
 
     if (title.isEmpty) {
       if (!mounted) return;
@@ -155,6 +164,7 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
                 ),
               ),
               child: AppBar(
+                systemOverlayStyle: SystemUiOverlayStyle.dark,
                 backgroundColor: Colors.transparent,
                 elevation: 0,
                 centerTitle: true,
@@ -200,11 +210,21 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
                 const SizedBox(height: 16),
                 _buildGradientTextField(
                   controller: _timeController,
-                  hint: 'e.g., 10 minutes',
+                  hint: 'e.g., 10 minutes (Max 999)',
                   icon: Icons.schedule,
                   keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(3),
+                  ],
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
+                const Divider(
+                  color: Color(0xFF9E9E9E),
+                  thickness: 1.5,
+                  height: 1,
+                ),
+                const SizedBox(height: 24),
                 const Text(
                   'Quiz Settings',
                   style: TextStyle(
@@ -257,6 +277,7 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
     required String hint,
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return CustomPaint(
       painter: _GradientPainter(
@@ -282,6 +303,7 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
         child: TextField(
           controller: controller,
           keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
           cursorColor: Colors.black54,
           style: const TextStyle(
             color: Colors.black87,
@@ -308,31 +330,44 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
 
   Widget _settingsSwitch(String label, bool value, ValueChanged<bool> onChanged) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
         children: [
-          Expanded(child: Text(label, style: const TextStyle(color: Color(0xFF222222), fontSize: 16, fontWeight: FontWeight.w500))),
-          Theme(
-            data: ThemeData(
-              useMaterial3: true,
-              switchTheme: SwitchThemeData(
-                thumbColor: WidgetStateProperty.resolveWith<Color>((Set<WidgetState> states) {
-                  if (states.contains(WidgetState.selected)) {
-                    return Colors.white;
-                  }
-                  return Colors.white;
-                }),
-                trackColor: WidgetStateProperty.resolveWith<Color>((Set<WidgetState> states) {
-                  if (states.contains(WidgetState.selected)) {
-                    return const Color(0xFFFFA500);
-                  }
-                  return const Color(0xFFBDBDBD);
-                }),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFF222222),
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
               ),
             ),
-            child: Switch(
-              value: value,
-              onChanged: onChanged,
+          ),
+          Transform.scale(
+            scale: 0.85,
+            child: Theme(
+              data: ThemeData(
+                useMaterial3: true,
+                switchTheme: SwitchThemeData(
+                  thumbColor: WidgetStateProperty.resolveWith<Color>((Set<WidgetState> states) {
+                    if (states.contains(WidgetState.selected)) {
+                      return Colors.white;
+                    }
+                    return const Color(0xFFE0E0E0);
+                  }),
+                  trackColor: WidgetStateProperty.resolveWith<Color>((Set<WidgetState> states) {
+                    if (states.contains(WidgetState.selected)) {
+                      return const Color(0xFF222222);
+                    }
+                    return const Color(0xFFBDBDBD);
+                  }),
+                  trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+                ),
+              ),
+              child: Switch(
+                value: value,
+                onChanged: onChanged,
+              ),
             ),
           ),
         ],

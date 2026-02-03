@@ -217,6 +217,12 @@ class FirestoreService {
       final docRef = await _firestore
           .collection(attemptsCollection)
           .add(attempt.copyWith(id: '').toFirestore());
+      
+      // Increment the attempt count on the quiz document transactionally or simply with FieldValue.increment
+      await _firestore.collection(quizzesCollection).doc(attempt.quizId).update({
+        'totalAttempts': FieldValue.increment(1),
+      });
+
       return docRef.id;
     } catch (e) {
       rethrow;

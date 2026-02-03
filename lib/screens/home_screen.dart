@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'dart:math' as math;
 import 'package:quiz_application/providers/auth_provider.dart';
@@ -24,8 +25,8 @@ class _HomeScreenState extends State<HomeScreen> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFFFFFFFF), // #ffffff (white)
-            Color.fromARGB(255, 207, 207, 207), // #9b9b9b (gray)
+            Color(0xFFFFFFFF),
+            Color.fromARGB(255, 197, 197, 197),
           ],
         ),
       ),
@@ -39,7 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
                 colors: [
-                  Color.fromARGB(255, 169, 169, 169),
+                  Color.fromARGB(255, 179, 179, 179),
                   Color.fromARGB(255, 255, 255, 255),
                 ],
               ),
@@ -51,14 +52,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
                   colors: [
-                    Color.fromARGB(204, 244, 244, 244),
-                    Color.fromARGB(205, 223, 223, 223),
+                    Color.fromARGB(255, 231, 231, 231),
+                    Color.fromARGB(255, 247, 247, 247),
                   ],
                 ),
               ),
               child: AppBar(
+                systemOverlayStyle: SystemUiOverlayStyle.dark,
                 backgroundColor: Colors.transparent,
                 elevation: 0,
+                scrolledUnderElevation: 0,
                 centerTitle: true,
                 leading: IconButton(
                   icon: const Icon(Icons.person, color: Colors.black, size: 28),
@@ -130,7 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Use 4 columns on large screens, 2 on smaller to prevent wide stretched tiles
                 final int crossAxisCount = screenWidth > 900 ? 4 : 2;
 
-                // Calculate childAspectRatio dynamically to maintain a reasonable card height (~220px)
+                // Calculate childAspectRatio dynamically to maintain a reasonable card height (~180px)
                 // regardless of screen width.
                 // Horizontal padding: 16 + 16 = 32
                 // Spacing: 12 * (crossAxisCount - 1)
@@ -139,8 +142,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 final double cardWidth =
                     (screenWidth - totalHorizontalPadding) / crossAxisCount;
                 // Original design was ~0.85 on mobile (approx 160px width / 190px height)
-                // We aim for height around 200-220px to accommodate content without excessive emptiness
-                final double desiredHeight = 220.0;
+                // We aim for height around 170-180px to accommodate content without excessive emptiness
+                final double desiredHeight = 190.0;
                 final double dynamicAspectRatio = cardWidth / desiredHeight;
 
                 return SingleChildScrollView(
@@ -154,7 +157,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           style: const TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF222222),
+                            color: Color(0xFF2C3E50),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -203,7 +206,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     'Design your own Quiz',
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: Color(0xFF7F8C8D),
+                                      color: Color.fromARGB(255, 71, 71, 71),
                                     ),
                                   ),
                                 ],
@@ -235,7 +238,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     'Enter quiz code to take quiz',
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: Color(0xFF7F8C8D),
+                                      color: Color.fromARGB(255, 71, 71, 71),
                                     ),
                                   ),
                                 ],
@@ -269,7 +272,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     '$createdCount Created $publishedCount Published\n$draftsCount drafts',
                                     style: const TextStyle(
                                       fontSize: 12,
-                                      color: Color(0xFF7F8C8D),
+                                      color: Color.fromARGB(255, 71, 71, 71),
                                       height: 1.3,
                                     ),
                                   ),
@@ -304,7 +307,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     '$submittedCount Submitted ${avgScore.toStringAsFixed(0)}% avg score',
                                     style: const TextStyle(
                                       fontSize: 12,
-                                      color: Color(0xFF7F8C8D),
+                                      color: Color.fromARGB(255, 71, 71, 71),
                                     ),
                                   ),
                                 ],
@@ -318,7 +321,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           'recent activity',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Color(0xFF7F8C8D),
+                            color: Color.fromARGB(255, 119, 119, 119),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -333,12 +336,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   vertical: 16,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color.fromARGB(
-                                    255,
-                                    110,
-                                    110,
-                                    110,
-                                  ),
+                                  color: const Color.fromARGB(255, 148, 148, 148),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Row(
@@ -382,7 +380,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           Container(
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              color: const Color.fromARGB(255, 110, 110, 110),
+                              color: const Color.fromARGB(255, 148, 148, 148),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: const Text(
@@ -410,12 +408,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       vertical: 8,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: const Color.fromARGB(
-                                        255,
-                                        110,
-                                        110,
-                                        110,
-                                      ),
+                                      color: const Color.fromARGB(255, 148, 148, 148),
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: Row(
@@ -431,12 +424,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                               style: const TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.w600,
-                                                color: Color.fromARGB(
-                                                  255,
-                                                  224,
-                                                  224,
-                                                  224,
-                                                ),
+                                                color: Color.fromARGB(255, 221, 221, 221),
                                               ),
                                             ),
                                             const SizedBox(height: 4),
@@ -444,12 +432,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                               ago,
                                               style: const TextStyle(
                                                 fontSize: 13,
-                                                color: Color.fromARGB(
-                                                  255,
-                                                  192,
-                                                  192,
-                                                  192,
-                                                ),
+                                                color: Color.fromARGB(255, 207, 207, 207),
                                               ),
                                             ),
                                           ],
@@ -457,12 +440,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         const Text(
                                           'View Details',
                                           style: TextStyle(
-                                            color: Color.fromARGB(
-                                              255,
-                                              203,
-                                              203,
-                                              203,
-                                            ),
+                                            color: Color.fromARGB(255, 223, 223, 223),
                                             fontSize: 13,
                                           ),
                                         ),
@@ -502,8 +480,8 @@ class _HomeScreenState extends State<HomeScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color.fromARGB(255, 255, 255, 255),
-              Color.fromARGB(255, 0, 0, 0),
+              Color.fromARGB(255, 248, 248, 248),
+              Color.fromARGB(255, 121, 121, 121),
             ],
           ),
           borderRadius: BorderRadius.circular(20),
@@ -514,7 +492,7 @@ class _HomeScreenState extends State<HomeScreen> {
             gradient: const LinearGradient(
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
-              colors: [Color(0xFFA6A6A6), Color(0xFFFFFFFF)],
+              colors: [Color.fromARGB(255, 201, 201, 201), Color.fromARGB(255, 233, 233, 233)],
             ),
             borderRadius: BorderRadius.circular(17),
           ),

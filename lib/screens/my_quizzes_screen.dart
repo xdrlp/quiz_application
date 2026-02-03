@@ -9,6 +9,37 @@ import 'package:quiz_application/screens/quiz_analysis_screen.dart';
 
 // ignore_for_file: use_super_parameters
 
+class _GradientPainter extends CustomPainter {
+  final double radius;
+  final double strokeWidth;
+  final Gradient gradient;
+
+  _GradientPainter({
+    required this.gradient,
+    required this.radius,
+    required this.strokeWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Rect rect = Rect.fromLTWH(
+      strokeWidth / 2,
+      strokeWidth / 2,
+      size.width - strokeWidth,
+      size.height - strokeWidth,
+    );
+    final RRect rRect = RRect.fromRectAndRadius(rect, Radius.circular(radius));
+    final Paint paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..shader = gradient.createShader(rect);
+    canvas.drawRRect(rRect, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => true;
+}
+
 class MyQuizzesScreen extends StatefulWidget {
   const MyQuizzesScreen({super.key});
 
@@ -72,8 +103,9 @@ class _SnackBarTimerState extends State<_SnackBarTimer> {
 class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
   late Future<List<QuizModel>> _future;
   String _searchQuery = '';
-  String _sortBy = 'updated'; // 'updated' | 'name' | 'created'
-  String _filter = 'All'; // 'All' | 'Recent' | 'Incomplete' | 'Popular'
+  String _selectedMode = 'Recent'; // 'Recent' | 'Name' | 'Created' | 'Incomplete' | 'Popular'
+  bool _sortAscending = false; // Default false (Descending/Newest First) for Recent/Created. True for Name.
+
   final Set<String> _selected = {};
   final Map<String, DateTime> _lastCopyTime = {};
   // snack showing state intentionally not tracked (we replace snackbars)
@@ -145,24 +177,30 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
     _future = FirestoreService().getQuizzesByTeacher(uid);
   }
 
-  List<QuizModel> _applyQuery(List<QuizModel> items) {
-    var list = items.where((q) => q.title.toLowerCase().contains(_searchQuery.toLowerCase()) || q.description.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
-    // filters
-    if (_filter == 'Recent') {
-      list.sort((a, b) => (b.updatedAt ?? b.createdAt).compareTo(a.updatedAt ?? a.createdAt));
-    } else if (_filter == 'Incomplete') {
-      list = list.where((q) => q.totalQuestions == 0).toList();
-    } else if (_filter == 'Popular') {
-      // placeholder: no popularity metric available; keep as-is
-    }
-    // sort
-    if (_sortBy == 'name') {
-      list.sort((a, b) => a.title.compareTo(b.title));
-    } else if (_sortBy == 'created') {
-      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    } else {
-      list.sort((a, b) => (b.updatedAt ?? b.createdAt).compareTo(a.updatedAt ?? a.createdAt));
-    }
+  List<QuizModel> _filterAndSort(List<QuizModel> items) {
+    // 1. Filter by Search Query
+    var list = items.where((q) => 
+      q.title.toLowerCase().contains(_searchQuery.toLowerCase()) || 
+      q.description.toLowerCase().contains(_searchQuery.toLowerCase())
+    ).toList();
+    
+    
+    // 3. Sort
+    list.sort((a, b) {
+      int cmp;
+      if (_selectedMode == 'Name') {
+        cmp = a.title.toLowerCase().compareTo(b.title.toLowerCase());
+      } else if (_selectedMode == 'Created') {
+        cmp = a.createdAt.compareTo(b.createdAt);
+      } else {
+        // 'Recent', 'Incomplete', 'Popular' -> Default to Updated/Created
+        final da = a.updatedAt ?? a.createdAt;
+        final db = b.updatedAt ?? b.createdAt;
+        cmp = da.compareTo(db);
+      }
+      return _sortAscending ? cmp : -cmp; 
+    });
+    
     return list;
   }
 
@@ -180,24 +218,44 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
   Widget _sectionHeader(String title, int count) {
     if (count == 0) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Expanded(child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF222222)))),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF222222).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF222222),
+                  ),
                 ),
-                child: Text('$count', style: const TextStyle(color: Color(0xFF222222), fontWeight: FontWeight.bold)),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFF222222),
+                    width: 1.5,
+                  ),
+                ),
+                child: Text(
+                  '$count',
+                  style: const TextStyle(
+                    color: Color(0xFF222222),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
         ],
       ),
     );
@@ -256,6 +314,7 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
                 ),
               ),
               child: AppBar(
+                systemOverlayStyle: SystemUiOverlayStyle.dark,
                 backgroundColor: Colors.transparent,
                 elevation: 0,
                 centerTitle: true,
@@ -324,10 +383,12 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
               }
               return Center(child: Text('Error: $err'));
             }
-            final quizzes = snap.data ?? [];
-            final drafts = quizzes.where((q) => q.published == false).toList();
-            final published = quizzes.where((q) => q.published == true).toList();
-            if (quizzes.isEmpty) {
+            final allQuizzes = snap.data ?? [];
+            final processed = _filterAndSort(allQuizzes);
+            final drafts = processed.where((q) => q.published == false).toList();
+            final published = processed.where((q) => q.published == true).toList();
+
+            if (allQuizzes.isEmpty) {
               return Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24.0),
@@ -364,25 +425,34 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
                   // Search & controls
                   Row(children: [
                     Expanded(
-                      child: TextField(
-                        decoration: _inputDecoration('Search quizzes', icon: Icons.search),
-                          onChanged: (v) => setState(() => _searchQuery = v),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.transparent),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _sortBy,
-                          icon: const Icon(Icons.sort, color: Color(0xFF7F8C8D)),
-                          items: const [DropdownMenuItem(value: 'updated', child: Text('Recent')), DropdownMenuItem(value: 'name', child: Text('Name')), DropdownMenuItem(value: 'created', child: Text('Created'))],
-                          onChanged: (v) => setState(() => _sortBy = v ?? 'updated'),
+                      child: CustomPaint(
+                        painter: _GradientPainter(
+                          strokeWidth: 1.5,
+                          radius: 12,
+                          gradient: const LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Colors.black, Colors.white],
+                          ),
+                        ),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: TextField(
+                            decoration: InputDecoration(
+                              hintText: 'Search quizzes',
+                              prefixIcon: const Icon(Icons.search, color: Color(0xFF999999)),
+                              hintStyle: const TextStyle(color: Color(0xFF999999), fontSize: 14),
+                              filled: false,
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            ),
+                            onChanged: (v) => setState(() => _searchQuery = v),
+                          ),
                         ),
                       ),
                     ),
@@ -392,13 +462,13 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(children: [
-                      _filterChip('All'),
+                      _modeChip('Recent'),
                       const SizedBox(width: 8),
-                      _filterChip('Recent'),
+                      _modeChip('Name'),
                       const SizedBox(width: 8),
-                      _filterChip('Incomplete'),
+                      _modeChip('Created'),
                       const SizedBox(width: 8),
-                      _filterChip('Popular'),
+                      _modeChip('Popular'),
                     ]),
                   ),
                   const SizedBox(height: 12),
@@ -412,10 +482,10 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
                       child: ListView(
                         children: [
                           _sectionHeader('Drafts', drafts.length),
-                          for (var q in _applyQuery(drafts)) _buildQuizCard(q, isPublished: false),
+                          for (var q in drafts) _buildQuizCard(q, isPublished: false),
                           const SizedBox(height: 12),
                           _sectionHeader('Published', published.length),
-                          for (var q in _applyQuery(published)) _buildQuizCard(q, isPublished: true),
+                          for (var q in published) _buildQuizCard(q, isPublished: true),
                           const SizedBox(height: 24),
                         ],
                       ),
@@ -433,36 +503,83 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
   InputDecoration _inputDecoration(String hint, {IconData? icon}) {
     return InputDecoration(
       hintText: hint,
-      prefixIcon: icon != null ? Icon(icon, color: const Color(0xFF7F8C8D)) : null,
-      hintStyle: const TextStyle(color: Color(0xFF7F8C8D)),
+      prefixIcon: icon != null ? Icon(icon, color: const Color(0xFF999999)) : null,
+      hintStyle: const TextStyle(color: Color(0xFF999999), fontSize: 14),
       filled: true,
       fillColor: Colors.white,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
+        borderSide: const BorderSide(color: Color(0xFFDDDDDD), width: 1),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
+        borderSide: const BorderSide(color: Color(0xFFDDDDDD), width: 1),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Color(0xFF222222), width: 1.5),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     );
   }
 
-  Widget _filterChip(String label) {
-    final selected = _filter == label;
-    return ChoiceChip(
-      label: Text(label),
-      selected: selected,
-      onSelected: (_) => setState(() => _filter = label),
-      selectedColor: const Color(0xFF222222),
-      labelStyle: TextStyle(color: selected ? Colors.white : const Color(0xFF222222)),
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: selected ? Colors.transparent : Colors.grey.shade300)),
+  Widget _modeChip(String label) {
+    final selected = _selectedMode == label;
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: selected ? const Color(0xFF222222) : const Color(0xFFD0D0D0),
+          width: 1.5,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            setState(() {
+              if (_selectedMode == label) {
+                // Toggle direction
+                _sortAscending = !_sortAscending;
+              } else {
+                // Change mode and set default direction
+                _selectedMode = label;
+                if (label == 'Name') {
+                  _sortAscending = true; // A-Z default
+                } else {
+                  _sortAscending = false; // Newest default
+                }
+              }
+            });
+          },
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: selected ? const Color(0xFF222222) : const Color(0xFF222222),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+                if (selected) ...[
+                  const SizedBox(width: 4),
+                  Icon(
+                    _sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
+                    size: 14,
+                    color: const Color(0xFF222222),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -529,27 +646,27 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
   Widget _buildQuizCard(QuizModel q, {required bool isPublished}) {
     final messenger = ScaffoldMessenger.of(context);
     return Container(
+      key: ValueKey(q.id),
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F5),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          const BoxShadow(
-            color: Colors.white,
-            offset: Offset(-4, -4),
-            blurRadius: 10,
+      child: CustomPaint(
+        painter: _GradientPainter(
+          strokeWidth: 2,
+          radius: 14,
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.black, Colors.white],
           ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            offset: const Offset(4, 4),
-            blurRadius: 10,
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
           ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
           onTap: () {
             if (_selected.isNotEmpty) {
               setState(() {
@@ -614,9 +731,9 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
                       const SizedBox(width: 4),
                       Text(_relativeTime(q.createdAt), style: const TextStyle(fontSize: 11, color: Color(0xFF7F8C8D))),
                       const SizedBox(width: 12),
-                      const Icon(Icons.format_list_bulleted, size: 12, color: Color(0xFF7F8C8D)),
+                      const Icon(Icons.people, size: 12, color: Color(0xFF7F8C8D)),
                       const SizedBox(width: 4),
-                      Text('${q.totalQuestions} Qs', style: const TextStyle(fontSize: 11, color: Color(0xFF7F8C8D))),
+                      Text('${q.totalAttempts} Respondents', style: const TextStyle(fontSize: 11, color: Color(0xFF7F8C8D))),
                     ])
                   ]),
                 ),
@@ -694,7 +811,9 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
           ),
           // status badge removed per UX request
         ]),
-      ),
+            ),
+          ),
+        ),
       ),
     );
   }

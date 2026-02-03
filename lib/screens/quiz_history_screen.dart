@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:quiz_application/services/firestore_service.dart';
 import 'package:quiz_application/providers/auth_provider.dart';
@@ -76,6 +77,7 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
                 ),
               ),
               child: AppBar(
+                systemOverlayStyle: SystemUiOverlayStyle.dark,
                 backgroundColor: Colors.transparent,
                 elevation: 0,
                 centerTitle: true,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:quiz_application/services/firestore_service.dart';
 import 'package:quiz_application/models/attempt_model.dart';
 import 'package:quiz_application/models/quiz_model.dart';
@@ -57,7 +58,10 @@ class _AttemptDetailScreenState extends State<AttemptDetailScreen> {
 
     if (_error != null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Error')),
+        appBar: AppBar(
+          title: const Text('Error'),
+          systemOverlayStyle: SystemUiOverlayStyle.dark,
+        ),
         body: Center(child: Text(_error!)),
       );
     }
@@ -80,6 +84,7 @@ class _AttemptDetailScreenState extends State<AttemptDetailScreen> {
         backgroundColor: Colors.transparent,
         appBar: AppBar(
           title: Text(quiz.title),
+          systemOverlayStyle: SystemUiOverlayStyle.dark,
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(

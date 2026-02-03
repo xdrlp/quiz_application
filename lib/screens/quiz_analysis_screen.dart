@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:math' as math;
 import 'package:quiz_application/services/firestore_service.dart';
 // Local queuing removed intentionally; use FirestoreService directly.
@@ -49,6 +50,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
   }
 
   Future<void> _loadAll() async {
+    if (!mounted) return;
     setState(() => _loading = true);
     try {
       final quiz = await _fs.getQuiz(widget.quizId);
@@ -66,13 +68,15 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
         violations[a.id] = await _fs.getViolationsByAttempt(a.id);
       }
 
-      setState(() {
-        _quiz = quiz;
-        _questions = qs;
-        _attempts = attempts;
-        _users = usersMap;
-        _violationsByAttempt = violations;
-      });
+      if (mounted) {
+        setState(() {
+          _quiz = quiz;
+          _questions = qs;
+          _attempts = attempts;
+          _users = usersMap;
+          _violationsByAttempt = violations;
+        });
+      }
     } catch (e, st) {
       // ignore: avoid_print
       print('[QuizAnalysisScreen] _loadAll error: $e\n$st');
@@ -123,6 +127,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
                 ),
               ),
               child: AppBar(
+                systemOverlayStyle: SystemUiOverlayStyle.dark,
                 backgroundColor: Colors.transparent,
                 elevation: 0,
                 centerTitle: true,

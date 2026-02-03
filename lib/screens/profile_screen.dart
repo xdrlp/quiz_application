@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 // ignore_for_file: use_build_context_synchronously
 
@@ -308,8 +309,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               ),
-              child: AppBar(
-                backgroundColor: Colors.transparent,
+              child: AppBar(                systemOverlayStyle: SystemUiOverlayStyle.dark,                backgroundColor: Colors.transparent,
                 elevation: 0,
                 centerTitle: true,
                 leading: IconButton(

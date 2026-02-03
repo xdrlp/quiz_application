@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:quiz_application/services/firestore_service.dart';
 import 'package:quiz_application/models/quiz_model.dart';
 
@@ -53,7 +54,12 @@ class _FindQuizScreenState extends State<FindQuizScreen> {
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: AppBar(title: const Text('Find Quiz')),
+        appBar: AppBar(
+          systemOverlayStyle: SystemUiOverlayStyle.dark,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: const Text('Find Quiz'),
+        ),
         body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

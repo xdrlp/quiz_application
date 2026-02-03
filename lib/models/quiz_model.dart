@@ -16,6 +16,7 @@ class QuizModel {
   final DateTime createdAt;
   final DateTime? updatedAt;
   final int totalQuestions;
+  final int totalAttempts;
   final String? password; // Optional password for accessing the quiz
 
   QuizModel({
@@ -34,6 +35,7 @@ class QuizModel {
     required this.createdAt,
     this.updatedAt,
     this.totalQuestions = 0,
+    this.totalAttempts = 0,
     this.password,
   });
 
@@ -55,6 +57,7 @@ class QuizModel {
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
       totalQuestions: data['totalQuestions'] ?? 0,
+      totalAttempts: data['totalAttempts'] ?? 0,
       password: data['password'],
     );
   }
@@ -75,6 +78,7 @@ class QuizModel {
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt ?? DateTime.now()),
       'totalQuestions': totalQuestions,
+      'totalAttempts': totalAttempts,
       'password': password,
     };
   }
@@ -95,6 +99,7 @@ class QuizModel {
     DateTime? createdAt,
     DateTime? updatedAt,
     int? totalQuestions,
+    int? totalAttempts,
     String? password,
   }) {
     return QuizModel(
@@ -113,6 +118,7 @@ class QuizModel {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       totalQuestions: totalQuestions ?? this.totalQuestions,
+      totalAttempts: totalAttempts ?? this.totalAttempts,
       password: password ?? this.password,
     );
   }
