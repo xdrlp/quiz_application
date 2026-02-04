@@ -278,7 +278,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           end: Alignment.bottomRight,
           colors: [
             Color(0xFFFFFFFF),
-            Color.fromARGB(255, 207, 207, 207),
+            Color.fromARGB(255, 197, 197, 197),
           ],
         ),
       ),
@@ -292,7 +292,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
                 colors: [
-                  Color.fromARGB(255, 124, 124, 124),
+                  Color.fromARGB(255, 179, 179, 179),
                   Color.fromARGB(255, 255, 255, 255),
                 ],
               ),
@@ -304,8 +304,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
                   colors: [
-                    Color.fromARGB(108, 244, 244, 244),
-                    Color.fromARGB(205, 223, 223, 223),
+                    Color.fromARGB(255, 231, 231, 231),
+                    Color.fromARGB(255, 247, 247, 247),
                   ],
                 ),
               ),
@@ -377,21 +377,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     shape: BoxShape.circle,
                                     gradient: const LinearGradient(
                                       colors: [
-                                        Color.fromARGB(255, 65, 65, 65),
-                                        Color(0xFFBDC3C7),
+                                        Color(0xFF000000),
+                                        Color.fromARGB(255, 160, 160, 160),
+                                        Color.fromARGB(255, 223, 223, 223),
+                                        Color(0xFFFFFFFF),
                                       ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
                                     ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(
-                                          alpha: 0.2,
-                                        ),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 5),
-                                      ),
-                                    ],
+                                    boxShadow: [],
                                   ),
                                   child: CircleAvatar(
                                     radius: 60,
@@ -516,38 +510,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ],
                       ),
-                      const Divider(color: Colors.black12),
+                      const Divider(color: Color.fromARGB(76, 0, 0, 0)),
                       const SizedBox(height: 16),
                       if (_isEditing)
                         Form(
                           key: _formKey,
                           child: Column(
                             children: [
-                              TextFormField(
+                              _gradientBorderedField(
                                 controller: _firstController,
-                                style: const TextStyle(color: Colors.black),
-                                decoration: _inputDecoration('First name'),
+                                label: 'First name',
                                 validator: (v) => v == null || v.trim().isEmpty
                                     ? 'Please enter first name'
                                     : null,
                               ),
                               const SizedBox(height: 16),
-                              TextFormField(
+                              _gradientBorderedField(
                                 controller: _lastController,
-                                style: const TextStyle(color: Colors.black),
-                                decoration: _inputDecoration('Last name'),
+                                label: 'Last name',
                               ),
                               const SizedBox(height: 16),
-                              TextFormField(
+                              _gradientBorderedField(
                                 controller: _classController,
-                                style: const TextStyle(color: Colors.black),
-                                decoration: _inputDecoration('Class / Section'),
+                                label: 'Class / Section',
                               ),
                               const SizedBox(height: 16),
-                              TextFormField(
+                              _gradientBorderedField(
                                 controller: _yearLevelController,
-                                style: const TextStyle(color: Colors.black),
-                                decoration: _inputDecoration('Year Level'),
+                                label: 'Year Level',
                               ),
                               const SizedBox(height: 24),
                               SizedBox(
@@ -670,7 +660,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           color: Colors.black,
                         ),
                       ),
-                      const Divider(color: Colors.black12),
+                      const Divider(color: Color.fromARGB(76, 0, 0, 0)),
                       const SizedBox(height: 16),
                       _infoRow('Quizzes created', '$createdCount Created'),
                       _infoRow(
@@ -683,7 +673,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         'Recent activity',
                         style: TextStyle(
                           fontSize: 14,
-                          color: Color(0xFF7F8C8D),
+                          color: Color.fromARGB(255, 121, 121, 121),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -703,78 +693,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             (i) {
                               final q = recent[i];
                               final ago = _relativeTime(q.createdAt);
-                              return GestureDetector(
-                                onTap:
-                                    () => Navigator.of(
-                                      context,
-                                    ).pushNamed('/edit_quiz', arguments: q.id),
-                                child: Container(
-                                  margin: const EdgeInsets.only(bottom: 12),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color.fromARGB(
-                                      255,
-                                      110,
-                                      110,
-                                      110,
+                              return Container(
+                                key: ValueKey(q.id),
+                                margin: const EdgeInsets.symmetric(vertical: 8),
+                                child: CustomPaint(
+                                  painter: _GradientPainter(
+                                    strokeWidth: 2,
+                                    radius: 14,
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [Colors.black, Colors.white],
                                     ),
-                                    borderRadius: BorderRadius.circular(20),
                                   ),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              q.title,
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w600,
-                                                color: Color.fromARGB(
-                                                  255,
-                                                  224,
-                                                  224,
-                                                  224,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.transparent,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        borderRadius: BorderRadius.circular(12),
+                                        onTap: () {
+                                          Navigator.of(context).pushNamed('/edit_quiz', arguments: q.id);
+                                        },
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                          child: Row(
+                                            children: [
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  children: [
+                                                    Text(q.title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color.fromARGB(220, 34, 34, 34))),
+                                                    const SizedBox(height: 4),
+                                                    Text(ago, style: const TextStyle(fontSize: 11, color: Color.fromARGB(255, 139, 139, 139))),
+                                                  ],
                                                 ),
                                               ),
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              ago,
-                                              style: const TextStyle(
-                                                fontSize: 13,
-                                                color: Color.fromARGB(
-                                                  255,
-                                                  192,
-                                                  192,
-                                                  192,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const Text(
-                                        'View',
-                                        style: TextStyle(
-                                          color: Color.fromARGB(
-                                            255,
-                                            203,
-                                            203,
-                                            203,
+                                              Text(q.published ? 'Published' : 'Draft', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color.fromARGB(255, 59, 59, 59))),
+                                              const SizedBox(width: 8),
+                                              const Icon(Icons.chevron_right, color: Color.fromARGB(255, 141, 141, 141), size: 20),
+                                            ],
                                           ),
-                                          fontSize: 13,
                                         ),
                                       ),
-                                    ],
+                                    ),
                                   ),
                                 ),
                               );
@@ -799,14 +765,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         strokeWidth: 2,
         radius: 24,
         gradient: const LinearGradient(
-          begin: Alignment.bottomCenter,
-          end: Alignment.topCenter,
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
           colors: [
-            Color.fromARGB(255, 109, 109, 109),
-            Color.fromARGB(255, 197, 197, 197),
-            Color.fromARGB(255, 221, 221, 221),
-            Color.fromARGB(255, 206, 206, 206),
-            Color.fromARGB(255, 165, 165, 165),
+            Color(0xFF000000),
+            Color.fromARGB(255, 187, 187, 187),
+            Color.fromARGB(255, 173, 173, 173),
+            Color(0xFFFFFFFF),
           ],
         ),
       ),
@@ -814,14 +779,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: const EdgeInsets.all(2),
         child: Container(
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color.fromARGB(228, 238, 238, 238),
-                Color.fromARGB(235, 235, 235, 235),
-              ],
-            ),
+            color: Colors.transparent,
             borderRadius: BorderRadius.circular(22),
           ),
           padding: const EdgeInsets.all(24),
@@ -831,25 +789,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  InputDecoration _inputDecoration(String label) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: const TextStyle(color: Color(0xFF7F8C8D)),
-      filled: true,
-      fillColor: Colors.white,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
+  Widget _gradientBorderedField({
+    required TextEditingController controller,
+    required String label,
+    String? Function(String?)? validator,
+  }) {
+    return Container(
+      height: 48,
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
       ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
+      child: CustomPaint(
+        painter: _GradientPainter(
+          strokeWidth: 2,
+          radius: 8,
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF000000),
+              Color(0xFF484848),
+              Color(0xFFFFFDFD),
+              Color(0xFFD5D5D5),
+              Color(0xFF7C7979),
+              Color(0xFFFFFFFF),
+              Color(0xFFFFFFFF),
+            ],
+          ),
+        ),
+        child: TextFormField(
+          controller: controller,
+          validator: validator,
+          style: const TextStyle(color: Colors.black87, fontSize: 16),
+          cursorColor: Colors.black87,
+          decoration: InputDecoration(
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
+            hintText: label,
+            hintStyle: const TextStyle(color: Colors.red),
+          ),
+        ),
       ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF222222), width: 1.5),
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     );
   }
 
@@ -863,7 +847,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             flex: 2,
             child: Text(
               label,
-              style: const TextStyle(color: Color(0xFF7F8C8D), fontSize: 14),
+              style: const TextStyle(color: Color.fromARGB(178, 37, 37, 37), fontSize: 14),
             ),
           ),
           Expanded(
@@ -871,7 +855,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Text(
               value,
               style: const TextStyle(
-                color: Color(0xFF222222),
+                color: Colors.black,
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
               ),

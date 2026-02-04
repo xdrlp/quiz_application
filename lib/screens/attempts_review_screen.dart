@@ -41,17 +41,50 @@ class _AttemptsReviewScreenState extends State<AttemptsReviewScreen> {
           end: Alignment.bottomRight,
           colors: [
             Color(0xFFFFFFFF),
-            Color.fromARGB(255, 207, 207, 207),
+            Color.fromARGB(255, 197, 197, 197),
           ],
         ),
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          title: const Text('Attempts'),
-          systemOverlayStyle: SystemUiOverlayStyle.dark,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight),
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: [
+                  Color.fromARGB(255, 179, 179, 179),
+                  Color.fromARGB(255, 255, 255, 255),
+                ],
+              ),
+            ),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 2),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [
+                    Color.fromARGB(255, 231, 231, 231),
+                    Color.fromARGB(255, 247, 247, 247),
+                  ],
+                ),
+              ),
+              child: AppBar(
+                title: const Text('Attempts', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20)),
+                systemOverlayStyle: SystemUiOverlayStyle.dark,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                centerTitle: true,
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.black),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ),
+            ),
+          ),
         ),
         body: FutureBuilder<List<AttemptModel>>(
         future: _attemptsFuture,

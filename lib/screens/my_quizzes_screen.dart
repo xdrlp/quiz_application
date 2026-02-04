@@ -288,7 +288,7 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
           end: Alignment.bottomRight,
           colors: [
             Color(0xFFFFFFFF),
-            Color.fromARGB(255, 207, 207, 207),
+            Color.fromARGB(255, 197, 197, 197),
           ],
         ),
       ),
@@ -301,7 +301,7 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
               gradient: LinearGradient(
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
-                colors: [Color.fromARGB(255, 169, 169, 169), Color.fromARGB(255, 255, 255, 255)],
+                colors: [Color.fromARGB(255, 179, 179, 179), Color.fromARGB(255, 255, 255, 255)],
               ),
             ),
             child: Container(
@@ -310,7 +310,7 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
-                  colors: [Color.fromARGB(108, 244, 244, 244), Color.fromARGB(205, 223, 223, 223)],
+                  colors: [Color.fromARGB(255, 231, 231, 231), Color.fromARGB(255, 247, 247, 247)],
                 ),
               ),
               child: AppBar(
@@ -497,29 +497,6 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
           },
         ),
       ),
-    );
-  }
-
-  InputDecoration _inputDecoration(String hint, {IconData? icon}) {
-    return InputDecoration(
-      hintText: hint,
-      prefixIcon: icon != null ? Icon(icon, color: const Color(0xFF999999)) : null,
-      hintStyle: const TextStyle(color: Color(0xFF999999), fontSize: 14),
-      filled: true,
-      fillColor: Colors.white,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFDDDDDD), width: 1),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFDDDDDD), width: 1),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF222222), width: 1.5),
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     );
   }
 

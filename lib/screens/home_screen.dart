@@ -8,6 +8,37 @@ import 'package:quiz_application/models/quiz_model.dart';
 // user_model import removed — roles simplified
 import 'package:quiz_application/screens/take_quiz_dialog.dart';
 
+class _GradientPainter extends CustomPainter {
+  final double radius;
+  final double strokeWidth;
+  final Gradient gradient;
+
+  _GradientPainter({
+    required this.gradient,
+    required this.radius,
+    required this.strokeWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Rect rect = Rect.fromLTWH(
+      strokeWidth / 2,
+      strokeWidth / 2,
+      size.width - strokeWidth,
+      size.height - strokeWidth,
+    );
+    final RRect rRect = RRect.fromRectAndRadius(rect, Radius.circular(radius));
+    final Paint paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..shader = gradient.createShader(rect);
+    canvas.drawRRect(rRect, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => true;
+}
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -157,7 +188,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           style: const TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF2C3E50),
+                            color: Color.fromARGB(255, 46, 46, 46),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -165,7 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           'What would you like to do today?',
                           style: const TextStyle(
                             fontSize: 16,
-                            color: Color(0xFF7F8C8D),
+                            color: Color.fromARGB(255, 136, 136, 136),
                           ),
                         ),
                         const SizedBox(height: 24),
@@ -330,48 +361,55 @@ class _HomeScreenState extends State<HomeScreen> {
                           Column(
                             children: List.generate(3, (index) {
                               return Container(
-                                margin: const EdgeInsets.only(bottom: 12),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 16,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color.fromARGB(255, 148, 148, 148),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Container(
-                                          width: 140,
-                                          height: 16,
-                                          color: Colors.white.withValues(
-                                            alpha: 0.2,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Container(
-                                          width: 80,
-                                          height: 12,
-                                          color: Colors.white.withValues(
-                                            alpha: 0.2,
-                                          ),
-                                        ),
-                                      ],
+                                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                child: CustomPaint(
+                                  painter: _GradientPainter(
+                                    strokeWidth: 2,
+                                    radius: 14,
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [Colors.black, Colors.white],
                                     ),
-                                    Container(
-                                      width: 70,
-                                      height: 12,
-                                      color: Colors.white.withValues(
-                                        alpha: 0.2,
+                                  ),
+                                  child: Container(
+                                    height: 60,
+                                    decoration: BoxDecoration(
+                                      color: Colors.transparent,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Container(
+                                                  width: 140,
+                                                  height: 14,
+                                                  color: Colors.grey.withValues(alpha: 0.3),
+                                                ),
+                                                const SizedBox(height: 6),
+                                                Container(
+                                                  width: 80,
+                                                  height: 10,
+                                                  color: Colors.grey.withValues(alpha: 0.2),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Container(
+                                            width: 70,
+                                            height: 10,
+                                            color: Colors.grey.withValues(alpha: 0.2),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                  ],
+                                  ),
                                 ),
                               );
                             }),
@@ -397,54 +435,54 @@ class _HomeScreenState extends State<HomeScreen> {
                               (i) {
                                 final q = recent[i];
                                 final ago = _relativeTime(q.createdAt);
-                                return GestureDetector(
-                                  onTap: () => Navigator.of(
-                                    context,
-                                  ).pushNamed('/edit_quiz', arguments: q.id),
-                                  child: Container(
-                                    margin: const EdgeInsets.only(bottom: 12),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 20,
-                                      vertical: 8,
+                                return Container(
+                                  key: ValueKey(q.id),
+                                  margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                  child: CustomPaint(
+                                    painter: _GradientPainter(
+                                      strokeWidth: 2,
+                                      radius: 14,
+                                      gradient: const LinearGradient(
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
+                                        colors: [Colors.black, Colors.white],
+                                      ),
                                     ),
-                                    decoration: BoxDecoration(
-                                      color: const Color.fromARGB(255, 148, 148, 148),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              q.title,
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w600,
-                                                color: Color.fromARGB(255, 221, 221, 221),
-                                              ),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.transparent,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          borderRadius: BorderRadius.circular(12),
+                                          onTap: () {
+                                            Navigator.of(context).pushNamed('/edit_quiz', arguments: q.id);
+                                          },
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                            child: Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    mainAxisAlignment: MainAxisAlignment.center,
+                                                    children: [
+                                                      Text(q.title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF222222))),
+                                                      const SizedBox(height: 4),
+                                                      Text(ago, style: const TextStyle(fontSize: 11, color: Color.fromARGB(255, 139, 139, 139))),
+                                                    ],
+                                                  ),
+                                                ),
+                                                Text(q.published ? 'Published' : 'Draft', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color.fromARGB(255, 59, 59, 59))),
+                                                const SizedBox(width: 8),
+                                                const Icon(Icons.chevron_right, color: Color.fromARGB(255, 141, 141, 141), size: 20),
+                                              ],
                                             ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              ago,
-                                              style: const TextStyle(
-                                                fontSize: 13,
-                                                color: Color.fromARGB(255, 207, 207, 207),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const Text(
-                                          'View Details',
-                                          style: TextStyle(
-                                            color: Color.fromARGB(255, 223, 223, 223),
-                                            fontSize: 13,
                                           ),
                                         ),
-                                      ],
+                                      ),
                                     ),
                                   ),
                                 );

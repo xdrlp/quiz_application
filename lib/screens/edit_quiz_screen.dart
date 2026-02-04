@@ -177,6 +177,9 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
     final questionCount = _questions.length;
     final totalPoints = _questions.fold<int>(0, (s, q) => s + q.points);
 
+    if (!mounted) return;
+    if (!context.mounted) return;
+
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -205,6 +208,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
       await FirestoreService().publishQuiz(quizId, true);
       await _load();
       if (!mounted) return;
+      if (!context.mounted) return;
       await showDialog(
         context: context,
         builder: (_) => AlertDialog(
@@ -253,12 +257,17 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
           end: Alignment.bottomRight,
           colors: [
             Color(0xFFFFFFFF),
-            Color.fromARGB(255, 207, 207, 207),
+            Color.fromARGB(255, 197, 197, 197),
           ],
         ),
       ),
-      child: WillPopScope(
-        onWillPop: () => _saveQuizSettings(showSnack: false),
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) async {
+          if (!didPop) {
+            await _saveQuizSettings(showSnack: false);
+          }
+        },
         child: Scaffold(
           backgroundColor: Colors.transparent,
           appBar: PreferredSize(
@@ -268,7 +277,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
               gradient: LinearGradient(
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
-                colors: [Color.fromARGB(255, 169, 169, 169), Color.fromARGB(255, 255, 255, 255)],
+                colors: [Color.fromARGB(255, 179, 179, 179), Color.fromARGB(255, 255, 255, 255)],
               ),
             ),
             child: Container(
@@ -277,7 +286,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
-                  colors: [Color.fromARGB(108, 244, 244, 244), Color.fromARGB(205, 223, 223, 223)],
+                  colors: [Color.fromARGB(255, 231, 231, 231), Color.fromARGB(255, 247, 247, 247)],
                 ),
               ),
               child: AppBar(
@@ -287,7 +296,9 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                 centerTitle: true,
                 leading: IconButton(
                   icon: const Icon(Icons.arrow_back, color: Colors.black),
-                  onPressed: () => Navigator.of(context).maybePop(),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
                 ),
                 title: Text(_quiz?.title ?? 'Edit Quiz', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20)),
                 actions: [
@@ -431,11 +442,10 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                           correctText = resolved.join(', ');
                         }
 
-                        return Container(
+                        return _neumorphicQuestionCard(
                           key: ValueKey(q.id),
                           margin: const EdgeInsets.symmetric(vertical: 8),
-                          child: _neumorphicQuestionCard(
-                            child: Row(
+                          child: Row(
                               children: [
                                 Expanded(
                                   child: Column(
@@ -504,7 +514,6 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                                 ),
                               ],
                             ),
-                          ),
                         );
                       },
                     ),
@@ -559,24 +568,33 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
     );
   }
 
-  Widget _neumorphicQuestionCard({required Widget child, double padding = 16}) {
-    return CustomPaint(
-      painter: _GradientPainter(
-        strokeWidth: 2,
-        radius: 16,
-        gradient: const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Colors.black, Colors.white],
+  Widget _neumorphicQuestionCard({
+    required Widget child,
+    double padding = 16,
+    EdgeInsets margin = EdgeInsets.zero,
+    Key? key,
+  }) {
+    return Container(
+      key: key,
+      margin: margin,
+      child: CustomPaint(
+        painter: _GradientPainter(
+          strokeWidth: 2,
+          radius: 16,
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.black, Colors.white],
+          ),
         ),
-      ),
-      child: Container(
-        padding: EdgeInsets.all(padding),
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: EdgeInsets.all(padding),
+          decoration: BoxDecoration(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: child,
         ),
-        child: child,
       ),
     );
   }

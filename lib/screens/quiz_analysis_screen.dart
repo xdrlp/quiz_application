@@ -10,6 +10,37 @@ import 'package:quiz_application/models/violation_model.dart';
 import 'package:quiz_application/models/user_model.dart';
 import 'package:quiz_application/utils/answer_utils.dart';
 
+class _GradientPainter extends CustomPainter {
+  final double radius;
+  final double strokeWidth;
+  final Gradient gradient;
+
+  _GradientPainter({
+    required this.gradient,
+    required this.radius,
+    required this.strokeWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Rect rect = Rect.fromLTWH(
+      strokeWidth / 2,
+      strokeWidth / 2,
+      size.width - strokeWidth,
+      size.height - strokeWidth,
+    );
+    final RRect rRect = RRect.fromRectAndRadius(rect, Radius.circular(radius));
+    final Paint paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..shader = gradient.createShader(rect);
+    canvas.drawRRect(rRect, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => true;
+}
+
 // Interactive Quiz Analysis screen with attempt viewer (recalc/save/toggle/edit-time).
 class QuizAnalysisScreen extends StatefulWidget {
   final String quizId;
@@ -101,7 +132,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
           end: Alignment.bottomRight,
           colors: [
             Color(0xFFFFFFFF),
-            Color.fromARGB(255, 207, 207, 207),
+            Color.fromARGB(255, 197, 197, 197),
           ],
         ),
       ),
@@ -114,7 +145,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
               gradient: LinearGradient(
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
-                colors: [Color.fromARGB(255, 169, 169, 169), Color.fromARGB(255, 255, 255, 255)],
+                colors: [Color.fromARGB(255, 179, 179, 179), Color.fromARGB(255, 255, 255, 255)],
               ),
             ),
             child: Container(
@@ -123,7 +154,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
                 gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
-                  colors: [Color.fromARGB(108, 244, 244, 244), Color.fromARGB(205, 223, 223, 223)],
+                  colors: [Color.fromARGB(255, 231, 231, 231), Color.fromARGB(255, 247, 247, 247)],
                 ),
               ),
               child: AppBar(
@@ -139,7 +170,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
                 bottom: TabBar(
                   controller: _tabController,
                   labelColor: const Color(0xFF222222),
-                  unselectedLabelColor: const Color(0xFF7F8C8D),
+                  unselectedLabelColor: Color.fromARGB(255, 94, 94, 94),
                   indicatorColor: const Color(0xFF222222),
                   tabs: const [Tab(text: 'Summary'), Tab(text: 'Insights'), Tab(text: 'Individual')],
                 ),
@@ -179,36 +210,57 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
     final maxPoints = _attempts.isEmpty ? 0 : _attempts.first.totalPoints;
     Widget buildTile({required IconData icon, required String title, required List<Widget> children, Color? accent}) {
       return Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFFF5F5F5),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            const BoxShadow(
-              color: Colors.white,
-              offset: Offset(-4, -4),
-              blurRadius: 10,
+        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        child: CustomPaint(
+          painter: _GradientPainter(
+            strokeWidth: 2,
+            radius: 14,
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.black, Colors.white],
             ),
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              offset: const Offset(4, 4),
-              blurRadius: 10,
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
             ),
-          ],
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: (accent ?? const Color(0xFF222222)).withAlpha(20),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.all(8),
+                        child: Icon(icon, color: accent ?? const Color(0xFF222222), size: 24),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Color(0xFF222222),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  ...children,
+                ],
+              ),
+            ),
+          ),
         ),
-        padding: const EdgeInsets.all(20.0),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            Container(
-              decoration: BoxDecoration(color: (accent ?? const Color(0xFF222222)).withAlpha(20), borderRadius: BorderRadius.circular(8)),
-              padding: const EdgeInsets.all(8),
-              child: Icon(icon, color: accent ?? const Color(0xFF222222)),
-            ),
-            const SizedBox(width: 12),
-            Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF222222)))),
-          ]),
-          const SizedBox(height: 12),
-          ...children,
-        ]),
       );
     }
 
@@ -217,16 +269,32 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
     final participationTile = buildTile(
       icon: Icons.group_outlined,
       title: 'Participation',
-      accent: Colors.blue,
+      accent: const Color(0xFF222222),
       children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Attempts', style: TextStyle(color: Color(0xFF7F8C8D))), Text('$attemptCount', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF222222)))]),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Attempts', style: TextStyle(color: Color.fromARGB(255, 94, 94, 94))), Text('$attemptCount', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF222222)))]),
         const SizedBox(height: 12),
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Submitted', style: TextStyle(color: Color(0xFF7F8C8D))), Text('$submittedCount', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF222222)))]),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Submitted', style: TextStyle(color: Color.fromARGB(255, 94, 94, 94))), Text('$submittedCount', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF222222)))]),
         const SizedBox(height: 12),
-        const Text('Completion rate', style: TextStyle(color: Color(0xFF7F8C8D))),
+        const Text('Completion rate', style: TextStyle(color: Color.fromARGB(255, 94, 94, 94))),
         const SizedBox(height: 8),
         Row(children: [
-          Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(8), child: LinearProgressIndicator(value: completionRate / 100.0, minHeight: 10, color: Colors.blue, backgroundColor: Colors.grey.shade300))),
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: completionRate > 80 ? Colors.green : (completionRate >= 50 ? Colors.orange : Colors.red), width: 1.5),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: completionRate / 100.0,
+                  minHeight: 10,
+                  color: completionRate > 80 ? Colors.green : (completionRate >= 50 ? Colors.orange : Colors.red),
+                  backgroundColor: const Color.fromARGB(0, 221, 221, 221),
+                ),
+              ),
+            ),
+          ),
           const SizedBox(width: 12),
           Text('${completionRate.toStringAsFixed(1)}%', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF222222))),
         ]),
@@ -240,10 +308,10 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
       return Colors.red;
     }
     final performanceTile = buildTile(
-      icon: Icons.bar_chart, title: 'Performance', accent: Colors.green, children: [
+      icon: Icons.bar_chart, title: 'Performance', accent: const Color(0xFF222222), children: [
         // Compact flow: label, then a single row with score on the left and a progress bar to the right.
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Average score', style: TextStyle(color: Color(0xFF7F8C8D))),
+          const Text('Average score', style: TextStyle(color: Color.fromARGB(255, 94, 94, 94))),
           const SizedBox(height: 6),
           Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
             // Score value
@@ -251,13 +319,19 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
             const SizedBox(width: 12),
             // Progress bar next to score
             Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: LinearProgressIndicator(
-                  value: (maxPoints == 0) ? 0.0 : (avgScore / maxPoints).clamp(0.0, 1.0),
-                  minHeight: 12,
-                  color: perfColor(),
-                  backgroundColor: Colors.grey.shade300,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: perfColor(), width: 1.5),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: LinearProgressIndicator(
+                    value: (maxPoints == 0) ? 0.0 : (avgScore / maxPoints).clamp(0.0, 1.0),
+                    minHeight: 12,
+                    color: perfColor(),
+                    backgroundColor: const Color.fromARGB(0, 224, 224, 224),
+                  ),
                 ),
               ),
             ),
@@ -267,8 +341,8 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
           const SizedBox(height: 12),
           // Small stats row: Highest and Lowest side-by-side
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Highest', style: TextStyle(color: Color(0xFF7F8C8D), fontSize: 12)), const SizedBox(height: 4), Text('$highest', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF222222)))]),
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Lowest', style: TextStyle(color: Color(0xFF7F8C8D), fontSize: 12)), const SizedBox(height: 4), Text('$lowest', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF222222)))]),
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Highest', style: TextStyle(color: Color.fromARGB(255, 94, 94, 94), fontSize: 12)), const SizedBox(height: 4), Text('$highest', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF222222)))]),
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Lowest', style: TextStyle(color: Color.fromARGB(255, 94, 94, 94), fontSize: 12)), const SizedBox(height: 4), Text('$lowest', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF222222)))]),
           ])
         ])
       ],
@@ -276,54 +350,50 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
 
     // Behavior & Time tile
     final behaviorTile = buildTile(
-      icon: Icons.schedule, title: 'Behavior & Time', accent: Colors.orange, children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Average time', style: TextStyle(color: Color(0xFF7F8C8D))), Text('${avgTimeFormatted.inMinutes}:${(avgTimeFormatted.inSeconds % 60).toString().padLeft(2, '0')}', style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF222222)))]),
+      icon: Icons.schedule, title: 'Behavior & Time', accent: const Color(0xFF222222), children: [
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Average time', style: TextStyle(color: Color.fromARGB(255, 94, 94, 94))), Text('${avgTimeFormatted.inMinutes}:${(avgTimeFormatted.inSeconds % 60).toString().padLeft(2, '0')}', style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF222222)))]),
         const SizedBox(height: 12),
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Total violations', style: TextStyle(color: Color(0xFF7F8C8D))), Row(children: [totalViolations == 0 ? const Icon(Icons.check_circle, color: Colors.green, size: 18) : const SizedBox(width: 18), const SizedBox(width: 8), Text('$totalViolations', style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF222222)))])]),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Total violations', style: TextStyle(color: Color.fromARGB(255, 94, 94, 94))), Row(children: [totalViolations == 0 ? const Icon(Icons.check_circle, color: Colors.green, size: 18) : const SizedBox(width: 18), const SizedBox(width: 8), Text('$totalViolations', style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF222222)))])]),
       ],
     );
 
     return SingleChildScrollView(
       child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(children: [
-          LayoutBuilder(builder: (context, constraints) {
-          int cols = 1;
-          if (constraints.maxWidth >= 1000) {
-            cols = 3;
-          } else if (constraints.maxWidth >= 650) {
-            cols = 2;
-          }
-          return Wrap(spacing: 16, runSpacing: 16, children: [
-            SizedBox(width: cols == 3 ? (constraints.maxWidth - 32) / 3 : (cols == 2 ? (constraints.maxWidth - 16) / 2 : constraints.maxWidth), child: participationTile),
-            SizedBox(width: cols == 3 ? (constraints.maxWidth - 32) / 3 : (cols == 2 ? (constraints.maxWidth - 16) / 2 : constraints.maxWidth), child: performanceTile),
-            SizedBox(width: cols == 3 ? (constraints.maxWidth - 32) / 3 : (cols == 2 ? (constraints.maxWidth - 16) / 2 : constraints.maxWidth), child: behaviorTile),
-          ]);
-        }),
-        const SizedBox(height: 18),
-        // Score distribution as a dashboard tile
-        Builder(builder: (ctx) {
-          final totalAttempts = _attempts.length;
-          final scoreTile = buildTile(
-            icon: Icons.insert_chart_outlined,
-            title: 'Score distribution',
-            accent: const Color(0xFF222222),
-            children: [
-              Center(child: Text('Total attempts: $totalAttempts', style: const TextStyle(color: Color(0xFF7F8C8D), fontSize: 13))),
-              const SizedBox(height: 8),
-                  LayoutBuilder(builder: (c, cc) {
-                    final available = cc.maxHeight.isFinite ? cc.maxHeight : double.infinity;
-                    final target = available.isFinite ? math.min(220.0, available) : 220.0;
-                    return SizedBox(height: target.toDouble(), child: _buildVerticalScoreChart(dist));
-                  }),
-            ],
-          );
-          return scoreTile;
-        }),
-      ]),
+        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+        child: Column(
+          children: [
+            participationTile,
+            performanceTile,
+            behaviorTile,
+            const SizedBox(height: 18),
+            // Score distribution as a dashboard tile
+            Builder(
+              builder: (ctx) {
+                final totalAttempts = _attempts.length;
+                final scoreTile = buildTile(
+                  icon: Icons.insert_chart_outlined,
+                  title: 'Score distribution',
+                  accent: const Color(0xFF222222),
+                  children: [
+                    Center(child: Text('Total attempts: $totalAttempts', style: const TextStyle(color: Color.fromARGB(255, 94, 94, 94), fontSize: 13))),
+                    const SizedBox(height: 8),
+                    LayoutBuilder(
+                      builder: (c, cc) {
+                        final available = cc.maxHeight.isFinite ? cc.maxHeight : double.infinity;
+                        final target = available.isFinite ? math.min(220.0, available) : 220.0;
+                        return SizedBox(height: target.toDouble(), child: _buildVerticalScoreChart(dist));
+                      },
+                    ),
+                  ],
+                );
+                return scoreTile;
+              },
+            ),
+          ],
+        ),
       ),
     );
-      }
+  }
 
       // Vertical score chart styled to resemble the attached image.
       Widget _buildVerticalScoreChart(Map<int, int> dist) {
@@ -350,7 +420,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
                         alignment: const Alignment(0.0, -0.05),
                         child: RotatedBox(
                           quarterTurns: 3,
-                          child: Text('Attempts', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey)),
+                          child: Text('Attempts', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade700)),
                         ),
                       ),
                     ),
@@ -382,7 +452,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
                               }
                               return Column(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: tickValues.map((v) => Align(alignment: Alignment.centerRight, child: Text('$v', style: Theme.of(context).textTheme.bodySmall))).toList(),
+                                children: tickValues.map((v) => Align(alignment: Alignment.centerRight, child: Text('$v', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade700)))).toList(),
                               );
                             }),
                           ),
@@ -413,7 +483,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
                                 top: ((gi) / (yTickCount - 1)) * (plotHeight - 4),
                                 left: chartMarginLeft,
                                 right: chartMarginRight,
-                                child: Container(height: 1, color: Colors.grey.shade200),
+                                child: Container(height: 1, color: Colors.grey.shade600),
                               ),
 
                             // bars for each bin (0..100 step 10)
@@ -478,7 +548,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
                                                   alignment: Alignment.center,
                                                   child: SizedBox(
                                                     width: labelW,
-                                                    child: Text('${bins[idx]}%', textAlign: TextAlign.center, softWrap: false, maxLines: 1, overflow: TextOverflow.clip, style: const TextStyle(color: Color(0xFF7F8C8D), fontSize: 11)),
+                                                    child: Text('${bins[idx]}%', textAlign: TextAlign.center, softWrap: false, maxLines: 1, overflow: TextOverflow.clip, style: const TextStyle(color: Color.fromARGB(255, 94, 94, 94), fontSize: 11)),
                                                   ),
                                                 ),
                                               ),
@@ -491,12 +561,12 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
 
                             // axis lines and tick marks
                             // vertical y-axis line (aligned with chart left margin)
-                            Positioned(left: chartMarginLeft, bottom: 52, top: 0, child: Container(width: 1.2, color: Colors.grey.shade300)),
+                            Positioned(left: chartMarginLeft, bottom: 52, top: 0, child: Container(width: 1.2, color: Colors.grey.shade700)),
                             // horizontal x-axis line (span only the plotting area)
-                            Positioned(left: chartMarginLeft, right: chartMarginRight, bottom: 52, child: Container(height: 1.2, color: Colors.grey.shade300)),
+                            Positioned(left: chartMarginLeft, right: chartMarginRight, bottom: 52, child: Container(height: 1.2, color: Colors.grey.shade700)),
                             // x-axis tick marks
                             for (var idx = 0; idx < bins.length; idx++)
-                              Positioned(bottom: 52 - 6, left: (chartMarginLeft + idx * spacing - 1).clamp(chartMarginLeft, plotWidth - chartMarginRight - 2), child: Container(width: 2, height: 6, color: Colors.grey.shade400)),
+                              Positioned(bottom: 52 - 6, left: (chartMarginLeft + idx * spacing - 1).clamp(chartMarginLeft, plotWidth - chartMarginRight - 2), child: Container(width: 2, height: 6, color: Colors.grey.shade700)),
                           ],
                         );
                       }),
@@ -506,7 +576,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
                 ),
               ),
               const SizedBox(height: 2),
-              const Text('Score (%)', style: TextStyle(color: Color(0xFF7F8C8D), fontSize: 12)),
+              const Text('Score (%)', style: TextStyle(color: Color.fromARGB(255, 94, 94, 94), fontSize: 12)),
             ],
           ),
         );
@@ -616,180 +686,501 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
 
         final uniqueFlagged = <String>{}..addAll(flaggedUsers)..addAll(frequentAppSwitchers);
 
-        Widget studentFlagsCard = Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [Icon(Icons.flag, color: Colors.redAccent), const SizedBox(width: 8), Text('Student Flags', style: Theme.of(context).textTheme.titleMedium)]),
-              const SizedBox(height: 12),
-              if (uniqueFlagged.isEmpty) const Text('No flagged students'),
-              for (var uid in uniqueFlagged.take(5))
-                Builder(builder: (ctx) {
-                  final name = _users[uid]?.displayName ?? uid;
-                  final violCount = userViolCounts[uid] ?? 0;
-                  final appSwitchCount = userAppSwitch[uid] ?? 0;
-                  final initials = name.split(' ').map((s) => s.isNotEmpty ? s[0] : '').join().toUpperCase();
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Row(children: [
-                      CircleAvatar(backgroundColor: Colors.grey.shade200, child: Text(initials.isEmpty ? '?' : initials.substring(0, initials.length > 2 ? 2 : initials.length))),
-                      const SizedBox(width: 12),
-                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(name, style: const TextStyle(fontWeight: FontWeight.bold)), const SizedBox(height: 6), Row(children: [
-                        if (violCount > 0) Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: Colors.red.withAlpha(30), borderRadius: BorderRadius.circular(12)), child: Text('$violCount violations', style: TextStyle(color: Colors.red, fontSize: 12))),
-                        if (violCount > 0) const SizedBox(width: 8),
-                        if (appSwitchCount > 0) Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: Colors.orange.withAlpha(30), borderRadius: BorderRadius.circular(12)), child: Text('$appSwitchCount app-switches', style: TextStyle(color: Colors.orange, fontSize: 12))),
-                      ])])),
-                      IconButton(icon: const Icon(Icons.chevron_right), onPressed: () { /* open details */ }),
-                    ]),
-                  );
-                }),
-            ]),
+        Widget studentFlagsCard = Container(
+          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          child: CustomPaint(
+            painter: _GradientPainter(
+              strokeWidth: 2,
+              radius: 14,
+              gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.black, Colors.white],
+              ),
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.flag, color: Colors.redAccent, size: 24),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Student Flags',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF222222),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    if (uniqueFlagged.isEmpty)
+                      const Text('No flagged students', style: TextStyle(color: Color.fromARGB(255, 94, 94, 94))),
+                    for (var uid in uniqueFlagged.take(5))
+                      Builder(
+                        builder: (ctx) {
+                          final user = _users[uid];
+                          final name = user?.displayName ?? uid;
+                          final violCount = userViolCounts[uid] ?? 0;
+                          final appSwitchCount = userAppSwitch[uid] ?? 0;
+
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  backgroundColor: Colors.grey.shade300,
+                                  backgroundImage: user?.photoUrl != null &&
+                                          user!.photoUrl!.isNotEmpty
+                                      ? NetworkImage(user.photoUrl!)
+                                      : null,
+                                  child: user?.photoUrl == null ||
+                                          user!.photoUrl!.isEmpty
+                                      ? Text(
+                                          name.isNotEmpty
+                                              ? name[0].toUpperCase()
+                                              : '?',
+                                          style: const TextStyle(
+                                              color: Color(0xFF222222),
+                                              fontWeight: FontWeight.bold),
+                                        )
+                                      : null,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(name,
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF222222))),
+                                      const SizedBox(height: 6),
+                                      Row(
+                                        children: [
+                                          if (violCount > 0)
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: Colors.red.withAlpha(30),
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: Text(
+                                                '$violCount violations',
+                                                style: const TextStyle(color: Colors.red, fontSize: 12),
+                                              ),
+                                            ),
+                                          if (violCount > 0) const SizedBox(width: 8),
+                                          if (appSwitchCount > 0)
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: Colors.orange.withAlpha(30),
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: Text(
+                                                '$appSwitchCount app-switches',
+                                                style: const TextStyle(color: Colors.orange, fontSize: 12),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.chevron_right, color: Color.fromARGB(255, 94, 94, 94)),
+                                  onPressed: () { /* open details */ },
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                  ],
+                ),
+              ),
+            ),
           ),
         );
 
-        Widget integrityCard = Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [Icon(Icons.shield_outlined, color: impactColor(percentFlagged)), const SizedBox(width: 8), Text('Quiz Integrity Overview', style: Theme.of(context).textTheme.titleMedium)]),
-              const SizedBox(height: 12),
-              Row(children: [
-                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('${percentFlagged.toStringAsFixed(1)}%', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: impactColor(percentFlagged))), const SizedBox(height: 6), Text('${attemptsWithViol.length} out of ${_attempts.length} attempts', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey))])),
-                const SizedBox(width: 12),
-                SizedBox(width: 84, height: 84, child: Stack(alignment: Alignment.center, children: [CircularProgressIndicator(value: (percentFlagged / 100.0).clamp(0.0, 1.0), color: impactColor(percentFlagged), backgroundColor: Colors.grey.shade200, strokeWidth: 8), Text('${percentFlagged.toStringAsFixed(0)}%', style: const TextStyle(fontWeight: FontWeight.bold))])),
-              ]),
-              const SizedBox(height: 12),
-              LinearProgressIndicator(value: (percentFlagged / 100.0).clamp(0.0, 1.0), color: impactColor(percentFlagged), backgroundColor: Colors.grey.shade200, minHeight: 10),
-              const SizedBox(height: 8),
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Severity', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey)), Text(percentFlagged > 25 ? 'High' : (percentFlagged >= 10 ? 'Medium' : 'Low'), style: TextStyle(color: impactColor(percentFlagged)))]),
-            ]),
+        Widget integrityCard = Container(
+          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          child: CustomPaint(
+            painter: _GradientPainter(
+              strokeWidth: 2,
+              radius: 14,
+              gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.black, Colors.white],
+              ),
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.shield_outlined, color: impactColor(percentFlagged), size: 24),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Quiz Integrity Overview',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF222222),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${percentFlagged.toStringAsFixed(1)}%',
+                                style: TextStyle(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                  color: impactColor(percentFlagged),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                '${attemptsWithViol.length} out of ${_attempts.length} attempts',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: const Color.fromARGB(255, 78, 78, 78),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        SizedBox(
+                          width: 84,
+                          height: 84,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              CircularProgressIndicator(
+                                value: (percentFlagged / 100.0).clamp(0.0, 1.0),
+                                color: impactColor(percentFlagged),
+                                backgroundColor: const Color.fromARGB(0, 238, 238, 238),
+                                strokeWidth: 8,
+                              ),
+                              Text(
+                                '${percentFlagged.toStringAsFixed(0)}%',
+                                style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF222222)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: impactColor(percentFlagged), width: 1.5),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: LinearProgressIndicator(
+                          value: (percentFlagged / 100.0).clamp(0.0, 1.0),
+                          color: impactColor(percentFlagged),
+                          backgroundColor: const Color.fromARGB(0, 238, 238, 238),
+                          minHeight: 10,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Severity',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: const Color.fromARGB(255, 80, 80, 80)),
+                        ),
+                        Text(
+                          percentFlagged > 25 ? 'High' : (percentFlagged >= 10 ? 'Medium' : 'Low'),
+                          style: TextStyle(color: impactColor(percentFlagged), fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         );
 
         if (constraints.maxWidth >= 800) {
-          return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [SizedBox(width: cardWidth, child: studentFlagsCard), const SizedBox(width: 16), SizedBox(width: cardWidth, child: integrityCard)]);
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(width: cardWidth, child: studentFlagsCard),
+              const SizedBox(width: 16),
+              SizedBox(width: cardWidth, child: integrityCard),
+            ],
+          );
         }
         return Column(children: [studentFlagsCard, const SizedBox(height: 12), integrityCard]);
       }),
       const SizedBox(height: 12),
-      // Easy items with clearer labels and badges
+      // Easy items with gradient borders
       Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF5F5F5),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            const BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 8),
-            BoxShadow(color: Colors.black.withAlpha(25), offset: const Offset(4, 4), blurRadius: 8),
-          ],
+        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        child: CustomPaint(
+          painter: _GradientPainter(
+            strokeWidth: 2,
+            radius: 14,
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.black, Colors.white],
+            ),
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Most correctly answered',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Color(0xFF222222),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ...sortedByEasy.take(5).map((id) {
+                    final q = _questions.firstWhere((x) => x.id == id);
+                    final st = qStats[id]!;
+                    final correct = st['correct'] as int;
+                    final total = st['total'] as int;
+                    final pctDouble = perQuestionRates[id] ?? 0.0;
+                    final badgeColor = pctDouble >= 80
+                        ? Colors.green
+                        : (pctDouble <= 40 ? Colors.red : const Color(0xFF222222));
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              q.prompt,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 14, color: Color(0xFF222222)),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: badgeColor.withAlpha((0.12 * 255).round()),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Text(
+                              '$correct/$total',
+                              style: TextStyle(
+                                color: badgeColor,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+          ),
         ),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Most correctly answered', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          const SizedBox(height: 12),
-          ...sortedByEasy.take(5).map((id) {
-            final q = _questions.firstWhere((x) => x.id == id);
-            final st = qStats[id]!;
-            final correct = st['correct'] as int;
-            final total = st['total'] as int;
-            final pctDouble = perQuestionRates[id] ?? 0.0;
-            final badgeColor = pctDouble >= 80
-                ? Colors.green
-                : (pctDouble <= 40 ? Colors.red : const Color(0xFF222222));
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Row(children: [
-                Expanded(child: Text(q.prompt, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14))),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(color: badgeColor.withAlpha((0.12 * 255).round()), borderRadius: BorderRadius.circular(14)),
-                  child: Text('$correct/$total', style: TextStyle(color: badgeColor, fontWeight: FontWeight.w600, fontSize: 12)),
-                ),
-              ]),
-            );
-          }),
-        ]),
       ),
-      
+      const SizedBox(height: 12),
       // Difficult items
       Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF5F5F5),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            const BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 8),
-            BoxShadow(color: Colors.black.withAlpha(25), offset: const Offset(4, 4), blurRadius: 8),
-          ],
+        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        child: CustomPaint(
+          painter: _GradientPainter(
+            strokeWidth: 2,
+            radius: 14,
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.black, Colors.white],
+            ),
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Least correctly answered',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Color(0xFF222222),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ...sortedByHard.take(5).map((id) {
+                    final q = _questions.firstWhere((x) => x.id == id);
+                    final st = qStats[id]!;
+                    final correct = st['correct'] as int;
+                    final total = st['total'] as int;
+                    final pctDouble = perQuestionRates[id] ?? 0.0;
+                    final badgeColor = pctDouble >= 80
+                        ? Colors.green
+                        : (pctDouble <= 40 ? Colors.red : const Color(0xFF222222));
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              q.prompt,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 14, color: Color(0xFF222222)),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: badgeColor.withAlpha((0.12 * 255).round()),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Text(
+                              '$correct/$total',
+                              style: TextStyle(
+                                color: badgeColor,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+          ),
         ),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Least correctly answered', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          const SizedBox(height: 12),
-          ...sortedByHard.take(5).map((id) {
-            final q = _questions.firstWhere((x) => x.id == id);
-            final st = qStats[id]!;
-            final correct = st['correct'] as int;
-            final total = st['total'] as int;
-            final pctDouble = perQuestionRates[id] ?? 0.0;
-            final badgeColor = pctDouble >= 80
-                ? Colors.green
-                : (pctDouble <= 40 ? Colors.red : const Color(0xFF222222));
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Row(children: [
-                Expanded(child: Text(q.prompt, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14))),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(color: badgeColor.withAlpha((0.12 * 255).round()), borderRadius: BorderRadius.circular(14)),
-                  child: Text('$correct/$total', style: TextStyle(color: badgeColor, fontWeight: FontWeight.w600, fontSize: 12)),
-                ),
-              ]),
-            );
-          }),
-        ]),
       ),
-
+      const SizedBox(height: 12),
       // High violation items with counts
       Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF5F5F5),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            const BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 8),
-            BoxShadow(color: Colors.black.withAlpha(25), offset: const Offset(4, 4), blurRadius: 8),
-          ],
+        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        child: CustomPaint(
+          painter: _GradientPainter(
+            strokeWidth: 2,
+            radius: 14,
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.black, Colors.white],
+            ),
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'High violation items',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Color(0xFF222222),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ...highViolation.take(5).map((id) {
+                    final q = _questions.firstWhere((x) => x.id == id);
+                    final st = qStats[id]!;
+                    final viol = st['violations'] as int;
+                    final total = st['total'] as int;
+                    final violPct = violationRates[id] ?? 0.0;
+                    final badgeColor = violPct >= 50 ? Colors.orange : const Color(0xFF222222);
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              q.prompt,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 14, color: Color(0xFF222222)),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: badgeColor.withAlpha((0.12 * 255).round()),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Text(
+                              '$viol/$total',
+                              style: TextStyle(
+                                color: badgeColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+          ),
         ),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('High violation items', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          const SizedBox(height: 12),
-          ...highViolation.take(5).map((id) {
-            final q = _questions.firstWhere((x) => x.id == id);
-            final st = qStats[id]!;
-            final viol = st['violations'] as int;
-            final total = st['total'] as int;
-            final violPct = violationRates[id] ?? 0.0;
-            final badgeColor = violPct >= 50 ? Colors.orange : const Color(0xFF222222);
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Row(children: [
-                Expanded(child: Text(q.prompt, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14))),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(color: badgeColor.withAlpha((0.12 * 255).round()), borderRadius: BorderRadius.circular(14)),
-                  child: Text('$viol/$total', style: TextStyle(color: badgeColor, fontWeight: FontWeight.bold, fontSize: 12)),
-                ),
-              ]),
-            );
-          }),
-        ]),
       ),
 
       // Visual: Violations vs performance & Time-based patterns
@@ -799,140 +1190,293 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
           final pct = (maxVal <= 0) ? 0.0 : (value / maxVal).clamp(0.0, 1.0);
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 6.0),
-            child: Row(children: [
-              SizedBox(width: 150, child: Text(label, style: const TextStyle(fontSize: 13, color: Color(0xFF7F8C8D)))),
-              const SizedBox(width: 8),
-              Expanded(
-                child: SizedBox(
-                  height: 12,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: LinearProgressIndicator(
-                      value: pct,
-                      color: color,
-                      backgroundColor: Colors.grey.shade200,
-                      minHeight: 12,
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 150,
+                  child: Text(
+                    label,
+                    style: const TextStyle(fontSize: 13, color: Color.fromARGB(255, 94, 94, 94)),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: color, width: 1.5),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: LinearProgressIndicator(
+                        value: pct,
+                        color: color,
+                        backgroundColor: Colors.transparent,
+                        minHeight: 12,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              SizedBox(width: 44, child: Text(value.toStringAsFixed(1), textAlign: TextAlign.right, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold))),
-            ]),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 44,
+                  child: Text(
+                    value.toStringAsFixed(1),
+                    textAlign: TextAlign.right,
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF222222)),
+                  ),
+                ),
+              ],
+            ),
           );
         }
 
         final maxScore = [avgWithViol, avgWithoutViol, avgFastScore, avgSlowScore].fold<double>(0.0, (p, e) => e > p ? e : p);
 
         return Container(
-          margin: const EdgeInsets.symmetric(vertical: 8),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF5F5F5),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              const BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 8),
-              BoxShadow(color: Colors.black.withAlpha(25), offset: const Offset(4, 4), blurRadius: 8),
-            ],
+          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          child: CustomPaint(
+            painter: _GradientPainter(
+              strokeWidth: 2,
+              radius: 14,
+              gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.black, Colors.white],
+              ),
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Violations vs performance',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Color(0xFF222222),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    scoreRow('With violations', avgWithViol, maxScore == 0 ? 1.0 : maxScore, Colors.orange),
+                    scoreRow('Without violations', avgWithoutViol, maxScore == 0 ? 1.0 : maxScore, Colors.green),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Time-based patterns',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Color(0xFF222222),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    scoreRow('Fast group (avg)', avgFastScore, maxScore == 0 ? 1.0 : maxScore, Colors.blue),
+                    scoreRow('Slow group (avg)', avgSlowScore, maxScore == 0 ? 1.0 : maxScore, Colors.purple),
+                  ],
+                ),
+              ),
+            ),
           ),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('Violations vs performance', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            const SizedBox(height: 12),
-            scoreRow('With violations', avgWithViol, maxScore == 0 ? 1.0 : maxScore, Colors.orange),
-            scoreRow('Without violations', avgWithoutViol, maxScore == 0 ? 1.0 : maxScore, Colors.green),
-            const SizedBox(height: 16),
-            const Text('Time-based patterns', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            const SizedBox(height: 12),
-            scoreRow('Fast group (avg)', avgFastScore, maxScore == 0 ? 1.0 : maxScore, Colors.blue),
-            scoreRow('Slow group (avg)', avgSlowScore, maxScore == 0 ? 1.0 : maxScore, Colors.purple),
-          ]),
         );
       }),
       
       Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF5F5F5),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            const BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 8),
-            BoxShadow(color: Colors.black.withAlpha(25), offset: const Offset(4, 4), blurRadius: 8),
-          ],
+        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        child: CustomPaint(
+          painter: _GradientPainter(
+            strokeWidth: 2,
+            radius: 14,
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.black, Colors.white],
+            ),
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Flagged students (>=3 violations)',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: Color(0xFF222222),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    flaggedUsers.isEmpty ? 'None' : flaggedUsers.map((u) => _users[u]?.displayName ?? u).join(', '),
+                    style: const TextStyle(color: Color.fromARGB(255, 94, 94, 94), fontSize: 14),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Frequent app-switchers',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: Color(0xFF222222),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    frequentAppSwitchers.isEmpty ? 'None' : frequentAppSwitchers.map((u) => _users[u]?.displayName ?? u).join(', '),
+                    style: const TextStyle(color: Color.fromARGB(255, 94, 94, 94), fontSize: 14),
+                  ),
+                  const Divider(height: 24, color: Color.fromARGB(255, 94, 94, 94)),
+                  const Text(
+                    'Overall impact of anti-cheating',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: Color(0xFF222222),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${percentFlagged.toStringAsFixed(1)}% of attempts had at least one violation.',
+                    style: const TextStyle(color: Color.fromARGB(255, 94, 94, 94), fontSize: 14),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Notes',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: Color(0xFF222222),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'These insights are automated heuristics. Review flagged attempts and context before taking action.',
+                    style: TextStyle(
+                      color: Color.fromARGB(255, 94, 94, 94),
+                      fontStyle: FontStyle.italic,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Flagged students (>=3 violations)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-          const SizedBox(height: 4),
-          Text(flaggedUsers.isEmpty ? 'None' : flaggedUsers.map((u) => _users[u]?.displayName ?? u).join(', '), style: const TextStyle(color: Color(0xFF7F8C8D), fontSize: 14)),
-          const SizedBox(height: 16),
-          const Text('Frequent app-switchers', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-          const SizedBox(height: 4),
-          Text(frequentAppSwitchers.isEmpty ? 'None' : frequentAppSwitchers.map((u) => _users[u]?.displayName ?? u).join(', '), style: const TextStyle(color: Color(0xFF7F8C8D), fontSize: 14)),
-          const Divider(height: 24),
-          const Text('Overall impact of anti-cheating', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-          const SizedBox(height: 4),
-          Text('${percentFlagged.toStringAsFixed(1)}% of attempts had at least one violation.', style: const TextStyle(color: Color(0xFF7F8C8D), fontSize: 14)),
-          const SizedBox(height: 16),
-          const Text('Notes', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-          const SizedBox(height: 4),
-          const Text('These insights are automated heuristics. Review flagged attempts and context before taking action.', style: TextStyle(color: Color(0xFF7F8C8D), fontStyle: FontStyle.italic, fontSize: 13)),
-        ]),
       ),
     ]);
   }
 
   // Individual attempts list
   Widget _buildIndividual() {
-    if (_attempts.isEmpty) return const Center(child: Padding(padding: EdgeInsets.all(24.0), child: Text('No attempts', style: TextStyle(color: Color(0xFF7F8C8D), fontSize: 16))));
+    if (_attempts.isEmpty) return const Center(child: Padding(padding: EdgeInsets.all(24.0), child: Text('No attempts', style: TextStyle(color: Color.fromARGB(255, 94, 94, 94), fontSize: 16))));
 
     return ListView.builder(
+      padding: const EdgeInsets.all(12),
       itemCount: _attempts.length,
       itemBuilder: (context, i) {
         final a = _attempts[i];
         final user = _users[a.userId];
         final violations = _violationsByAttempt[a.id] ?? [];
         return Container(
-          margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF5F5F5),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              const BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 8),
-              BoxShadow(color: Colors.black.withAlpha(25), offset: const Offset(4, 4), blurRadius: 8),
-            ],
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(user?.displayName ?? a.userId, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF222222))),
-                    const SizedBox(height: 6),
-                    Text('Score: ${a.score}/${a.totalPoints} • Violations: ${violations.length}', style: const TextStyle(color: Color(0xFF7F8C8D), fontSize: 13)),
-                  ],
+          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          child: CustomPaint(
+            painter: _GradientPainter(
+              strokeWidth: 2,
+              radius: 14,
+              gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.black, Colors.white],
+              ),
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () async {
+                    // show interactive attempt viewer
+                    await showDialog(
+                      context: context,
+                      builder: (_) => _AttemptDetailViewer(
+                        attempt: a,
+                        questions: _questions,
+                        violations: violations,
+                        user: user,
+                      ),
+                    );
+                    // reload after dialog (in case of save)
+                    if (!mounted) return;
+                    await _loadAll();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 20,
+                          backgroundColor: Colors.grey.shade300,
+                          backgroundImage:
+                              user?.photoUrl != null && user!.photoUrl!.isNotEmpty
+                                  ? NetworkImage(user.photoUrl!)
+                                  : null,
+                          child: user?.photoUrl == null || user!.photoUrl!.isEmpty
+                              ? Text(
+                                  (user?.displayName ?? a.userId).isNotEmpty
+                                      ? (user?.displayName ?? a.userId)[0].toUpperCase()
+                                      : '?',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87),
+                                )
+                              : null,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                user?.displayName ?? a.userId,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Color(0xFF222222),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'Score: ${a.score}/${a.totalPoints} • Violations: ${violations.length}',
+                                style: const TextStyle(
+                                  color: Color.fromARGB(255, 70, 70, 70),
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.arrow_forward_ios, size: 16, color: Color.fromARGB(255, 94, 94, 94)),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.arrow_forward_ios, size: 16, color: Color(0xFF7F8C8D)),
-                onPressed: () async {
-                  // show interactive attempt viewer
-                  await showDialog(
-                    context: context,
-                    builder: (_) => _AttemptDetailViewer(
-                      attempt: a,
-                      questions: _questions,
-                      violations: violations,
-                      user: user,
-                    ),
-                  );
-                  // reload after dialog (in case of save)
-                  if (!mounted) return;
-                  await _loadAll();
-                },
-              ),
-            ],
+            ),
           ),
         );
       },

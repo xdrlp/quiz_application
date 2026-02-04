@@ -234,7 +234,7 @@ Future<void> showTakeQuizDialog(BuildContext context) async {
           children: [
             Positioned.fill(
               child: BackdropFilter(
-                filter: ui.ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
+                filter: ui.ImageFilter.blur(sigmaX: 4.0, sigmaY: 4.0),
                 child: Container(color: Colors.transparent),
               ),
             ),
@@ -255,9 +255,9 @@ Future<void> showTakeQuizDialog(BuildContext context) async {
                           begin: Alignment.bottomCenter,
                           end: Alignment.topCenter,
                           colors: [
-                            Color(0xFF181818),
+                            Color.fromARGB(255, 0, 0, 0),
                             Color(0xFFFFFFFF),
-                            Color(0xFFC3B8B8),
+                            Color.fromARGB(255, 170, 170, 170),
                             Color(0xFFFFFFFF),
                             Color(0xFFFFFFFF),
                           ],
@@ -272,13 +272,13 @@ Future<void> showTakeQuizDialog(BuildContext context) async {
                               end: Alignment.bottomRight,
                               colors: [
                                 Color.fromARGB(228, 238, 238, 238),
-                                Color.fromARGB(235, 155, 155, 155),
+                                Color.fromARGB(235, 173, 173, 173),
                               ],
                             ),
                             borderRadius: BorderRadius.circular(22),
                             boxShadow: const [
                               BoxShadow(
-                                color: Colors.black45,
+                                color: Color.fromARGB(0, 0, 0, 0),
                                 blurRadius: 15,
                                 offset: Offset(0, 8),
                               ),
@@ -299,7 +299,7 @@ Future<void> showTakeQuizDialog(BuildContext context) async {
                               ),
                               const SizedBox(height: 6),
                               const Text(
-                                'Enter your blahblahblahblahblah',
+                                'Enter the 6-digit code to join the quiz',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 14,
@@ -353,10 +353,14 @@ Future<void> showTakeQuizDialog(BuildContext context) async {
                                   child: TextField(
                                     controller: codeController,
                                     keyboardType: TextInputType.number,
+                                    maxLength: 6,
+                                    textAlign: TextAlign.left,
+                                    textAlignVertical: TextAlignVertical.bottom,
                                     cursorColor: Colors.black54,
                                     style: const TextStyle(
                                       color: Colors.black87,
-                                      fontSize: 14,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                     decoration: InputDecoration(
                                       border: InputBorder.none,
@@ -369,14 +373,15 @@ Future<void> showTakeQuizDialog(BuildContext context) async {
                                       ),
                                       filled: false,
                                       contentPadding: const EdgeInsets.symmetric(
-                                        vertical: 14,
-                                        horizontal: 16,
+                                        vertical: 16,
+                                        horizontal: 15,
                                       ),
-                                      hintText: 'Quiz code',
+                                      hintText: 'Enter code',
                                       hintStyle: const TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.black26,
+                                        fontSize: 16,
+                                        color: Colors.black38,
                                       ),
+                                      counterText: '',
                                     ),
                                   ),
                                 ),

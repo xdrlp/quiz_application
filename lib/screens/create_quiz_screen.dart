@@ -138,7 +138,7 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
           end: Alignment.bottomRight,
           colors: [
             Color(0xFFFFFFFF),
-            Color.fromARGB(255, 207, 207, 207),
+            Color.fromARGB(255, 197, 197, 197),
           ],
         ),
       ),
@@ -151,7 +151,7 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
               gradient: LinearGradient(
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
-                colors: [Color.fromARGB(255, 169, 169, 169), Color.fromARGB(255, 255, 255, 255)],
+                colors: [Color.fromARGB(255, 179, 179, 179), Color.fromARGB(255, 255, 255, 255)],
               ),
             ),
             child: Container(
@@ -160,7 +160,7 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
-                  colors: [Color.fromARGB(108, 244, 244, 244), Color.fromARGB(205, 223, 223, 223)],
+                  colors: [Color.fromARGB(255, 231, 231, 231), Color.fromARGB(255, 247, 247, 247)],
                 ),
               ),
               child: AppBar(

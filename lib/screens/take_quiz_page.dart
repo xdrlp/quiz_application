@@ -382,7 +382,24 @@ class _TakeQuizPageState extends State<TakeQuizPage>
       }
     }
 
-    final qs = await _firestore.getQuizQuestions(widget.quizId);
+    var qs = await _firestore.getQuizQuestions(widget.quizId);
+
+    // Apply randomization logic
+    if (quiz.randomizeQuestions) {
+      qs.shuffle();
+    }
+
+    if (quiz.randomizeOptions) {
+      qs = qs.map((q) {
+        // Only shuffle choices for questions that have them
+        if (q.choices.isNotEmpty) {
+          final shuffledChoices = List<Choice>.from(q.choices)..shuffle();
+          return q.copyWith(choices: shuffledChoices);
+        }
+        return q;
+      }).toList();
+    }
+
     setState(() {
       _quizTitle = quiz.title;
       _questions = qs;

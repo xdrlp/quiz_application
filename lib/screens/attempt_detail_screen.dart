@@ -6,6 +6,39 @@ import 'package:quiz_application/models/quiz_model.dart';
 import 'package:quiz_application/models/question_model.dart';
 import 'package:intl/intl.dart';
 
+// ignore_for_file: use_super_parameters
+
+class _GradientPainter extends CustomPainter {
+  final double radius;
+  final double strokeWidth;
+  final Gradient gradient;
+
+  _GradientPainter({
+    required this.gradient,
+    required this.radius,
+    required this.strokeWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Rect rect = Rect.fromLTWH(
+      strokeWidth / 2,
+      strokeWidth / 2,
+      size.width - strokeWidth,
+      size.height - strokeWidth,
+    );
+    final RRect rRect = RRect.fromRectAndRadius(rect, Radius.circular(radius));
+    final Paint paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..shader = gradient.createShader(rect);
+    canvas.drawRRect(rRect, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => true;
+}
+
 class AttemptDetailScreen extends StatefulWidget {
   final String attemptId;
   const AttemptDetailScreen({super.key, required this.attemptId});
@@ -76,22 +109,50 @@ class _AttemptDetailScreenState extends State<AttemptDetailScreen> {
           end: Alignment.bottomRight,
           colors: [
             Color(0xFFFFFFFF),
-            Color.fromARGB(255, 207, 207, 207),
+            Color.fromARGB(255, 197, 197, 197),
           ],
         ),
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          title: Text(quiz.title),
-          systemOverlayStyle: SystemUiOverlayStyle.dark,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: IconButton(
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight),
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: [
+                  Color.fromARGB(255, 179, 179, 179),
+                  Color.fromARGB(255, 255, 255, 255),
+                ],
+              ),
+            ),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 2),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [
+                    Color.fromARGB(255, 231, 231, 231),
+                    Color.fromARGB(255, 247, 247, 247),
+                  ],
+                ),
+              ),
+              child: AppBar(
+                title: Text(quiz.title, style: const TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold)),
+                systemOverlayStyle: SystemUiOverlayStyle.dark,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                centerTitle: true,
+                leading: IconButton(
                   icon: const Icon(Icons.arrow_back, color: Colors.black),
                   onPressed: () => Navigator.of(context).pop(),
+                ),
+              ),
+            ),
           ),
-          titleTextStyle: const TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold),
         ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -100,50 +161,66 @@ class _AttemptDetailScreenState extends State<AttemptDetailScreen> {
           children: [
             // Score Card
             Container(
+              key: ValueKey('score_card'),
               width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    'Score',
-                    style: TextStyle(color: Colors.grey[400], fontSize: 16),
+              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+              child: CustomPaint(
+                painter: _GradientPainter(
+                  strokeWidth: 2.5,
+                  radius: 14,
+                  gradient: const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.black, Colors.white],
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${attempt.score} / ${attempt.totalPoints}',
-                    style: const TextStyle(
-                      fontSize: 48, 
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  Text(
-                    '${attempt.scorePercentage.toStringAsFixed(1)}%',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: attempt.scorePercentage >= 75 ? Colors.green : 
-                             attempt.scorePercentage >= 50 ? Colors.orange : Colors.red,
-                    ),
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Score',
+                        style: TextStyle(color: Colors.grey[500], fontSize: 16, fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        '${attempt.score} / ${attempt.totalPoints}',
+                        style: const TextStyle(
+                          fontSize: 52, 
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF222222),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        '${attempt.scorePercentage.toStringAsFixed(1)}%',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: attempt.scorePercentage >= 75 ? const Color(0xFF27AE60) : 
+                                 attempt.scorePercentage >= 50 ? const Color(0xFFF39C12) : const Color(0xFFE74C3C),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      if (attempt.submittedAt != null)
+                       Text(
+                          'Completed on ${DateFormat.yMMMd().add_jm().format(attempt.submittedAt!)}',
+                           style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                        ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  if (attempt.submittedAt != null)
-                   Text(
-                      'Completed on ${DateFormat.yMMMd().add_jm().format(attempt.submittedAt!)}',
-                       style: TextStyle(color: Colors.grey[400], fontSize: 12),
-                    ),
-                ],
+                ),
               ),
             ),
             
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
             const Text(
               'Question Review',
-               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF222222)),
             ),
             const SizedBox(height: 16),
 
@@ -172,61 +249,87 @@ class _AttemptDetailScreenState extends State<AttemptDetailScreen> {
               );
 
               return Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.grey[900],
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isCorrect ? Colors.green.withValues(alpha: 0.5) : Colors.red.withValues(alpha: 0.5),
-                    width: 1,
+                key: ValueKey(q.id),
+                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                child: CustomPaint(
+                  painter: _GradientPainter(
+                    strokeWidth: 2,
+                    radius: 14,
+                    gradient: const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.black, Colors.white],
+                    ),
                   ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: isCorrect ? Colors.green : Colors.red,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            'Q$idx',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            q.prompt,
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                          ),
-                        ),
-                      ],
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    const SizedBox(height: 12),
-                    const Divider(color: Colors.grey),
-                    const SizedBox(height: 12),
-                    
-                    _AnswerRow(
-                      label: 'Your Answer:', 
-                      text: selectedOption.text, 
-                      color: isCorrect ? Colors.green[300]! : Colors.red[300]!,
-                    ),
-                    if (!isCorrect)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: _AnswerRow(
-                          label: 'Correct Answer:', 
-                          text: correctOption.text, 
-                          color: Colors.green[300]!,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF222222),
+                                    borderRadius: BorderRadius.circular(6),
+                                    boxShadow: [
+                                      const BoxShadow(
+                                        color: Colors.white,
+                                        offset: Offset(-2, -2),
+                                        blurRadius: 5,
+                                      ),
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.1),
+                                        offset: const Offset(2, 2),
+                                        blurRadius: 5,
+                                      ),
+                                    ],
+                                  ),
+                                  child: Text(
+                                    'Q$idx',
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    q.prompt,
+                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF222222)),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            const Divider(color: Color.fromARGB(255, 182, 182, 182), height: 1),
+                            const SizedBox(height: 16),
+                            
+                            _AnswerRow(
+                              label: 'Your Answer:', 
+                              text: selectedOption.text, 
+                              color: const Color.fromARGB(255, 49, 49, 49),
+                            ),
+                            if (!isCorrect) ...[
+                              const SizedBox(height: 12),
+                              _AnswerRow(
+                                label: 'Correct:', 
+                                text: correctOption.text, 
+                                color: const Color.fromARGB(255, 49, 49, 49),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
-                  ],
+                    ),
+                  ),
                 ),
               );
             }),
@@ -254,7 +357,7 @@ class _AnswerRow extends StatelessWidget {
           width: 100,
           child: Text(
             label,
-            style: TextStyle(color: Colors.grey[400], fontSize: 14),
+            style: const TextStyle(color: Color.fromARGB(255, 70, 70, 70), fontSize: 14, fontWeight: FontWeight.w500),
           ),
         ),
         Expanded(
