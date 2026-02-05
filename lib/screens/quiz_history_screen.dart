@@ -165,6 +165,144 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
     );
   }
 
+  Widget _buildSkeletonAttemptCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      child: CustomPaint(
+        painter: _GradientPainter(
+          strokeWidth: 2,
+          radius: 14,
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.black, Colors.white],
+          ),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 150,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        width: 200,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  width: 50,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSkeletonHistorySection() {
+    return Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: Column(
+        children: [
+          // Search bar (actual UI)
+          Row(children: [
+            Expanded(
+              child: CustomPaint(
+                painter: _GradientPainter(
+                  strokeWidth: 1.5,
+                  radius: 12,
+                  gradient: const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.black, Colors.white],
+                  ),
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Search attempts',
+                      prefixIcon: const Icon(Icons.search, color: Color(0xFF999999)),
+                      hintStyle: const TextStyle(color: Color(0xFF999999), fontSize: 14),
+                      filled: false,
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    ),
+                    onChanged: (v) => setState(() => _searchQuery = v),
+                  ),
+                ),
+              ),
+            ),
+          ]),
+          const SizedBox(height: 12),
+          // Filter chips (actual UI)
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(children: [
+              _modeChip('Recent'),
+              const SizedBox(width: 8),
+              _modeChip('Quiz Name'),
+              const SizedBox(width: 8),
+              _modeChip('Date Submitted'),
+            ]),
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: ListView.separated(
+              itemCount: 6,
+              separatorBuilder: (context, index) => const SizedBox(height: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              itemBuilder: (context, index) => _buildSkeletonAttemptCard(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -214,7 +352,7 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
           ),
         ),
         body: _loading
-            ? const Center(child: CircularProgressIndicator())
+            ? _buildSkeletonHistorySection()
             : _attempts.isEmpty
                 ? Center(
                     child: Column(

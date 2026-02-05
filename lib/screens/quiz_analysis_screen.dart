@@ -178,10 +178,178 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
             ),
           ),
         ),
-        body: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : TabBarView(controller: _tabController, children: [_buildSummary(), _buildInsights(), _buildIndividual()]),
+        body: TabBarView(controller: _tabController, children: [_loading ? _buildSkeletonSummary() : _buildSummary(), _loading ? _buildSkeletonInsights() : _buildInsights(), _loading ? _buildSkeletonIndividual() : _buildIndividual()]),
       ),
+    );
+  }
+
+  // Skeleton loaders
+  Widget _buildSkeletonCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      child: CustomPaint(
+        painter: _GradientPainter(
+          strokeWidth: 2,
+          radius: 14,
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.black, Colors.white],
+          ),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header skeleton
+                Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Container(
+                        width: double.infinity,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // Content skeleton lines
+                Container(
+                  width: double.infinity,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  width: 200,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSkeletonSummary() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        children: List.generate(4, (_) => _buildSkeletonCard()),
+      ),
+    );
+  }
+
+  Widget _buildSkeletonInsights() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        children: List.generate(5, (_) => _buildSkeletonCard()),
+      ),
+    );
+  }
+
+  Widget _buildSkeletonIndividual() {
+    return ListView.builder(
+      padding: const EdgeInsets.all(12),
+      itemCount: 6,
+      itemBuilder: (context, i) {
+        return Container(
+          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          child: CustomPaint(
+            painter: _GradientPainter(
+              strokeWidth: 2,
+              radius: 14,
+              gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.black, Colors.white],
+              ),
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: double.infinity,
+                            height: 14,
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade300,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            width: 150,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade300,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      width: 16,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -1425,7 +1593,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
                   borderRadius: BorderRadius.circular(12),
                   onTap: () async {
                     // show interactive attempt viewer
-                    await showDialog(
+                    final saved = await showDialog<bool>(
                       context: context,
                       builder: (_) => _AttemptDetailViewer(
                         attempt: a,
@@ -1433,9 +1601,9 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
                         violations: violations,
                         user: user,
                       ),
-                    );
-                    // reload after dialog (in case of save)
-                    if (!mounted) return;
+                    ) ?? false;
+                    // reload after dialog only if changes were saved
+                    if (!mounted || !saved) return;
                     await _loadAll();
                   },
                   child: Padding(
@@ -1666,7 +1834,7 @@ class _AttemptDetailViewerState extends State<_AttemptDetailViewer> {
       await FirestoreService().patchAttempt(_attempt.id, _attempt.toFirestore());
       if (!mounted) return;
       setState(() => _saving = false);
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -1693,7 +1861,14 @@ class _AttemptDetailViewerState extends State<_AttemptDetailViewer> {
           width: double.maxFinite,
           constraints: const BoxConstraints(maxWidth: 800, maxHeight: 800),
           decoration: BoxDecoration(
-            color: Colors.white,
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFFFFFFFF),
+                Color.fromARGB(255, 197, 197, 197),
+              ],
+            ),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
@@ -1707,13 +1882,13 @@ class _AttemptDetailViewerState extends State<_AttemptDetailViewer> {
                   children: [
                     Expanded(child: Text('Attempt by ${widget.user?.displayName ?? _attempt.userId}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF222222)))),
                     IconButton(
-                      icon: const Icon(Icons.close, color: Color(0xFF7F8C8D)),
+                      icon: const Icon(Icons.close, color: Color.fromARGB(255, 0, 0, 0)),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                   ],
                 ),
               ),
-              const Divider(height: 1),
+              const Divider(height: 1, color: Color.fromARGB(255, 94, 94, 94)),
             // Actions
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
@@ -1722,7 +1897,8 @@ class _AttemptDetailViewerState extends State<_AttemptDetailViewer> {
                   _NeumorphicButton(
                     onPressed: _recalculate,
                     icon: Icons.refresh,
-                    label: 'Recalculate',
+                    label: 'Reset',
+                    showShadow: false,
                   ),
                   const SizedBox(width: 12),
                   _NeumorphicButton(
@@ -1732,6 +1908,14 @@ class _AttemptDetailViewerState extends State<_AttemptDetailViewer> {
                     isPrimary: true,
                   ),
                 ],
+              ),
+            ),
+            
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Text(
+                'Tap on the check icons to mark it as correct or incorrect',
+                style: TextStyle(fontSize: 12, color: Color.fromARGB(255, 94, 94, 94), fontStyle: FontStyle.italic),
               ),
             ),
             
@@ -1895,8 +2079,9 @@ class _NeumorphicButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool isPrimary;
+  final bool showShadow;
 
-  const _NeumorphicButton({required this.onPressed, required this.icon, required this.label, this.isPrimary = false});
+  const _NeumorphicButton({required this.onPressed, required this.icon, required this.label, this.isPrimary = false, this.showShadow = true});
 
   @override
   Widget build(BuildContext context) {
@@ -1907,19 +2092,19 @@ class _NeumorphicButton extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
-            color: isPrimary ? const Color(0xFF222222) : const Color(0xFFF5F5F5),
+            color: isPrimary ? const Color.fromARGB(255, 14, 207, 0) : const Color.fromARGB(255, 255, 0, 0),
             borderRadius: BorderRadius.circular(12),
-            boxShadow: onPressed == null ? [] : [
-              const BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 6),
+            boxShadow: (onPressed == null || !showShadow) ? [] : [
+              const BoxShadow(color: Color.fromARGB(255, 255, 255, 255), offset: Offset(-3, -3), blurRadius: 6),
               BoxShadow(color: Colors.black.withAlpha(25), offset: const Offset(3, 3), blurRadius: 6),
             ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 18, color: isPrimary ? Colors.white : const Color(0xFF222222)),
+              Icon(icon, size: 18, color: isPrimary ? const Color(0xFF222222) : const Color(0xFF222222)),
               const SizedBox(width: 8),
-              Text(label, style: TextStyle(fontWeight: FontWeight.w600, color: isPrimary ? Colors.white : const Color(0xFF222222))),
+              Text(label, style: TextStyle(fontWeight: FontWeight.w600, color: isPrimary ? const Color(0xFF222222) : const Color(0xFF222222))),
             ],
           ),
         ),

@@ -273,6 +273,148 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
     messenger.showSnackBar(SnackBar(duration: const Duration(seconds: 1), content: Text(message)));
   }
 
+  Widget _buildSkeletonQuizCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      child: CustomPaint(
+        painter: _GradientPainter(
+          strokeWidth: 2,
+          radius: 14,
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.black, Colors.white],
+          ),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 200,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      width: 60,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  width: 200,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSkeletonQuizzesSection() {
+    return Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: Column(
+        children: [
+          // Search & controls (actual UI, not skeleton)
+          Row(children: [
+            Expanded(
+              child: CustomPaint(
+                painter: _GradientPainter(
+                  strokeWidth: 1.5,
+                  radius: 12,
+                  gradient: const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.black, Colors.white],
+                  ),
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Search quizzes',
+                      prefixIcon: const Icon(Icons.search, color: Color(0xFF999999)),
+                      hintStyle: const TextStyle(color: Color(0xFF999999), fontSize: 14),
+                      filled: false,
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    ),
+                    onChanged: (v) => setState(() => _searchQuery = v),
+                  ),
+                ),
+              ),
+            ),
+          ]),
+          const SizedBox(height: 12),
+          // Quick filters (actual UI, not skeleton)
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(children: [
+              _modeChip('Recent'),
+              const SizedBox(width: 8),
+              _modeChip('Name'),
+              const SizedBox(width: 8),
+              _modeChip('Created'),
+              const SizedBox(width: 8),
+              _modeChip('Popular'),
+            ]),
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: ListView(
+              children: [
+                _sectionHeader('Drafts', 3),
+                ...[0, 1, 2].map((_) => _buildSkeletonQuizCard()),
+                const SizedBox(height: 12),
+                _sectionHeader('Published', 2),
+                ...[0, 1].map((_) => _buildSkeletonQuizCard()),
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -345,7 +487,7 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
           future: _future,
           builder: (context, snap) {
             if (snap.connectionState != ConnectionState.done) {
-              return const Center(child: CircularProgressIndicator());
+              return _buildSkeletonQuizzesSection();
             }
             if (snap.hasError) {
               final err = snap.error.toString();
@@ -701,21 +843,21 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
                       Expanded(child: Text(q.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF222222)))),
                     ]),
                     const SizedBox(height: 4),
-                    Text(q.description.isEmpty ? 'No description' : q.description, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, color: Color(0xFF7F8C8D))),
+                    Text(q.description.isEmpty ? 'No description' : q.description, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, color: Color.fromARGB(255, 97, 97, 97))),
                     const SizedBox(height: 8),
                     Row(children: [
-                      const Icon(Icons.calendar_today, size: 12, color: Color(0xFF7F8C8D)),
+                      const Icon(Icons.calendar_today, size: 12, color: Color.fromARGB(255, 134, 134, 134)),
                       const SizedBox(width: 4),
-                      Text(_relativeTime(q.createdAt), style: const TextStyle(fontSize: 11, color: Color(0xFF7F8C8D))),
+                      Text(_relativeTime(q.createdAt), style: const TextStyle(fontSize: 11, color: Color.fromARGB(255, 126, 126, 126))),
                       const SizedBox(width: 12),
-                      const Icon(Icons.people, size: 12, color: Color(0xFF7F8C8D)),
+                      const Icon(Icons.people, size: 12, color: Color.fromARGB(255, 122, 122, 122)),
                       const SizedBox(width: 4),
-                      Text('${q.totalAttempts} Respondents', style: const TextStyle(fontSize: 11, color: Color(0xFF7F8C8D))),
+                      Text('${q.totalAttempts} Respondents', style: const TextStyle(fontSize: 11, color: Color.fromARGB(255, 128, 128, 128))),
                     ])
                   ]),
                 ),
                 PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert, color: Color(0xFF7F8C8D)),
+                  icon: const Icon(Icons.more_vert, color: Color.fromARGB(255, 135, 135, 135)),
                   onSelected: (v) async {
                   switch (v) {
                     case 'edit':
