@@ -844,19 +844,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
         ),
-        child: TextFormField(
-          controller: controller,
-          validator: validator,
-          style: const TextStyle(color: Colors.black87, fontSize: 16),
-          cursorColor: Colors.black87,
-          decoration: InputDecoration(
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
+        child: Theme(
+          data: Theme.of(context).copyWith(
+            textSelectionTheme: TextSelectionThemeData(
+              selectionColor: Colors.grey.withAlpha(150),
+              selectionHandleColor: Colors.grey,
             ),
-            hintText: label,
-            hintStyle: const TextStyle(color: Colors.red),
+          ),
+          child: TextFormField(
+            controller: controller,
+            validator: validator,
+            style: const TextStyle(color: Colors.black87, fontSize: 16),
+            cursorColor: Colors.black87,
+            selectionControls: materialTextSelectionControls,
+            decoration: InputDecoration(
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
+              hintText: label,
+              hintStyle: const TextStyle(color: Colors.black54),
+            ),
           ),
         ),
       ),

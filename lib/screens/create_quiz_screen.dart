@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:quiz_application/models/quiz_model.dart';
 import 'package:quiz_application/providers/auth_provider.dart';
 import 'package:quiz_application/services/firestore_service.dart';
@@ -53,6 +54,27 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
   bool _singleResponse = false;
   bool _enablePassword = false;
   final _passwordController = TextEditingController();
+  
+  // Error state variables
+  String? _titleError;
+  String? _timeError;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDefaults();
+    _timeController.text = '10'; // Default to 10 minutes
+  }
+
+  Future<void> _loadDefaults() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _shuffleQuestions = prefs.getBool('default_shuffle_questions') ?? false;
+      _shuffleChoices = prefs.getBool('default_shuffle_options') ?? false;
+      _singleResponse = prefs.getBool('default_single_response') ?? false;
+    });
+  }
 
   @override
   void dispose() {
@@ -64,6 +86,12 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
   }
 
   Future<void> _submit() async {
+    // Clear previous errors
+    setState(() {
+      _titleError = null;
+      _timeError = null;
+    });
+
     final auth = context.read<AuthProvider>();
     final user = auth.currentUser;
     if (user == null) return;
@@ -72,19 +100,15 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
     final desc = _descController.text.trim();
     final minutes = int.tryParse(_timeController.text) ?? 10;
 
-    if (minutes > 999) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Maximum time limit is 999 minutes')),
-      );
+    // Validate title
+    if (title.isEmpty) {
+      setState(() => _titleError = 'Required');
       return;
     }
 
-    if (title.isEmpty) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please provide a title')),
-      );
+    // Validate time limit
+    if (minutes > 999) {
+      setState(() => _timeError = 'Max 999 minutes');
       return;
     }
 
@@ -191,26 +215,65 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
                   textAlign: TextAlign.left,
                 ),
                 const SizedBox(height: 32),
-                _buildGradientTextField(
-                  controller: _titleController,
-                  hint: 'Title',
-                  icon: Icons.title,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Text('Details', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF222222), letterSpacing: 0.5)),
+                        if (_titleError != null)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 8.0),
+                            child: Text(_titleError!, style: const TextStyle(fontSize: 12, color: Color(0xFFD32F2F), fontWeight: FontWeight.w500)),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    _buildGradientTextField(
+                      controller: _titleController,
+                      hint: 'Title',
+                      icon: Icons.title,
+                      inputFormatters: [
+                        LengthLimitingTextInputFormatter(99),
+                      ],
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 _buildGradientTextField(
                   controller: _descController,
                   hint: 'Description',
                   icon: Icons.description,
+                  inputFormatters: [
+                    LengthLimitingTextInputFormatter(249),
+                  ],
                 ),
                 const SizedBox(height: 16),
-                _buildGradientTextField(
-                  controller: _timeController,
-                  hint: 'e.g., 10 minutes (Max 999)',
-                  icon: Icons.schedule,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(3),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Text('Time Limit', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF222222), letterSpacing: 0.5)),
+                        if (_timeError != null)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 8.0),
+                            child: Text(_timeError!, style: const TextStyle(fontSize: 12, color: Color(0xFFD32F2F), fontWeight: FontWeight.w500)),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    _buildGradientTextField(
+                      controller: _timeController,
+                      hint: 'e.g., 10 (Max 999)',
+                      icon: Icons.schedule,
+                      keyboardType: TextInputType.number,
+                      suffixText: 'mins',
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(3),
+                      ],
+                    ),
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -243,20 +306,60 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
                     ),
                   ),
                 const SizedBox(height: 32),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                            onPressed: _loading ? null : _submit,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF222222),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              elevation: 2,
-                            ),
-                            child: _loading
-                                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                : const Text('Create', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Color.fromARGB(255, 248, 248, 248),
+                        Color.fromARGB(255, 199, 199, 199),
+                        Color.fromARGB(255, 248, 248, 248),
+                        Color.fromARGB(255, 116, 116, 116),
+                        Color.fromARGB(242, 61, 61, 61),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _loading ? null : _submit,
+                      borderRadius: BorderRadius.circular(6),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF1F00),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: _loading
+                            ? const Center(child: SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)))
+                            : Center(
+                                child: ShaderMask(
+                                  shaderCallback: (bounds) => const LinearGradient(
+                                    begin: Alignment.centerLeft,
+                                    end: Alignment.centerRight,
+                                    colors: [Color(0xFFE9E9E9), Color(0xFFFFFFFF)],
+                                  ).createShader(bounds),
+                                  child: const Text(
+                                    'Create',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Color.fromARGB(255, 247, 247, 247),
+                                      shadows: [
+                                        Shadow(
+                                          offset: Offset(0, 1),
+                                          blurRadius: 0,
+                                          color: Color.fromARGB(181, 0, 0, 0),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -273,6 +376,7 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
     List<TextInputFormatter>? inputFormatters,
+    String? suffixText,
   }) {
     return CustomPaint(
       painter: _GradientPainter(
@@ -295,27 +399,49 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(10),
         ),
-        child: TextField(
-          controller: controller,
-          keyboardType: keyboardType,
-          inputFormatters: inputFormatters,
-          cursorColor: Colors.black54,
-          style: const TextStyle(
-            color: Colors.black87,
-            fontSize: 14,
-          ),
-          decoration: InputDecoration(
-            border: InputBorder.none,
-            prefixIcon: Icon(icon, color: Colors.black54),
-            filled: false,
-            contentPadding: const EdgeInsets.symmetric(
-              vertical: 14,
-              horizontal: 8,
+        child: Theme(
+          data: Theme.of(context).copyWith(
+            textSelectionTheme: TextSelectionThemeData(
+              selectionColor: Colors.grey.withAlpha(150),
+              selectionHandleColor: Colors.grey,
             ),
-            hintText: hint,
-            hintStyle: const TextStyle(
+          ),
+          child: TextField(
+            controller: controller,
+            keyboardType: keyboardType,
+            inputFormatters: inputFormatters,
+            cursorColor: Colors.black54,
+            style: const TextStyle(
+              color: Colors.black87,
               fontSize: 14,
-              color: Colors.black26,
+            ),
+            selectionControls: materialTextSelectionControls,
+            decoration: InputDecoration(
+              border: InputBorder.none,
+              prefixIcon: Icon(icon, color: Colors.black54),
+              suffix: suffixText != null
+                  ? Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: Text(
+                        suffixText,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    )
+                  : null,
+              filled: false,
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 14,
+                horizontal: 8,
+              ),
+              hintText: hint,
+              hintStyle: const TextStyle(
+                fontSize: 14,
+                color: Colors.black26,
+              ),
             ),
           ),
         ),

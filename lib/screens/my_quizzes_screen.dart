@@ -530,7 +530,7 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
                 child: Padding(
                   padding: const EdgeInsets.all(24.0),
                   child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.quiz, size: 84, color: Colors.blueAccent),
+                    const Icon(Icons.quiz, size: 84, color: Color.fromARGB(255, 0, 0, 0)),
                     const SizedBox(height: 16),
                     const Text('No quizzes yet', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF222222))),
                     const SizedBox(height: 8),
@@ -854,6 +854,12 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
                 PopupMenuButton<String>(
                   icon: const Icon(Icons.more_vert, color: Color.fromARGB(255, 135, 135, 135)),
                   tooltip: '',
+                  color: const Color.fromARGB(244, 197, 197, 197),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    side: const BorderSide(color: Color(0xFF666666), width: 1.5),
+                  ),
                   onSelected: (v) async {
                   switch (v) {
                     case 'edit':
@@ -915,11 +921,11 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
                   }
                 },
                 itemBuilder: (_) => [
-                  const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                  const PopupMenuItem(value: 'copy', child: Text('Copy code')),
-                  if (!isPublished) const PopupMenuItem(value: 'publish', child: Text('Publish')),
-                  if (isPublished) const PopupMenuItem(value: 'unpublish', child: Text('Unpublish')),
-                  const PopupMenuItem(value: 'delete', child: Text('Delete')),
+                  if (!isPublished) const PopupMenuItem(value: 'edit', child: Text('Edit', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500))),
+                  const PopupMenuItem(value: 'copy', child: Text('Copy code', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500))),
+                  if (!isPublished) const PopupMenuItem(value: 'publish', child: Text('Publish', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500))),
+                  if (isPublished) const PopupMenuItem(value: 'unpublish', child: Text('Unpublish', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500))),
+                  const PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500))),
                 ],
               )
             ]),

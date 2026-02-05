@@ -10,9 +10,12 @@ class UserModel {
   final String? yearLevel;
   final String? photoUrl;
   final List<String> classes; // classIds
+  final bool notifySubmission;
+  final bool notifyResultUpdate;
+  final String? fcmToken;
   final DateTime createdAt;
   final DateTime? updatedAt;
-
+  
   UserModel({
     required this.uid,
     required this.email,
@@ -23,6 +26,9 @@ class UserModel {
     this.yearLevel,
     this.photoUrl,
     this.classes = const [],
+    this.notifySubmission = true,
+    this.notifyResultUpdate = true,
+    this.fcmToken,
     required this.createdAt,
     this.updatedAt,
   });
@@ -40,6 +46,9 @@ class UserModel {
       yearLevel: data['yearLevel'] as String?,
       photoUrl: data['photoUrl'] as String?,
       classes: List<String>.from(data['classes'] ?? []),
+      notifySubmission: data['notifySubmission'] ?? true,
+      notifyResultUpdate: data['notifyResultUpdate'] ?? true,
+      fcmToken: data['fcmToken'] as String?,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
     );
@@ -56,6 +65,9 @@ class UserModel {
       'yearLevel': yearLevel,
       'photoUrl': photoUrl,
       'classes': classes,
+      'notifySubmission': notifySubmission,
+      'notifyResultUpdate': notifyResultUpdate,
+      'fcmToken': fcmToken,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt ?? DateTime.now()),
     };
@@ -71,6 +83,9 @@ class UserModel {
     String? yearLevel,
     String? photoUrl,
     List<String>? classes,
+    bool? notifySubmission,
+    bool? notifyResultUpdate,
+    String? fcmToken,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -84,6 +99,9 @@ class UserModel {
       yearLevel: yearLevel ?? this.yearLevel,
       photoUrl: photoUrl ?? this.photoUrl,
       classes: classes ?? this.classes,
+      notifySubmission: notifySubmission ?? this.notifySubmission,
+      notifyResultUpdate: notifyResultUpdate ?? this.notifyResultUpdate,
+      fcmToken: fcmToken ?? this.fcmToken,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

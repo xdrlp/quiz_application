@@ -56,6 +56,9 @@ dependencies:
   image_cropper: 8.0.0
   image: ^4.7.2
   intl: ^0.20.2
+  shared_preferences: ^2.5.4
+  url_launcher: ^6.3.2
+  firebase_messaging: ^16.1.1
   # image_picker and firebase_storage removed (no profile image uploads)
   # cloud_functions removed — using Firebase SDK sendEmailVerification instead
   # flutter_windowmanager removed due to Android Gradle Plugin namespace issue.

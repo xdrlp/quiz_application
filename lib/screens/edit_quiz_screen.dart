@@ -87,9 +87,9 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
       _questions = list;
       _shuffleQuestions = q?.randomizeQuestions ?? false;
       _shuffleChoices = q?.randomizeOptions ?? false;
-      _timeController.text = _timeMinutes.toString();
       _singleResponse = (q?.singleResponse) ?? false;
       _timeMinutes = ((q?.timeLimitSeconds ?? 0) / 60).ceil();
+      _timeController.text = _timeMinutes.toString();
       _enablePassword = (q?.password != null && q!.password!.isNotEmpty);
       _passwordController.text = q?.password ?? '';
       _loading = false;
@@ -197,23 +197,212 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
 
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Confirm Publish'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Questions: $questionCount'),
-            const SizedBox(height: 6),
-            Text('Total points: $totalPoints'),
-            const SizedBox(height: 12),
-            const Text('Publish this quiz? This will make it available to participants.'),
-          ],
+      builder: (_) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Center(
+          child: SingleChildScrollView(
+            child: Material(
+              type: MaterialType.transparency,
+              child: SizedBox(
+                width: 360,
+                child: CustomPaint(
+                  painter: _GradientPainter(
+                    strokeWidth: 2,
+                    radius: 20,
+                    gradient: const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.black, Colors.white],
+                    ),
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color.fromARGB(255, 226, 226, 226),
+                          Color.fromARGB(255, 167, 167, 167),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Confirm Publish',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            color: Color.fromARGB(206, 34, 34, 34),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'This will make it available to participants.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Color.fromARGB(202, 0, 0, 0),
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        // Quiz Details Section
+                        _buildDetailCard(
+                          children: [
+                            _buildDetailRow('Questions', '$questionCount'),
+                            const SizedBox(height: 12),
+                            _buildDetailRow('Total Points', '$totalPoints'),
+                            const SizedBox(height: 12),
+                            _buildDetailRow('Quiz Code', '${_quiz?.quizCode ?? 'N/A'}'),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        // Settings Section
+                        _buildDetailCard(
+                          children: [
+                            const Text(
+                              'Settings',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Color.fromARGB(255, 0, 0, 0),
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            _buildSettingRow('Shuffle Questions', _shuffleQuestions),
+                            const SizedBox(height: 8),
+                            _buildSettingRow('Shuffle Choices', _shuffleChoices),
+                            const SizedBox(height: 8),
+                            _buildSettingRow('Single Response', _singleResponse),
+                            const SizedBox(height: 8),
+                            _buildSettingRow('Password Protected', _enablePassword),
+                          ],
+                        ),
+                      const SizedBox(height: 20),
+                      // Buttons
+                      Column(
+                        children: [
+                          MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            child: GestureDetector(
+                              onTap: () => Navigator.of(context).pop(true),
+                              child: Container(
+                                padding: const EdgeInsets.all(3),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Color.fromARGB(255, 248, 248, 248),
+                                      Color.fromARGB(255, 199, 199, 199),
+                                      Color.fromARGB(255, 248, 248, 248),
+                                      Color.fromARGB(255, 116, 116, 116),
+                                      Color.fromARGB(242, 61, 61, 61),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Container(
+                                  height: 40,
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Color(0xFFFF1F00),
+                                        Color(0xFFDD1700),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Center(
+                                    child: ShaderMask(
+                                      shaderCallback: (bounds) {
+                                        return const LinearGradient(
+                                          begin: Alignment.centerLeft,
+                                          end: Alignment.centerRight,
+                                          colors: [Color(0xFFE9E9E9), Color(0xFFFFFFFF)],
+                                        ).createShader(bounds);
+                                      },
+                                      child: const Text(
+                                        'Publish',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            child: GestureDetector(
+                              onTap: () => Navigator.of(context).pop(false),
+                              child: Container(
+                                padding: const EdgeInsets.all(3),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Color.fromARGB(255, 248, 248, 248),
+                                      Color.fromARGB(255, 199, 199, 199),
+                                      Color.fromARGB(255, 248, 248, 248),
+                                      Color.fromARGB(255, 116, 116, 116),
+                                      Color.fromARGB(242, 61, 61, 61),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Container(
+                                  height: 40,
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Color(0xFF808080),
+                                        Color(0xFF505050),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Center(
+                                    child: Text(
+                                      'Cancel',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Publish')),
-        ],
       ),
     );
 
@@ -226,33 +415,169 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
       if (!context.mounted) return;
       await showDialog(
         context: context,
-        builder: (_) => AlertDialog(
-          title: const Text('Quiz Published'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Your quiz is now published. Share the code below with participants:'),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(child: SelectableText(_quiz?.quizCode ?? '—', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold))),
-                  IconButton(
-                    tooltip: 'Copy code',
-                    icon: const Icon(Icons.copy),
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: _quiz?.quizCode ?? '')).then((_) {
-                        if (!mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Quiz code copied')));
-                      });
-                    },
+        builder: (_) => Dialog(
+          backgroundColor: Colors.transparent,
+          child: Center(
+            child: SingleChildScrollView(
+              child: Material(
+                type: MaterialType.transparency,
+                child: SizedBox(
+                  width: 360,
+                  child: CustomPaint(
+                    painter: _GradientPainter(
+                      strokeWidth: 2,
+                      radius: 20,
+                      gradient: const LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.black, Colors.white],
+                      ),
+                    ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color.fromARGB(228, 238, 238, 238),
+                            Color.fromARGB(235, 173, 173, 173),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.check_circle,
+                            color: Colors.green,
+                            size: 48,
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Quiz Published',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF222222),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Your quiz is now published. Share the code below with participants:',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.black54,
+                              height: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          _buildDetailCard(
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    'Quiz Code',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                  SelectableText(
+                                    _quiz?.quizCode ?? '—',
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF222222),
+                                      letterSpacing: 1.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            child: GestureDetector(
+                              onTap: () {
+                                Clipboard.setData(ClipboardData(text: _quiz?.quizCode ?? '')).then((_) {
+                                  if (!mounted) return;
+                                  Navigator.of(context).pop();
+                                });
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(3),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Color.fromARGB(255, 248, 248, 248),
+                                      Color.fromARGB(255, 199, 199, 199),
+                                      Color.fromARGB(255, 248, 248, 248),
+                                      Color.fromARGB(255, 116, 116, 116),
+                                      Color.fromARGB(242, 61, 61, 61),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Container(
+                                  height: 40,
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Color(0xFF222222),
+                                        Color(0xFF1a1a1a),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Center(
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(Icons.copy, color: Colors.white, size: 18),
+                                        const SizedBox(width: 8),
+                                        ShaderMask(
+                                          shaderCallback: (bounds) {
+                                            return const LinearGradient(
+                                              begin: Alignment.centerLeft,
+                                              end: Alignment.centerRight,
+                                              colors: [Color(0xFFE9E9E9), Color(0xFFFFFFFF)],
+                                            ).createShader(bounds);
+                                          },
+                                          child: const Text(
+                                            'Copy Code',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ],
+                ),
               ),
-            ],
+            ),
           ),
-          actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Close')),
-          ],
         ),
       );
       // indicate to caller that publishing occurred so they can refresh
@@ -272,7 +597,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
           end: Alignment.bottomRight,
           colors: [
             Color(0xFFFFFFFF),
-            Color.fromARGB(255, 197, 197, 197),
+            Color.fromARGB(255, 175, 175, 175),
           ],
         ),
       ),
@@ -344,7 +669,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
         floatingActionButton: null,
         floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
         body: _loading
-            ? const Center(child: CircularProgressIndicator())
+            ? _buildSkeletonLoading()
             : SingleChildScrollView(
                 padding: const EdgeInsets.all(24.0),
                 child: Column(
@@ -353,10 +678,33 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                     if (_quiz != null)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 16.0),
-                        child: Text(
-                          _quiz!.description,
-                          style: const TextStyle(fontSize: 16, color: Color(0xFF7F8C8D)),
-                          textAlign: TextAlign.center,
+                        child: CustomPaint(
+                          painter: _GradientPainter(
+                            strokeWidth: 2,
+                            radius: 8,
+                            gradient: const LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Color(0xFF000000),
+                                Color(0xFFBDBDBD),
+                                Color(0xFFFFFFFF),
+                                Color(0xFFFFFFFF),
+                              ],
+                            ),
+                          ),
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              color: Colors.transparent,
+                            ),
+                            child: Text(
+                              _quiz!.description,
+                              style: const TextStyle(fontSize: 16, color: Color.fromARGB(255, 133, 133, 133)),
+                              textAlign: TextAlign.left,
+                            ),
+                          ),
                         ),
                       ),
                     if (_quiz != null && !_quiz!.published && _questions.isEmpty)
@@ -364,18 +712,17 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                         margin: const EdgeInsets.only(bottom: 16),
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFF3CD),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFFFECB5)),
+                          border: Border.all(color: const Color(0x000ffccc)),
                         ),
                         child: Row(
                           children: const [
-                            Icon(Icons.info_outline, size: 20, color: Color(0xFF856404)),
+                            Icon(Icons.info_outline, size: 20, color: Color.fromARGB(255, 109, 109, 109)),
                             SizedBox(width: 12),
                             Expanded(
                               child: Text(
                                 'Add at least one question to enable Publish.',
-                                style: TextStyle(color: Color(0xFF856404)),
+                                style: TextStyle(color: Color.fromARGB(255, 71, 71, 71)),
                               ),
                             ),
                           ],
@@ -404,12 +751,13 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                       icon: Icons.timer,
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(3)],
+                      suffix: 'mins',
                     ),
                     const SizedBox(height: 32),
                     const Text('Questions', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Color(0xFF222222))),
                     const SizedBox(height: 12),
                     if (_questions.isEmpty)
-                      const Center(child: Padding(padding: EdgeInsets.all(20), child: Text('No questions yet, add some!', style: TextStyle(color: Colors.grey)))),
+                      const Center(child: Padding(padding: EdgeInsets.all(20), child: Text('No questions yet, add some!', style: TextStyle(color: Color.fromARGB(255, 126, 126, 126))))),
                     ReorderableListView.builder(
                       shrinkWrap: true,
                       buildDefaultDragHandles: false,
@@ -615,6 +963,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
     List<TextInputFormatter>? inputFormatters,
+    String? suffix,
   }) {
     return CustomPaint(
       painter: _GradientPainter(
@@ -649,11 +998,14 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
           decoration: InputDecoration(
             border: InputBorder.none,
             prefixIcon: Icon(icon, color: Colors.black54),
-            filled: false,
-            contentPadding: const EdgeInsets.symmetric(
-              vertical: 14,
-              horizontal: 8,
+            suffixText: suffix,
+            suffixStyle: const TextStyle(
+              color: Colors.black54,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
             ),
+            filled: false,
+            contentPadding: const EdgeInsets.fromLTRB(8, 14, 20, 14),
             hintText: hint,
             hintStyle: const TextStyle(
               fontSize: 14,
@@ -707,6 +1059,198 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailCard({required List<Widget> children}) {
+    return CustomPaint(
+      painter: _GradientPainter(
+        strokeWidth: 1.5,
+        radius: 12,
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color.fromARGB(255, 0, 0, 0), Color.fromARGB(255, 151, 151, 151), Color.fromARGB(255, 180, 180, 180), Color.fromARGB(255, 255, 255, 255)],
+        ),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        padding: const EdgeInsets.all(14),
+        child: Column(children: children),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            color: Colors.black54,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF222222),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSettingRow(String label, bool isEnabled) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            color: Colors.black54,
+          ),
+        ),
+        Text(
+          isEnabled ? 'Yes' : 'No',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: isEnabled ? Colors.green.shade700 : Colors.red.shade700,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSkeletonLoading() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Quiz Description Skeleton
+          Container(
+            height: 80,
+            margin: const EdgeInsets.only(bottom: 16.0),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Quiz Settings Header
+          Container(
+            height: 20,
+            width: 150,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Settings Switches (4 items)
+          for (int i = 0; i < 4; i++)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Container(
+                    width: 50,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          const SizedBox(height: 16),
+          // Time Input Skeleton
+          Container(
+            height: 48,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          const SizedBox(height: 32),
+          // Questions Header
+          Container(
+            height: 24,
+            width: 120,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Question Cards (3 skeleton cards)
+          for (int i = 0; i < 3; i++)
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 16,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade400,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Container(
+                        height: 20,
+                        width: 100,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade400,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        height: 20,
+                        width: 120,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade400,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );

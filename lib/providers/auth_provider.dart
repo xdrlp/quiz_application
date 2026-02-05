@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:quiz_application/models/user_model.dart';
 import 'package:quiz_application/services/auth_service.dart';
 import 'package:quiz_application/services/firestore_service.dart';
+import 'package:quiz_application/services/notification_service.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -47,6 +48,11 @@ class AuthProvider with ChangeNotifier {
               // ignore: avoid_print
               print('Failed to auto-create user doc: $e');
             }
+          }
+          
+          // Sync FCM Token for notifications
+          if (_currentUser != null) {
+            NotificationService().saveTokenToFirestore();
           }
         } catch (e) {
           _currentUser = null;
@@ -302,6 +308,21 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> deleteAccount() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      await _authService.deleteAccount();
+      _currentUser = null;
+    } catch (e) {
+      _errorMessage = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   /// Reloads the Firebase user from the backend and returns whether the
   /// user's email is now verified.
   Future<bool> reloadAndCheckVerified() async {
@@ -380,6 +401,34 @@ class AuthProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
       return false;
+    }
+  }
+
+  /// Update notification preferences
+  Future<void> updateNotificationPreferences({
+    bool? notifySubmission,
+    bool? notifyResultUpdate,
+  }) async {
+    final user = _currentUser;
+    if (user == null) return;
+
+    final updates = <String, dynamic>{};
+    if (notifySubmission != null) updates['notifySubmission'] = notifySubmission;
+    if (notifyResultUpdate != null) updates['notifyResultUpdate'] = notifyResultUpdate;
+
+    if (updates.isEmpty) return;
+    updates['updatedAt'] = FieldValue.serverTimestamp();
+
+    try {
+      await _firestoreService.updateUser(user.uid, updates);
+      // Refresh local user to reflect changes
+      _currentUser = user.copyWith(
+        notifySubmission: notifySubmission,
+        notifyResultUpdate: notifyResultUpdate,
+      );
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Failed to update notification preferences: $e');
     }
   }
 

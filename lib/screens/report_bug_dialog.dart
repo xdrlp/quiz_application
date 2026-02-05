@@ -417,7 +417,14 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(10),
         ),
-        child: TextField(
+        child: Theme(
+          data: Theme.of(context).copyWith(
+            textSelectionTheme: TextSelectionThemeData(
+              selectionColor: Colors.grey.withAlpha(150),
+              selectionHandleColor: Colors.grey,
+            ),
+          ),
+          child: TextField(
           controller: controller,
           keyboardType: keyboardType,
           maxLines: maxLines,
@@ -436,6 +443,7 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
               fontWeight: FontWeight.w500,
               color: Color(0x8A000000),
             ),
+          ),
           ),
         ),
       ),

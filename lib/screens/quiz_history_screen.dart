@@ -427,7 +427,7 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
                         const SizedBox(height: 16),
                         Text(
                           'No quiz attempts yet', 
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey.shade500)
+                          style: TextStyle(fontSize: 18, color: const Color.fromARGB(255, 116, 116, 116))
                         ),
                       ],
                     ),

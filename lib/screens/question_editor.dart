@@ -50,6 +50,10 @@ class _QuestionEditorState extends State<QuestionEditor> {
   int _points = 1;
   final Set<String> _correctAnswers = {};
   final _shortAnswerController = TextEditingController();
+  
+  // Error state variables
+  String? _promptError;
+  String? _choicesError;
   // (scale and grid question types removed)
 
   // File upload metadata
@@ -152,10 +156,26 @@ class _QuestionEditorState extends State<QuestionEditor> {
                   const SizedBox(height: 24),
                   _buildQuestionTypeSelector(),
                   const SizedBox(height: 20),
-                  _buildGradientTextField(
-                    controller: _promptController,
-                    hint: 'Question prompt',
-                    icon: Icons.help,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Text('Question', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF222222), letterSpacing: 0.5)),
+                          if (_promptError != null)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 8.0),
+                              child: Text(_promptError!, style: const TextStyle(fontSize: 12, color: Color(0xFFD32F2F), fontWeight: FontWeight.w500)),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      _buildGradientTextField(
+                        controller: _promptController,
+                        hint: 'Question prompt',
+                        icon: Icons.help,
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 20),
                   if (_type == QuestionType.multipleChoice || _type == QuestionType.checkbox || _type == QuestionType.dropdown)
@@ -182,7 +202,7 @@ class _QuestionEditorState extends State<QuestionEditor> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         onPressed: _saveQuestion,
-                        child: const Text('Save', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                        child: const Text('Save', style: TextStyle(fontSize: 15)),
                       ),
                     ],
                   ),
@@ -296,21 +316,28 @@ class _QuestionEditorState extends State<QuestionEditor> {
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(10),
         ),
-        child: TextField(
-          controller: controller,
-          focusNode: focusNode,
-          style: const TextStyle(color: Color(0xFF222222), fontSize: 15, fontWeight: FontWeight.w500),
-          cursorColor: Colors.black54,
-          maxLines: null,
-          textInputAction: nextFocusNode != null ? TextInputAction.next : TextInputAction.done,
-          onSubmitted: (_) {
-            if (nextFocusNode != null) {
-              FocusScope.of(context).requestFocus(nextFocusNode);
-            } else {
-              onFieldSubmitted?.call();
-            }
-          },
-          decoration: InputDecoration(
+        child: Theme(
+          data: Theme.of(context).copyWith(
+            textSelectionTheme: TextSelectionThemeData(
+              selectionColor: Colors.grey.withAlpha(150),
+              selectionHandleColor: Colors.grey,
+            ),
+          ),
+          child: TextField(
+            controller: controller,
+            focusNode: focusNode,
+            style: const TextStyle(color: Color(0xFF222222), fontSize: 15, fontWeight: FontWeight.w500),
+            cursorColor: Colors.black54,
+            maxLines: null,
+            textInputAction: nextFocusNode != null ? TextInputAction.next : TextInputAction.done,
+            onSubmitted: (_) {
+              if (nextFocusNode != null) {
+                FocusScope.of(context).requestFocus(nextFocusNode);
+              } else {
+                onFieldSubmitted?.call();
+              }
+            },
+            decoration: InputDecoration(
             hintText: hint,
             hintStyle: const TextStyle(color: Color(0xFF999999), fontSize: 15),
             prefixIcon: Icon(icon, color: Color.fromARGB(255, 124, 124, 124), size: 20),
@@ -318,6 +345,7 @@ class _QuestionEditorState extends State<QuestionEditor> {
             enabledBorder: InputBorder.none,
             focusedBorder: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            ),
           ),
         ),
       ),
@@ -328,14 +356,23 @@ class _QuestionEditorState extends State<QuestionEditor> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Choices',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF222222),
-            letterSpacing: 0.5,
-          ),
+        Row(
+          children: [
+            const Text(
+              'Choices',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF222222),
+                letterSpacing: 0.5,
+              ),
+            ),
+            if (_choicesError != null)
+              Padding(
+                padding: const EdgeInsets.only(left: 8.0),
+                child: Text(_choicesError!, style: const TextStyle(fontSize: 12, color: Color(0xFFD32F2F), fontWeight: FontWeight.w500)),
+              ),
+          ],
         ),
         const SizedBox(height: 12),
         for (var i = 0; i < _choices.length; i++)
@@ -501,6 +538,18 @@ class _QuestionEditorState extends State<QuestionEditor> {
   }
 
   void _saveQuestion() {
+    // Clear previous errors
+    setState(() {
+      _promptError = null;
+      _choicesError = null;
+    });
+
+    // Validate prompt
+    if (_promptController.text.trim().isEmpty) {
+      setState(() => _promptError = 'Required');
+      return;
+    }
+
     Map<String, dynamic>? metadata;
     List<String> correct = [];
     if (_type == QuestionType.shortAnswer || _type == QuestionType.paragraph) {
@@ -515,34 +564,24 @@ class _QuestionEditorState extends State<QuestionEditor> {
     // Validate choices for choice-like questions
     if (_type == QuestionType.multipleChoice || _type == QuestionType.checkbox || _type == QuestionType.dropdown) {
       if (_choices.isEmpty) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please add at least one choice')));
+        setState(() => _choicesError = 'Please add at least one choice');
         return;
       }
       final hasEmpty = _choiceControllers.any((controller) => controller.text.trim().isEmpty);
       if (hasEmpty) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill in all choice text')));
+        setState(() => _choicesError = 'Please fill in all choice text');
         return;
       }
-    }
-
-    final requiresCorrect = {
-      QuestionType.multipleChoice,
-      QuestionType.checkbox,
-      QuestionType.dropdown,
-    };
-    if (requiresCorrect.contains(_type) && correct.isEmpty) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please mark at least one correct answer')));
-      return;
+      if (correct.isEmpty) {
+        setState(() => _choicesError = 'Please mark at least one correct answer');
+        return;
+      }
     }
 
     if (_type == QuestionType.shortAnswer) {
       final raw = _shortAnswerController.text.trim();
       if (raw.isEmpty) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Short answer questions require a correct answer')));
+        setState(() => _choicesError = 'Short answer questions require a correct answer');
         return;
       }
     }

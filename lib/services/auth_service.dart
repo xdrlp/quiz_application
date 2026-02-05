@@ -56,4 +56,9 @@ class AuthService {
     }
     return null;
   }
+
+  // Delete account
+  Future<void> deleteAccount() async {
+    await _firebaseAuth.currentUser?.delete();
+  }
 }

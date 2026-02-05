@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:quiz_application/screens/starter_screen.dart';
 import 'package:quiz_application/services/local_violation_store.dart';
+import 'package:quiz_application/services/notification_service.dart';
 import 'package:quiz_application/providers/auth_provider.dart';
 import 'package:quiz_application/providers/quiz_provider.dart';
 import 'package:quiz_application/screens/splash_screen.dart';
@@ -19,6 +20,7 @@ import 'package:quiz_application/screens/edit_quiz_screen.dart';
 import 'package:quiz_application/screens/take_quiz_page.dart' as tqp;
 import 'package:quiz_application/screens/my_quizzes_screen.dart';
 import 'package:quiz_application/screens/profile_screen.dart';
+import 'package:quiz_application/screens/settings_screen.dart';
 import 'package:quiz_application/screens/quiz_history_screen.dart';
 import 'package:quiz_application/screens/attempt_detail_screen.dart';
 
@@ -51,7 +53,16 @@ void main() async {
     // ignore: avoid_print
     print('Firebase initialization error: $firebaseInitError');
   }
-    runApp(MyApp(firebaseInitError: firebaseInitError));
+
+  // Initialize Notification Service (Push Notifications) - Non-Blocking
+  if (firebaseInitError == null) {
+    // Fire and forget to prevent blocking app startup
+    NotificationService().initialize().catchError((e) {
+      debugPrint('Notification init failed: $e');
+    });
+  }
+
+  runApp(MyApp(firebaseInitError: firebaseInitError));
 }
 
 class MyApp extends StatelessWidget {
@@ -164,6 +175,7 @@ class MyApp extends StatelessWidget {
           '/edit_quiz': (context) => const EditQuizScreen(),
           '/my_quizzes': (context) => const MyQuizzesScreen(),
           '/profile': (context) => const ProfileScreen(),
+          '/settings': (context) => const SettingsScreen(),
           '/quiz_history': (context) => const QuizHistoryScreen(),
           '/attempt_review': (context) {
             final args = ModalRoute.of(context)!.settings.arguments;

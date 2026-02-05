@@ -51,18 +51,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _passwordVisible = false;
   bool _confirmPasswordVisible = false;
   bool _isCreatingAccount = false;
-
-  void _showMessage(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
-  }
+  String? _firstError;
+  String? _lastError;
+  String? _emailError;
+  String? _passwordError;
+  String? _confirmError;
 
   Future<void> _handleCreateAccount() async {
     if (_isCreatingAccount) return;
     FocusScope.of(context).unfocus();
+
+    setState(() {
+      _firstError = null;
+      _lastError = null;
+      _emailError = null;
+      _passwordError = null;
+      _confirmError = null;
+    });
 
     final email = _emailController.text.trim();
     final firstName = _firstController.text.trim();
@@ -70,22 +75,32 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final password = _passwordController.text;
     final confirmPassword = _confirmController.text;
 
-    if ([
-      email,
-      firstName,
-      lastName,
-      password,
-      confirmPassword,
-    ].any((v) => v.isEmpty)) {
-      _showMessage('All fields are required.');
+    if (firstName.isEmpty) {
+      setState(() => _firstError = 'Required');
+      return;
+    }
+    if (lastName.isEmpty) {
+      setState(() => _lastError = 'Required');
+      return;
+    }
+    if (email.isEmpty) {
+      setState(() => _emailError = 'Required');
+      return;
+    }
+    if (password.isEmpty) {
+      setState(() => _passwordError = 'Required');
+      return;
+    }
+    if (confirmPassword.isEmpty) {
+      setState(() => _confirmError = 'Required');
       return;
     }
     if (password.length < 6) {
-      _showMessage('Password must be at least 6 characters.');
+      setState(() => _passwordError = 'Min 6 characters');
       return;
     }
     if (password != confirmPassword) {
-      _showMessage('Passwords do not match.');
+      setState(() => _confirmError = 'Passwords do not match');
       return;
     }
 
@@ -103,7 +118,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (success) {
       Navigator.pop(context);
     } else {
-      _showMessage(auth.errorMessage ?? 'Sign up failed.');
+      setState(() => _emailError = auth.errorMessage ?? 'Sign up failed.');
     }
   }
 
@@ -124,6 +139,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     bool obscureText = false,
     VoidCallback? onToggleVisibility,
     bool isPassword = false,
+    String? error,
   }) {
     return Container(
       height: 48,
@@ -160,8 +176,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
               horizontal: 16,
               vertical: 12,
             ),
-            hintText: hint,
-            hintStyle: const TextStyle(color: Colors.black38),
+            hintText: error != null ? '$hint - $error' : hint,
+            hintStyle: TextStyle(
+              color: Colors.black38,
+              fontSize: error != null ? 14 : 16,
+            ),
             prefixIcon: Icon(icon, color: Colors.black54),
             suffixIcon: isPassword
                 ? IconButton(
@@ -229,18 +248,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             controller: _firstController,
                             hint: 'First Name',
                             icon: Icons.person_outline,
+                            error: _firstError,
                           ),
                           const SizedBox(height: 20),
                           _buildGradientTextField(
                             controller: _lastController,
                             hint: 'Last Name',
                             icon: Icons.person_outline,
+                            error: _lastError,
                           ),
                           const SizedBox(height: 20),
                           _buildGradientTextField(
                             controller: _emailController,
                             hint: 'Email',
                             icon: Icons.email_outlined,
+                            error: _emailError,
                           ),
                           const SizedBox(height: 20),
                           _buildGradientTextField(
@@ -252,6 +274,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             onToggleVisibility: () => setState(
                               () => _passwordVisible = !_passwordVisible,
                             ),
+                            error: _passwordError,
                           ),
                           const SizedBox(height: 20),
                           _buildGradientTextField(
@@ -264,6 +287,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               () => _confirmPasswordVisible =
                                   !_confirmPasswordVisible,
                             ),
+                            error: _confirmError,
                           ),
                           const SizedBox(height: 40),
                           Center(

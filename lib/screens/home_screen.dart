@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'dart:math' as math;
+import 'dart:async';
 import 'package:quiz_application/providers/auth_provider.dart';
 import 'package:quiz_application/providers/quiz_provider.dart';
 import 'package:quiz_application/models/quiz_model.dart';
@@ -107,7 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       size: 28,
                     ),
                     onPressed: () {
-                      Navigator.of(context).pushNamed('/profile');
+                      Navigator.of(context).pushNamed('/settings');
                     },
                   ),
                 ],
@@ -131,7 +132,6 @@ class _HomeScreenState extends State<HomeScreen> {
             
             // Stats for Quiz Board
             final quizzes = quizProvider.userQuizzes;
-            final createdCount = quizzes.length;
             final publishedCount = quizzes.where((q) => q.published).length;
             final draftsCount = quizzes.where((q) => !q.published).length;
             
@@ -527,32 +527,111 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _neumorphicCard({required VoidCallback onTap, required Widget child}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(3),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color.fromARGB(255, 248, 248, 248),
-              Color.fromARGB(255, 121, 121, 121),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              colors: [Color.fromARGB(255, 201, 201, 201), Color.fromARGB(255, 233, 233, 233)],
+    return _NeuomorphicCardWidget(onTap: onTap, child: child);
+  }
+}
+
+class _NeuomorphicCardWidget extends StatefulWidget {
+  final VoidCallback onTap;
+  final Widget child;
+
+  const _NeuomorphicCardWidget({
+    required this.onTap,
+    required this.child,
+  });
+
+  @override
+  State<_NeuomorphicCardWidget> createState() => _NeuomorphicCardWidgetState();
+}
+
+class _NeuomorphicCardWidgetState extends State<_NeuomorphicCardWidget> {
+  bool isHovered = false;
+  Timer? _hoverTimer;
+
+  @override
+  void dispose() {
+    _hoverTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) {
+        _hoverTimer?.cancel();
+        _hoverTimer = Timer(const Duration(milliseconds: 250), () {
+          if (mounted) {
+            setState(() => isHovered = true);
+          }
+        });
+      },
+      onExit: (_) {
+        _hoverTimer?.cancel();
+        if (mounted) {
+          setState(() => isHovered = false);
+        }
+      },
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedScale(
+          scale: isHovered ? 1.05 : 1.0,
+          duration: const Duration(milliseconds: 200),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: isHovered
+                    ? [
+                        const Color.fromARGB(255, 248, 248, 248).withOpacity(0.8),
+                        const Color.fromARGB(255, 121, 121, 121).withOpacity(0.8),
+                      ]
+                    : [
+                        const Color.fromARGB(255, 248, 248, 248),
+                        const Color.fromARGB(255, 121, 121, 121),
+                      ],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: isHovered
+                  ? [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 12,
+                        offset: const Offset(0, 6),
+                      ),
+                    ]
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
             ),
-            borderRadius: BorderRadius.circular(17),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: isHovered
+                      ? [
+                          const Color.fromARGB(255, 201, 201, 201).withOpacity(0.9),
+                          const Color.fromARGB(255, 233, 233, 233).withOpacity(0.9),
+                        ]
+                      : [
+                          const Color.fromARGB(255, 201, 201, 201),
+                          const Color.fromARGB(255, 233, 233, 233),
+                        ],
+                ),
+                borderRadius: BorderRadius.circular(17),
+              ),
+              child: widget.child,
+            ),
           ),
-          child: child,
         ),
       ),
     );

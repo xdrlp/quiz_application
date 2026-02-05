@@ -57,6 +57,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final GlobalKey _passwordKey = GlobalKey();
   OverlayEntry? _topToastEntry;
   static final RegExp _emailRegExp = RegExp(r"^[^@\s]+@[^@\s]+\.[^@\s]+");
+  String? _emailError;
+  String? _passwordError;
 
   @override
   void dispose() {
@@ -143,24 +145,28 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _submit(BuildContext context) async {
-    final auth = context.read<AuthProvider>();
+    setState(() {
+      _emailError = null;
+      _passwordError = null;
+    });
+
     final email = _emailController.text.trim();
     final password = _passwordController.text;
-    if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter email and password.')),
-      );
+
+    if (email.isEmpty) {
+      setState(() => _emailError = 'Required');
       return;
     }
+    if (password.isEmpty) {
+      setState(() => _passwordError = 'Required');
+      return;
+    }
+
+    final auth = context.read<AuthProvider>();
     final ok = await auth.login(email: email, password: password);
     if (!mounted) return;
-    if (ok) {
-      // navigate home if your app expects that
-      // Navigator.pushReplacementNamed(context, '/home');
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(auth.errorMessage ?? 'Sign in failed')),
-      );
+    if (!ok) {
+      setState(() => _emailError = auth.errorMessage ?? 'Sign in failed');
     }
   }
 
@@ -531,6 +537,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         hint: 'Email',
                         icon: Icons.email_outlined,
                         key: _emailKey,
+                        error: _emailError,
                       ),
                       const SizedBox(height: 20),
                       _buildTextField(
@@ -540,6 +547,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         icon: Icons.lock_outline,
                         isPassword: true,
                         key: _passwordKey,
+                        error: _passwordError,
                       ),
                       Align(
                         alignment: Alignment.centerRight,
@@ -657,6 +665,7 @@ class _LoginScreenState extends State<LoginScreen> {
     required IconData icon,
     bool isPassword = false,
     required GlobalKey key,
+    String? error,
   }) {
     return Container(
       key: key,
@@ -683,36 +692,47 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
           ),
         ),
-        child: TextField(
-          controller: controller,
-          focusNode: focusNode,
-          obscureText: isPassword && !_passwordVisible,
-          style: const TextStyle(color: Colors.black87, fontSize: 16),
-          cursorColor: Colors.black87,
-          decoration: InputDecoration(
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
+        child: Theme(
+          data: Theme.of(context).copyWith(
+            textSelectionTheme: TextSelectionThemeData(
+              selectionColor: Colors.grey.withAlpha(150),
+              selectionHandleColor: Colors.grey,
             ),
-            hintText: hint,
-            hintStyle: const TextStyle(color: Colors.black38),
-            prefixIcon: Icon(icon, color: Colors.black54),
-            suffixIcon: isPassword
-                ? IconButton(
-                    icon: Icon(
-                      _passwordVisible
-                          ? Icons.visibility
-                          : Icons.visibility_off,
-                      color: Colors.black54,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _passwordVisible = !_passwordVisible;
-                      });
-                    },
-                  )
-                : null,
+          ),
+          child: TextField(
+            controller: controller,
+            focusNode: focusNode,
+            obscureText: isPassword && !_passwordVisible,
+            style: const TextStyle(color: Colors.black87, fontSize: 16),
+            cursorColor: Colors.black87,
+            decoration: InputDecoration(
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
+              hintText: error != null ? '$hint - $error' : hint,
+              hintStyle: TextStyle(
+                color: Colors.black38,
+                fontSize: error != null ? 14 : 16,
+              ),
+              prefixIcon: Icon(icon, color: Colors.black54),
+              suffixIcon: isPassword
+                  ? IconButton(
+                      icon: Icon(
+                        _passwordVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                        color: Colors.black54,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _passwordVisible = !_passwordVisible;
+                        });
+                      },
+                    )
+                  : null,
+            ),
           ),
         ),
       ),
