@@ -46,6 +46,7 @@ class _QuestionEditorState extends State<QuestionEditor> {
   final _promptController = TextEditingController();
   final List<Choice> _choices = [];
   final List<TextEditingController> _choiceControllers = [];
+  final List<FocusNode> _choiceFocusNodes = [];
   int _points = 1;
   final Set<String> _correctAnswers = {};
   final _shortAnswerController = TextEditingController();
@@ -63,6 +64,7 @@ class _QuestionEditorState extends State<QuestionEditor> {
     _choices.addAll(init?.choices ?? []);
     for (var c in _choices) {
       _choiceControllers.add(TextEditingController(text: c.text));
+      _choiceFocusNodes.add(FocusNode());
     }
     _correctAnswers.addAll(init?.correctAnswers ?? []);
     // If this is a short answer/paragraph type, populate the short answer field
@@ -83,6 +85,9 @@ class _QuestionEditorState extends State<QuestionEditor> {
     for (var c in _choiceControllers) {
       c.dispose();
     }
+    for (var fn in _choiceFocusNodes) {
+      fn.dispose();
+    }
     _shortAnswerController.dispose();
     // no controllers for removed types
     // file-upload removed
@@ -94,6 +99,7 @@ class _QuestionEditorState extends State<QuestionEditor> {
     setState(() {
       _choices.add(Choice(id: id, text: ''));
       _choiceControllers.add(TextEditingController(text: ''));
+      _choiceFocusNodes.add(FocusNode());
     });
   }
 
@@ -209,6 +215,7 @@ class _QuestionEditorState extends State<QuestionEditor> {
           onSelected: (QuestionType type) => setState(() => _type = type),
           color: const Color.fromARGB(244, 197, 197, 197),
           elevation: 0,
+          tooltip: '',
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
             side: const BorderSide(color: Color(0xFF666666), width: 1.5),
@@ -270,6 +277,9 @@ class _QuestionEditorState extends State<QuestionEditor> {
     required TextEditingController controller,
     required String hint,
     required IconData icon,
+    VoidCallback? onFieldSubmitted,
+    FocusNode? focusNode,
+    FocusNode? nextFocusNode,
   }) {
     return CustomPaint(
       painter: _GradientPainter(
@@ -288,9 +298,18 @@ class _QuestionEditorState extends State<QuestionEditor> {
         ),
         child: TextField(
           controller: controller,
+          focusNode: focusNode,
           style: const TextStyle(color: Color(0xFF222222), fontSize: 15, fontWeight: FontWeight.w500),
           cursorColor: Colors.black54,
           maxLines: null,
+          textInputAction: nextFocusNode != null ? TextInputAction.next : TextInputAction.done,
+          onSubmitted: (_) {
+            if (nextFocusNode != null) {
+              FocusScope.of(context).requestFocus(nextFocusNode);
+            } else {
+              onFieldSubmitted?.call();
+            }
+          },
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: const TextStyle(color: Color(0xFF999999), fontSize: 15),
@@ -339,7 +358,7 @@ class _QuestionEditorState extends State<QuestionEditor> {
                 else
                   IconButton(
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                     icon: Icon(
                       _correctAnswers.contains(_choices[i].id)
                           ? Icons.radio_button_checked
@@ -357,6 +376,8 @@ class _QuestionEditorState extends State<QuestionEditor> {
                     controller: _choiceControllers[i],
                     hint: 'Choice ${i + 1}',
                     icon: Icons.edit,
+                    focusNode: _choiceFocusNodes[i],
+                    nextFocusNode: i < _choices.length - 1 ? _choiceFocusNodes[i + 1] : null,
                   ),
                 ),
                 IconButton(
@@ -365,6 +386,7 @@ class _QuestionEditorState extends State<QuestionEditor> {
                     final removedId = _choices[i].id;
                     _choices.removeAt(i);
                     _choiceControllers.removeAt(i).dispose();
+                    _choiceFocusNodes.removeAt(i).dispose();
                     _correctAnswers.remove(removedId);
                   }),
                 ),

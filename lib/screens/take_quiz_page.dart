@@ -1251,14 +1251,9 @@ class _TakeQuizPageState extends State<TakeQuizPage>
             ),
             child: Container(
               margin: const EdgeInsets.only(bottom: 2),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [Color.fromARGB(108, 244, 244, 244), Color.fromARGB(205, 223, 223, 223)],
-                ),
-              ),
+              color: const Color.fromARGB(255, 240, 240, 240),
               child: AppBar(
+                scrolledUnderElevation: 0,
                 systemOverlayStyle: SystemUiOverlayStyle.dark,
                 backgroundColor: Colors.transparent,
                 elevation: 0,

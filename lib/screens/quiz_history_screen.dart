@@ -54,6 +54,7 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
   String _searchQuery = '';
   String _selectedMode = 'Recent'; // 'Recent' | 'Quiz Name' | 'Date Submitted'
   bool _sortAscending = false;
+  final Set<String> _selected = {};
 
   @override
   void initState() {
@@ -115,6 +116,40 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
     if (diff.inHours < 24) return '${diff.inHours}h ago';
     if (diff.inDays < 7) return '${diff.inDays}d ago';
     return '${dt.month}/${dt.day}/${dt.year}';
+  }
+
+  Future<void> _batchDeleteSelected() async {
+    if (_selected.isEmpty) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Delete selected attempts'),
+        content: const Text('Delete selected quiz attempts? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE74C3C)),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    final ids = List<String>.from(_selected);
+    for (final id in ids) {
+      try {
+        await _fs.deleteAttempt(id);
+      } catch (_) {}
+    }
+    setState(() => _selected.clear());
+    _load();
+    messenger.showSnackBar(const SnackBar(content: Text('Selected attempts deleted')));
   }
 
   Widget _modeChip(String label) {
@@ -330,14 +365,9 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
             ),
             child: Container(
               margin: const EdgeInsets.only(bottom: 2),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [Color.fromARGB(255, 231, 231, 231), Color.fromARGB(255, 247, 247, 247)],
-                ),
-              ),
+              color: const Color.fromARGB(255, 240, 240, 240),
               child: AppBar(
+                scrolledUnderElevation: 0,
                 systemOverlayStyle: SystemUiOverlayStyle.dark,
                 backgroundColor: Colors.transparent,
                 elevation: 0,
@@ -351,6 +381,41 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
             ),
           ),
         ),
+        floatingActionButton: _selected.isNotEmpty
+            ? Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  FloatingActionButton(
+                    onPressed: () {
+                      setState(() {
+                        if (_selected.length == _filterAndSort(_attempts).length) {
+                          _selected.clear();
+                        } else {
+                          _selected.addAll(_filterAndSort(_attempts).map((a) => a.id));
+                        }
+                      });
+                    },
+                    backgroundColor: const Color(0xFF2196F3),
+                    child: Icon(
+                      _selected.length == _filterAndSort(_attempts).length ? Icons.done_all : Icons.select_all,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  FloatingActionButton(
+                    onPressed: () => setState(() => _selected.clear()),
+                    backgroundColor: Colors.grey,
+                    child: const Icon(Icons.close, color: Colors.white),
+                  ),
+                  const SizedBox(height: 8),
+                  FloatingActionButton(
+                    onPressed: _batchDeleteSelected,
+                    backgroundColor: const Color(0xFFE74C3C),
+                    child: const Icon(Icons.delete, color: Colors.white),
+                  ),
+                ],
+              )
+            : null,
         body: _loading
             ? _buildSkeletonHistorySection()
             : _attempts.isEmpty
@@ -419,6 +484,20 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
                           ]),
                         ),
                         const SizedBox(height: 12),
+                        if (_selected.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    '${_selected.length} selected',
+                                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF222222)),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         Expanded(
                           child: RefreshIndicator(
                             onRefresh: () async {
@@ -459,12 +538,30 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
                                         child: InkWell(
                                           borderRadius: BorderRadius.circular(12),
                                           onTap: () {
+                                            if (_selected.isNotEmpty) {
+                                              setState(() {
+                                                if (_selected.contains(a.id)) {
+                                                  _selected.remove(a.id);
+                                                } else {
+                                                  _selected.add(a.id);
+                                                }
+                                              });
+                                              return;
+                                            }
                                             Navigator.of(context).pushNamed('/attempt_review', arguments: a.id);
+                                          },
+                                          onLongPress: () {
+                                            setState(() => _selected.add(a.id));
                                           },
                                           child: Padding(
                                             padding: const EdgeInsets.all(16.0),
                                             child: Row(
                                               children: [
+                                                if (_selected.contains(a.id))
+                                                  Padding(
+                                                    padding: const EdgeInsets.only(right: 12.0),
+                                                    child: Icon(Icons.check_circle, color: const Color(0xFF222222), size: 24),
+                                                  ),
                                                 Container(
                                                   width: 56,
                                                   height: 56,

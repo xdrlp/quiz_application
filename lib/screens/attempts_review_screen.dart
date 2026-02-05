@@ -62,17 +62,9 @@ class _AttemptsReviewScreenState extends State<AttemptsReviewScreen> {
             ),
             child: Container(
               margin: const EdgeInsets.only(bottom: 2),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [
-                    Color.fromARGB(255, 231, 231, 231),
-                    Color.fromARGB(255, 247, 247, 247),
-                  ],
-                ),
-              ),
+              color: const Color.fromARGB(255, 240, 240, 240),
               child: AppBar(
+                scrolledUnderElevation: 0,
                 title: const Text('Attempts', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20)),
                 systemOverlayStyle: SystemUiOverlayStyle.dark,
                 backgroundColor: Colors.transparent,

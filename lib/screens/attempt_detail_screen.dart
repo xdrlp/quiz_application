@@ -305,17 +305,9 @@ class _AttemptDetailScreenState extends State<AttemptDetailScreen> {
             ),
             child: Container(
               margin: const EdgeInsets.only(bottom: 2),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [
-                    Color.fromARGB(255, 231, 231, 231),
-                    Color.fromARGB(255, 247, 247, 247),
-                  ],
-                ),
-              ),
+              color: const Color.fromARGB(255, 240, 240, 240),
               child: AppBar(
+                scrolledUnderElevation: 0,
                 title: Container(
                   width: 150,
                   height: 20,
@@ -407,17 +399,9 @@ class _AttemptDetailScreenState extends State<AttemptDetailScreen> {
             ),
             child: Container(
               margin: const EdgeInsets.only(bottom: 2),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [
-                    Color.fromARGB(255, 231, 231, 231),
-                    Color.fromARGB(255, 247, 247, 247),
-                  ],
-                ),
-              ),
+              color: const Color.fromARGB(255, 240, 240, 240),
               child: AppBar(
+                scrolledUnderElevation: 0,
                 title: Text(quiz.title, style: const TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold)),
                 systemOverlayStyle: SystemUiOverlayStyle.dark,
                 backgroundColor: Colors.transparent,

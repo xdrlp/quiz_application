@@ -299,7 +299,25 @@ class FirestoreService {
     try {
       await _firestore.collection(attemptsCollection).doc(attemptId).set(data, SetOptions(merge: true));
     } catch (e) {
-      // Do not rethrow; this is best-effort telemetry to persist flags.
+      rethrow;
+    }
+  }
+
+  /// Delete an attempt and its associated violations.
+  Future<void> deleteAttempt(String attemptId) async {
+    try {
+      // Delete violations for this attempt
+      final violSnap = await _firestore
+          .collection(violationsCollection)
+          .where('attemptId', isEqualTo: attemptId)
+          .get();
+      for (var vDoc in violSnap.docs) {
+        await vDoc.reference.delete();
+      }
+      // Delete the attempt itself
+      await _firestore.collection(attemptsCollection).doc(attemptId).delete();
+    } catch (e) {
+      rethrow;
     }
   }
 

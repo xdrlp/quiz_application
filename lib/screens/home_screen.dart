@@ -78,16 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             child: Container(
               margin: const EdgeInsets.only(bottom: 2),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [
-                    Color.fromARGB(255, 231, 231, 231),
-                    Color.fromARGB(255, 247, 247, 247),
-                  ],
-                ),
-              ),
+              color: const Color.fromARGB(255, 240, 240, 240),
               child: AppBar(
                 systemOverlayStyle: SystemUiOverlayStyle.dark,
                 backgroundColor: Colors.transparent,
@@ -300,7 +291,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    '$createdCount Created $publishedCount Published\n$draftsCount drafts',
+                                    '$publishedCount Published\n$draftsCount drafts',
                                     style: const TextStyle(
                                       fontSize: 12,
                                       color: Color.fromARGB(255, 71, 71, 71),
@@ -335,10 +326,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    '$submittedCount Submitted ${avgScore.toStringAsFixed(0)}% avg score',
+                                    '$submittedCount Submitted\n${avgScore.toStringAsFixed(0)}% avg score',
                                     style: const TextStyle(
                                       fontSize: 12,
                                       color: Color.fromARGB(255, 71, 71, 71),
+                                      height: 1.3,
                                     ),
                                   ),
                                 ],

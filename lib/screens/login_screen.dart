@@ -490,36 +490,22 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
       child: Scaffold(
-      backgroundColor: Colors.transparent,
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        systemOverlayStyle: SystemUiOverlayStyle.dark,
         backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Padding(
-            padding: EdgeInsets.only(left: 6.0),
-            child: Icon(Icons.arrow_back_ios, color: Colors.black87),
-          ),
-          onPressed: () {
-            FocusScope.of(context).unfocus();
-            if (Navigator.canPop(context)) Navigator.pop(context);
-          },
-        ),
-      ),
-      body: Stack(
-        children: [
-          SafeArea(
-            child: SingleChildScrollView(
-              controller: _scrollController,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 600),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+        body: Stack(
+          children: [
+            SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 600),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                       const SizedBox(height: 20),
                       const Text(
                         "Hello,\nWelcome\nBack",
@@ -638,16 +624,29 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
-                    ],
+                          const SizedBox(height: 20),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 8,
+              left: 6,
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back_ios, color: Colors.black87),
+                onPressed: () {
+                  FocusScope.of(context).unfocus();
+                  if (Navigator.canPop(context)) Navigator.pop(context);
+                },
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
     );
   }
 

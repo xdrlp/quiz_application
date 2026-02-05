@@ -58,24 +58,24 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
   final _passwordController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final arg = ModalRoute.of(context)?.settings.arguments;
+      if (arg is String) {
+        quizId = arg;
+        _load();
+      } else if (mounted && Navigator.canPop(context)) {
+        Navigator.of(context).pop();
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _passwordController.dispose();
     _timeController.dispose();
     super.dispose();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final arg = ModalRoute.of(context)!.settings.arguments;
-    if (arg is String) {
-      quizId = arg;
-      _load();
-    } else {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.of(context).pop();
-      });
-    }
   }
 
   Future<void> _load() async {
@@ -104,7 +104,11 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
     if (result != null) {
       final toSave = result.copyWith(order: _questions.length, createdAt: DateTime.now());
       await FirestoreService().addQuestion(quizId, toSave);
-      await _load();
+      if (mounted) {
+        setState(() {
+          _questions.add(toSave);
+        });
+      }
     }
   }
 
@@ -143,13 +147,24 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
     );
     if (result != null) {
       await FirestoreService().updateQuestion(quizId, q.id, result.toFirestore());
-      await _load();
+      if (mounted) {
+        final index = _questions.indexWhere((question) => question.id == q.id);
+        if (index != -1) {
+          setState(() {
+            _questions[index] = result.copyWith(id: q.id);
+          });
+        }
+      }
     }
   }
 
   Future<void> _deleteQuestion(String id) async {
     await FirestoreService().deleteQuestion(quizId, id);
-    await _load();
+    if (mounted) {
+      setState(() {
+        _questions.removeWhere((q) => q.id == id);
+      });
+    }
   }
 
   Future<void> _publishQuiz() async {
@@ -282,14 +297,9 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
             ),
             child: Container(
               margin: const EdgeInsets.only(bottom: 2),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [Color.fromARGB(255, 231, 231, 231), Color.fromARGB(255, 247, 247, 247)],
-                ),
-              ),
+              color: const Color.fromARGB(255, 240, 240, 240),
               child: AppBar(
+                scrolledUnderElevation: 0,
                 systemOverlayStyle: SystemUiOverlayStyle.dark,
                 backgroundColor: Colors.transparent,
                 elevation: 0,
