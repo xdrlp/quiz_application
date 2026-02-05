@@ -767,28 +767,42 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
                                       Row(
                                         children: [
                                           if (violCount > 0)
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                              decoration: BoxDecoration(
-                                                color: Colors.red.withAlpha(30),
-                                                borderRadius: BorderRadius.circular(12),
+                                            CustomPaint(
+                                              painter: _GradientPainter(
+                                                strokeWidth: 1.5,
+                                                radius: 8,
+                                                gradient: const LinearGradient(
+                                                  begin: Alignment.topCenter,
+                                                  end: Alignment.bottomCenter,
+                                                  colors: [Color.fromARGB(255, 0, 0, 0), Color.fromARGB(255, 248, 248, 248)],
+                                                ),
                                               ),
-                                              child: Text(
-                                                '$violCount violations',
-                                                style: const TextStyle(color: Colors.red, fontSize: 12),
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                child: Text(
+                                                  '$violCount violations',
+                                                  style: const TextStyle(color: Colors.black, fontSize: 12),
+                                                ),
                                               ),
                                             ),
                                           if (violCount > 0) const SizedBox(width: 8),
                                           if (appSwitchCount > 0)
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                              decoration: BoxDecoration(
-                                                color: Colors.orange.withAlpha(30),
-                                                borderRadius: BorderRadius.circular(12),
+                                            CustomPaint(
+                                              painter: _GradientPainter(
+                                                strokeWidth: 1.5,
+                                                radius: 8,
+                                                gradient: const LinearGradient(
+                                                  begin: Alignment.topCenter,
+                                                  end: Alignment.bottomCenter,
+                                                  colors: [Colors.black, Color.fromARGB(255, 248, 248, 248)],
+                                                ),
                                               ),
-                                              child: Text(
-                                                '$appSwitchCount app-switches',
-                                                style: const TextStyle(color: Colors.orange, fontSize: 12),
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                child: Text(
+                                                  '$appSwitchCount app-switches',
+                                                  style: const TextStyle(color: Colors.black, fontSize: 12),
+                                                ),
                                               ),
                                             ),
                                         ],
@@ -1665,35 +1679,41 @@ class _AttemptDetailViewerState extends State<_AttemptDetailViewer> {
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(16),
-      child: Container(
-        width: double.maxFinite,
-        constraints: const BoxConstraints(maxWidth: 800, maxHeight: 800),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF5F5F5),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            const BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 8),
-            BoxShadow(color: Colors.black.withAlpha(25), offset: const Offset(4, 4), blurRadius: 8),
-          ],
+      child: CustomPaint(
+        painter: _GradientPainter(
+          strokeWidth: 2,
+          radius: 14,
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.black, Colors.white],
+          ),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  Expanded(child: Text('Attempt by ${widget.user?.displayName ?? _attempt.userId}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF222222)))),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Color(0xFF7F8C8D)),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
+        child: Container(
+          width: double.maxFinite,
+          constraints: const BoxConstraints(maxWidth: 800, maxHeight: 800),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Header
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Expanded(child: Text('Attempt by ${widget.user?.displayName ?? _attempt.userId}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF222222)))),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Color(0xFF7F8C8D)),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const Divider(height: 1),
+              const Divider(height: 1),
             // Actions
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
@@ -1794,42 +1814,53 @@ class _AttemptDetailViewerState extends State<_AttemptDetailViewer> {
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF5F5F5),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white.withAlpha(150)),
-                      boxShadow: [
-                        const BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
-                        BoxShadow(color: Colors.black.withAlpha(15), offset: const Offset(2, 2), blurRadius: 4),
-                      ],
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
+                    child: CustomPaint(
+                      painter: _GradientPainter(
+                        strokeWidth: 1.5,
+                        radius: 8,
+                        gradient: const LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Colors.black, Color.fromARGB(255, 248, 248, 248)],
+                        ),
+                      ),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(q?.prompt ?? ans.questionId, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                              const SizedBox(height: 4),
-                              Text('Response: $respLabel', style: const TextStyle(fontSize: 13, color: Color(0xFF7F8C8D))),
-                              Text('$timeLabel$answeredLabel • ${isCorrect ? 'Correct' : 'Incorrect'}', style: TextStyle(fontSize: 12, color: isCorrect ? Colors.green : Colors.red)),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(q?.prompt ?? ans.questionId, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Color(0xFF222222))),
+                                    const SizedBox(height: 4),
+                                    Text('Response: $respLabel', style: const TextStyle(fontSize: 13, color: Color.fromARGB(255, 94, 94, 94))),
+                                    Text('$timeLabel$answeredLabel • ${isCorrect ? 'Correct' : 'Incorrect'}', style: TextStyle(fontSize: 12, color: isCorrect ? Colors.green : Colors.red)),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                icon: Icon(isCorrect ? Icons.check_circle : Icons.check_circle_outline, color: isCorrect ? Colors.green : Colors.grey),
+                                onPressed: () => _toggleCorrect(i),
+                                tooltip: 'Toggle correct status',
+                              ),
                             ],
                           ),
                         ),
-                        IconButton(
-                          icon: Icon(isCorrect ? Icons.check_circle : Icons.check_circle_outline, color: isCorrect ? Colors.green : Colors.grey),
-                          onPressed: () => _toggleCorrect(i),
-                          tooltip: 'Toggle correct status',
-                        ),
-                      ],
+                      ),
                     ),
                   );
                 },
               ),
             ),
           ],
+        ),
         ),
       ),
     );

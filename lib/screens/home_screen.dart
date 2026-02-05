@@ -416,15 +416,41 @@ class _HomeScreenState extends State<HomeScreen> {
                           )
                         else if (recent.isEmpty)
                           Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: const Color.fromARGB(255, 148, 148, 148),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: const Text(
-                              'No recent activity',
-                              style: TextStyle(
-                                color: Color.fromARGB(255, 224, 224, 224),
+                            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                            child: CustomPaint(
+                              painter: _GradientPainter(
+                                strokeWidth: 2,
+                                radius: 14,
+                                gradient: const LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [Colors.black, Colors.white],
+                                ),
+                              ),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.transparent,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            'No recent activity',
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              color: Color.fromARGB(255, 139, 139, 139),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                           )
