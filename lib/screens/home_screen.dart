@@ -586,8 +586,8 @@ class _NeuomorphicCardWidgetState extends State<_NeuomorphicCardWidget> {
                 end: Alignment.bottomCenter,
                 colors: isHovered
                     ? [
-                        const Color.fromARGB(255, 248, 248, 248).withOpacity(0.8),
-                        const Color.fromARGB(255, 121, 121, 121).withOpacity(0.8),
+                        const Color.fromARGB(255, 248, 248, 248).withValues(alpha: 0.8),
+                        const Color.fromARGB(255, 121, 121, 121).withValues(alpha: 0.8),
                       ]
                     : [
                         const Color.fromARGB(255, 248, 248, 248),
@@ -598,14 +598,14 @@ class _NeuomorphicCardWidgetState extends State<_NeuomorphicCardWidget> {
               boxShadow: isHovered
                   ? [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.15),
+                        color: Colors.black.withValues(alpha: 0.15),
                         blurRadius: 12,
                         offset: const Offset(0, 6),
                       ),
                     ]
                   : [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -619,8 +619,8 @@ class _NeuomorphicCardWidgetState extends State<_NeuomorphicCardWidget> {
                   end: Alignment.centerRight,
                   colors: isHovered
                       ? [
-                          const Color.fromARGB(255, 201, 201, 201).withOpacity(0.9),
-                          const Color.fromARGB(255, 233, 233, 233).withOpacity(0.9),
+                          const Color.fromARGB(255, 201, 201, 201).withValues(alpha: 0.9),
+                          const Color.fromARGB(255, 233, 233, 233).withValues(alpha: 0.9),
                         ]
                       : [
                           const Color.fromARGB(255, 201, 201, 201),

@@ -79,6 +79,7 @@ class _TakeQuizPageState extends State<TakeQuizPage>
   final Map<String, AttemptAnswerModel> _answerModels = {};
   final Set<String> _flaggedQuestionIds = {};
   final Set<String> _lockedQuestionIds = {};
+  final Map<String, bool> _hoveredAnswers = {};
   DateTime? _attemptStartedAt;
   final TextEditingController _textController = TextEditingController();
   final List<ViolationModel> _pendingViolations = [];
@@ -1324,7 +1325,7 @@ class _TakeQuizPageState extends State<TakeQuizPage>
       '[TakeQuizPage] _answerSingle wrote for qid=$qid model=${_answerModels[qid]} flagged=${_flaggedQuestionIds.contains(qid)}',
     );
     _antiCheat.onQuestionAnswered();
-    Future.microtask(() {
+    Future.delayed(const Duration(milliseconds: 600), () {
       if (mounted) _nextQuestion();
     });
   }
@@ -1483,7 +1484,7 @@ class _TakeQuizPageState extends State<TakeQuizPage>
           end: Alignment.bottomRight,
           colors: [
             Color(0xFFFFFFFF),
-            Color.fromARGB(255, 207, 207, 207),
+            Color.fromARGB(255, 197, 197, 197),
           ],
         ),
       ),
@@ -1496,7 +1497,7 @@ class _TakeQuizPageState extends State<TakeQuizPage>
               gradient: LinearGradient(
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
-                colors: [Color.fromARGB(255, 169, 169, 169), Color.fromARGB(255, 255, 255, 255)],
+                colors: [Color.fromARGB(255, 179, 179, 179), Color.fromARGB(255, 255, 255, 255)],
               ),
             ),
             child: Container(
@@ -1529,25 +1530,39 @@ class _TakeQuizPageState extends State<TakeQuizPage>
         body: _loading
             ? const Center(child: CircularProgressIndicator())
             : Padding(
-                padding: const EdgeInsets.all(12.0),
+                padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
                 child: Column(
                   children: [
-                    if (_remainingSeconds != null)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF222222),
-                          borderRadius: BorderRadius.circular(20),
+                    const SizedBox(height: 20),
+                    if (_remainingSeconds != null) ...[
+                      CustomPaint(
+                        painter: _GradientPainter(
+                          strokeWidth: 1.5,
+                          radius: 8,
+                          gradient: const LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Color.fromARGB(255, 0, 0, 0), Color.fromARGB(255, 151, 151, 151), Color.fromARGB(255, 180, 180, 180), Color.fromARGB(255, 255, 255, 255)],
+                          ),
                         ),
-                        child: Text(
-                          'Time left: ${_formatRemaining(_remainingSeconds!)}',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: Text(
+                            'Time left: ${_formatRemaining(_remainingSeconds!)}',
+                            style: const TextStyle(color: Color(0xFF222222), fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ),
+                      const SizedBox(height: 32),
+                    ],
                     if ((_usageAccessGranted ?? false) == false ||
                         (_accessibilityServiceEnabled ?? false) == false)
                       Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12.0),
+                        padding: const EdgeInsets.only(bottom: 12.0),
                         child: _buildMonitoringBanner(),
                       ),
                     Expanded(
@@ -1565,36 +1580,62 @@ class _TakeQuizPageState extends State<TakeQuizPage>
                                       child: Opacity(
                                         opacity: started ? 1.0 : 0.95,
                                         child: Container(
-                                          margin: const EdgeInsets.symmetric(vertical: 8),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFF5F5F5),
-                                            borderRadius: BorderRadius.circular(16),
-                                            boxShadow: [
-                                              const BoxShadow(
-                                                color: Colors.white,
-                                                offset: Offset(-4, -4),
-                                                blurRadius: 10,
+                                          margin: EdgeInsets.zero,
+                                          child: CustomPaint(
+                                            painter: _GradientPainter(
+                                              strokeWidth: 2,
+                                              radius: 12,
+                                              gradient: const LinearGradient(
+                                                begin: Alignment.topCenter,
+                                                end: Alignment.bottomCenter,
+                                                colors: [Color.fromARGB(255, 0, 0, 0), Color.fromARGB(255, 151, 151, 151), Color.fromARGB(255, 180, 180, 180), Color.fromARGB(255, 255, 255, 255)],
                                               ),
-                                              BoxShadow(
-                                                color: Colors.black.withValues(alpha: 0.1),
-                                                offset: const Offset(4, 4),
-                                                blurRadius: 10,
+                                            ),
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                color: Colors.transparent,
+                                                borderRadius: BorderRadius.circular(12),
                                               ),
-                                            ],
-                                          ),
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(20.0),
+                                              child: Padding(
+                                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                                             child: Column(
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.start,
+                                              mainAxisSize: MainAxisSize.min,
                                               children: [
-                                                Text(
-                                                  'Question ${_currentQuestionIndex + 1} of ${_questions.length}',
-                                                  style: const TextStyle(
-                                                    color: Color(0xFF7F8C8D),
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.bold
-                                                  ),
+                                                Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      'Question ${_currentQuestionIndex + 1} of ${_questions.length}',
+                                                      style: const TextStyle(
+                                                        color: Color.fromARGB(255, 58, 58, 58),
+                                                        fontSize: 13,
+                                                        fontWeight: FontWeight.w400,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 4),
+                                                    CustomPaint(
+                                                      painter: _GradientPainter(
+                                                        strokeWidth: 1,
+                                                        radius: 6,
+                                                        gradient: const LinearGradient(
+                                                          begin: Alignment.topCenter,
+                                                          end: Alignment.bottomCenter,
+                                                          colors: [Color.fromARGB(255, 0, 0, 0), Color.fromARGB(255, 151, 151, 151), Color.fromARGB(255, 180, 180, 180), Color.fromARGB(255, 255, 255, 255)],
+                                                        ),
+                                                      ),
+                                                      child: ClipRRect(
+                                                        borderRadius: BorderRadius.circular(6),
+                                                        child: LinearProgressIndicator(
+                                                          value: (_currentQuestionIndex + 1) / _questions.length,
+                                                          minHeight: 6,
+                                                          backgroundColor: Colors.grey.shade300,
+                                                          color: const Color(0xFF222222),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
                                                 const SizedBox(height: 12),
                                                 Text(
@@ -1605,38 +1646,64 @@ class _TakeQuizPageState extends State<TakeQuizPage>
                                                     fontSize: 18,
                                                   ),
                                                 ),
-                                                const SizedBox(height: 20),
+                                                const SizedBox(height: 16),
                                                 if (q.type ==
                                                         QuestionType
                                                             .multipleChoice ||
                                                     q.type ==
                                                         QuestionType.dropdown)
-                                                  Expanded(
-                                                    child: SingleChildScrollView(
-                                                      child: Column(
-                                                        children: q.choices.map((c) {
-                                                          final selected =
-                                                              _answers[q.id] == c.id;
-                                                          final locked =
-                                                              _lockedQuestionIds
-                                                                  .contains(q.id);
-                                                          return Container(
-                                                            margin: const EdgeInsets.only(bottom: 12),
+                                                  Column(
+                                                    children: q.choices.asMap().entries.expand((entry) {
+                                                      int idx = entry.key;
+                                                      var c = entry.value;
+                                                      final selected =
+                                                          _answers[q.id] == c.id;
+                                                      final locked =
+                                                          _lockedQuestionIds
+                                                              .contains(q.id);
+                                                      return [
+                                                        MouseRegion(
+                                                          onEnter: (_) => setState(() => _hoveredAnswers['${q.id}_${c.id}'] = true),
+                                                          onExit: (_) => setState(() => _hoveredAnswers['${q.id}_${c.id}'] = false),
+                                                          child: Container(
+                                                            margin: const EdgeInsets.only(bottom: 0),
                                                             decoration: BoxDecoration(
-                                                              color: selected ? const Color(0xFF222222).withValues(alpha: 0.05) : Colors.white,
+                                                              color: Colors.transparent,
                                                               borderRadius: BorderRadius.circular(12),
-                                                              border: Border.all(color: selected ? const Color(0xFF222222) : Colors.transparent),
                                                             ),
                                                             child: ListTile(
-                                                              title: Text(c.text, style: TextStyle(color: locked ? Colors.grey : const Color(0xFF222222), fontWeight: selected ? FontWeight.bold : FontWeight.normal)),
-                                                              leading: Icon(
-                                                                selected
-                                                                    ? Icons
-                                                                          .radio_button_checked
-                                                                    : Icons
-                                                                          .radio_button_unchecked,
-                                                                color: locked ? Colors.grey : (selected ? const Color(0xFF222222) : const Color(0xFF7F8C8D)),
+                                                              title: Text(c.text, style: TextStyle(color: locked ? Colors.grey : const Color(0xFF222222), fontWeight: (selected || (_hoveredAnswers['${q.id}_${c.id}'] ?? false)) ? FontWeight.w700 : FontWeight.w500)),
+                                                              leading: SizedBox(
+                                                                width: 24,
+                                                                height: 24,
+                                                                child: Stack(
+                                                                  alignment: Alignment.center,
+                                                                  children: [
+                                                                    CustomPaint(
+                                                                      painter: _GradientPainter(
+                                                                        strokeWidth: 1.5,
+                                                                        radius: 12,
+                                                                        gradient: LinearGradient(
+                                                                          begin: Alignment.topCenter,
+                                                                          end: Alignment.bottomCenter,
+                                                                          colors: [const Color.fromARGB(255, 0, 0, 0), const Color.fromARGB(255, 151, 151, 151), const Color.fromARGB(255, 180, 180, 180), const Color.fromARGB(255, 255, 255, 255)],
+                                                                        ),
+                                                                      ),
+                                                                      size: const Size(24, 24),
+                                                                    ),
+                                                                    if (selected || (_hoveredAnswers['${q.id}_${c.id}'] ?? false))
+                                                                      Container(
+                                                                        width: 8,
+                                                                        height: 8,
+                                                                        decoration: BoxDecoration(
+                                                                          color: const Color(0xFF222222),
+                                                                          shape: BoxShape.circle,
+                                                                        ),
+                                                                      ),
+                                                                  ],
+                                                                ),
                                                               ),
+                                                              trailing: locked ? const Icon(Icons.lock, size: 18, color: Colors.redAccent) : null,
                                                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                                               onTap: locked
                                                                   ? null
@@ -1646,54 +1713,72 @@ class _TakeQuizPageState extends State<TakeQuizPage>
                                                                           c.id,
                                                                         ),
                                                             ),
-                                                          );
-                                                        }).toList(),
-                                                      ),
-                                                    ),
+                                                          ),
+                                                        ),
+                                                        if (idx < q.choices.length - 1)
+                                                          const SizedBox(height: 8),
+                                                      ];
+                                                    }).toList(),
                                                   ),
                                                 if (q.type ==
                                                     QuestionType.checkbox)
-                                                  Expanded(
-                                                    child: SingleChildScrollView(
-                                                      child: Column(
-                                                        children: q.choices.map((c) {
-                                                          final locked =
-                                                              _lockedQuestionIds
-                                                                  .contains(q.id);
-                                                          final isSelected = (_multiAnswers[q.id] ?? []).contains(c.id);
-                                                          return Container(
-                                                            margin: const EdgeInsets.only(bottom: 12),
-                                                            decoration: BoxDecoration(
-                                                              color: isSelected ? const Color(0xFF222222).withValues(alpha: 0.05) : Colors.white,
-                                                              borderRadius: BorderRadius.circular(12),
-                                                              border: Border.all(color: isSelected ? const Color(0xFF222222) : Colors.transparent),
-                                                            ),
-                                                            child: CheckboxListTile(
-                                                              title: Text(c.text, style: TextStyle(color: locked ? Colors.grey : const Color(0xFF222222), fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
-                                                              value: isSelected,
-                                                              activeColor: const Color(0xFF222222),
-                                                              checkboxShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                                              onChanged: locked
-                                                                  ? null
-                                                                  : (v) =>
-                                                                        _answerCheckbox(
-                                                                          q.id,
-                                                                          c.id,
-                                                                          v ?? false,
-                                                                        ),
-                                                            ),
-                                                          );
-                                                        }).toList(),
-                                                      ),
-                                                    ),
+                                                  Column(
+                                                    children: q.choices.asMap().entries.expand((entry) {
+                                                      int idx = entry.key;
+                                                      var c = entry.value;
+                                                      final locked =
+                                                          _lockedQuestionIds
+                                                              .contains(q.id);
+                                                      final isSelected = (_multiAnswers[q.id] ?? []).contains(c.id);
+                                                      return [
+                                                        Container(
+                                                          margin: const EdgeInsets.only(bottom: 0),
+                                                          decoration: BoxDecoration(
+                                                            color: Colors.transparent,
+                                                            borderRadius: BorderRadius.circular(12),
+                                                          ),
+                                                          child: CheckboxListTile(
+                                                            title: Text(c.text, style: TextStyle(color: locked ? Colors.grey : const Color(0xFF222222), fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500)),
+                                                            value: isSelected,
+                                                            activeColor: const Color(0xFF222222),
+                                                            checkboxShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                            onChanged: locked
+                                                                ? null
+                                                                : (v) =>
+                                                                      _answerCheckbox(
+                                                                        q.id,
+                                                                        c.id,
+                                                                        v ?? false,
+                                                                      ),
+                                                          ),
+                                                        ),
+                                                        if (idx < q.choices.length - 1)
+                                                          const SizedBox(height: 8),
+                                                      ];
+                                                    }).toList(),
                                                   ),
                                                 if (q.type ==
                                                         QuestionType
                                                             .shortAnswer ||
                                                     q.type ==
                                                         QuestionType.paragraph)
-                                                  TextField(
+                                                  CustomPaint(
+                                                    painter: _GradientPainter(
+                                                      strokeWidth: 1.5,
+                                                      radius: 12,
+                                                      gradient: const LinearGradient(
+                                                        begin: Alignment.topCenter,
+                                                        end: Alignment.bottomCenter,
+                                                        colors: [Color.fromARGB(255, 0, 0, 0), Color.fromARGB(255, 151, 151, 151), Color.fromARGB(255, 180, 180, 180), Color.fromARGB(255, 255, 255, 255)],
+                                                      ),
+                                                    ),
+                                                    child: Container(
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.white,
+                                                        borderRadius: BorderRadius.circular(12),
+                                                      ),
+                                                      child: TextField(
                                                     controller: _textController,
                                                     onChanged: (v) =>
                                                         _answerText(q.id, v),
@@ -1713,34 +1798,42 @@ class _TakeQuizPageState extends State<TakeQuizPage>
                                                             QuestionType.paragraph
                                                         ? null
                                                         : 1,
-                                                    style: const TextStyle(color: Color(0xFF222222)),
+                                                    style: const TextStyle(color: Color(0xFF222222), fontSize: 16),
+                                                    cursorColor: const Color(0xFF222222),
                                                     decoration: InputDecoration(
                                                       hintText: 'Type your answer here...',
-                                                      hintStyle: const TextStyle(color: Color(0xFF7F8C8D)),
-                                                      filled: true,
-                                                      fillColor: Colors.white,
-                                                      border: OutlineInputBorder(
-                                                        borderRadius: BorderRadius.circular(12),
-                                                        borderSide: BorderSide.none,
-                                                      ),
-                                                      enabledBorder: OutlineInputBorder(
-                                                        borderRadius: BorderRadius.circular(12),
-                                                        borderSide: BorderSide.none,
-                                                      ),
-                                                      focusedBorder: OutlineInputBorder(
-                                                        borderRadius: BorderRadius.circular(12),
-                                                        borderSide: const BorderSide(color: Color(0xFF222222), width: 1.5),
-                                                      ),
+                                                      hintStyle: const TextStyle(color: Color(0xFF7F8C8D), fontSize: 16),
+                                                      filled: false,
+                                                      border: InputBorder.none,
+                                                      enabledBorder: InputBorder.none,
+                                                      focusedBorder: InputBorder.none,
                                                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                                      suffix:
-                                                          _lockedQuestionIds
-                                                              .contains(q.id)
-                                                          ? const Text('Flagged', style: TextStyle(color: Colors.red))
+                                                      suffix: _lockedQuestionIds.contains(q.id)
+                                                          ? Container(
+                                                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                                                              child: Row(
+                                                                mainAxisSize: MainAxisSize.min,
+                                                                children: const [
+                                                                  Icon(Icons.lock, size: 16, color: Colors.redAccent),
+                                                                  SizedBox(width: 4),
+                                                                  Text('Flagged', style: TextStyle(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.w600)),
+                                                                ],
+                                                              ),
+                                                            )
                                                           : null,
                                                     ),
                                                   ),
-                                                const Spacer(),
-                                                const SizedBox(height: 12),
+                                                  ),
+                                                  ),
+                                                if (q.type ==
+                                                        QuestionType.checkbox ||
+                                                    q.type ==
+                                                        QuestionType
+                                                            .shortAnswer ||
+                                                    q.type ==
+                                                        QuestionType.paragraph)
+                                                  const Spacer(),
+                                                const SizedBox(height: 8),
                                                 if (q.type ==
                                                         QuestionType.checkbox ||
                                                     q.type ==
@@ -1750,16 +1843,33 @@ class _TakeQuizPageState extends State<TakeQuizPage>
                                                         QuestionType.paragraph)
                                                   Row(
                                                     mainAxisAlignment:
-                                                        MainAxisAlignment.end,
+                                                        MainAxisAlignment.spaceBetween,
                                                     children: [
+                                                      OutlinedButton.icon(
+                                                        style: OutlinedButton.styleFrom(
+                                                          foregroundColor: _flaggedQuestionIds.contains(q.id) ? Colors.amber : const Color(0xFF7F8C8D),
+                                                          side: BorderSide(color: _flaggedQuestionIds.contains(q.id) ? Colors.amber : const Color(0xFF7F8C8D), width: 1.5),
+                                                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                                        ),
+                                                        onPressed: () => setState(() {
+                                                          if (_flaggedQuestionIds.contains(q.id)) {
+                                                            _flaggedQuestionIds.remove(q.id);
+                                                          } else {
+                                                            _flaggedQuestionIds.add(q.id);
+                                                          }
+                                                        }),
+                                                        icon: Icon(_flaggedQuestionIds.contains(q.id) ? Icons.flag : Icons.flag_outlined, size: 18),
+                                                        label: Text(_flaggedQuestionIds.contains(q.id) ? 'Flagged' : 'Flag', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                                                      ),
                                                       ElevatedButton(
                                                         style: ElevatedButton.styleFrom(
                                                           backgroundColor: const Color(0xFF222222),
                                                           foregroundColor: Colors.white,
-                                                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                                          elevation: 5,
-                                                          shadowColor: Colors.black.withValues(alpha: 0.3),
+                                                          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+                                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                                          elevation: 6,
+                                                          shadowColor: Colors.black.withValues(alpha: 0.4),
                                                         ),
                                                         onPressed: () {
                                                           final ok =
@@ -1802,6 +1912,8 @@ class _TakeQuizPageState extends State<TakeQuizPage>
                                           ),
                                         ),
                                       ),
+                                    ),
+                                    ),
                                     ),
                                     // Blur overlay when not started
                                     if (!started)

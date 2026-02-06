@@ -171,13 +171,19 @@ class AntiCheatService {
       _lifecycleListener = null;
     }
     try {
-      await _accessibilitySubscription?.cancel();
-    } catch (_) {}
+      if (_accessibilitySubscription != null) {
+        await _accessibilitySubscription?.cancel();
+      }
+    } catch (_) {
+      // Ignore platform errors when canceling stream
+    }
     _accessibilitySubscription = null;
     _capturedAccessibilityEvents.clear();
     try {
       await _accessibilityMonitor.dispose();
-    } catch (_) {}
+    } catch (_) {
+      // Ignore disposal errors
+    }
     try {
       _foregroundSampler?.cancel();
     } catch (_) {}

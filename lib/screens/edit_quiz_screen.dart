@@ -253,11 +253,11 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                         // Quiz Details Section
                         _buildDetailCard(
                           children: [
-                            _buildDetailRow('Questions', '$questionCount'),
+                            _buildDetailRow('Questions', questionCount.toString()),
                             const SizedBox(height: 12),
-                            _buildDetailRow('Total Points', '$totalPoints'),
+                            _buildDetailRow('Total Points', totalPoints.toString()),
                             const SizedBox(height: 12),
-                            _buildDetailRow('Quiz Code', '${_quiz?.quizCode ?? 'N/A'}'),
+                            _buildDetailRow('Quiz Code', _quiz?.quizCode ?? 'N/A'),
                           ],
                         ),
                         const SizedBox(height: 16),
