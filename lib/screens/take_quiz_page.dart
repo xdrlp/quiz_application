@@ -21,6 +21,37 @@ import 'package:quiz_application/services/local_violation_store.dart';
 import 'package:usage_stats/usage_stats.dart';
 import 'package:quiz_application/services/screen_protector.dart';
 
+class _GradientPainter extends CustomPainter {
+  final double radius;
+  final double strokeWidth;
+  final Gradient gradient;
+
+  _GradientPainter({
+    required this.gradient,
+    required this.radius,
+    required this.strokeWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Rect rect = Rect.fromLTWH(
+      strokeWidth / 2,
+      strokeWidth / 2,
+      size.width - strokeWidth,
+      size.height - strokeWidth,
+    );
+    final RRect rRect = RRect.fromRectAndRadius(rect, Radius.circular(radius));
+    final Paint paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..shader = gradient.createShader(rect);
+    canvas.drawRRect(rRect, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => true;
+}
+
 class TakeQuizPage extends StatefulWidget {
   final String quizId;
   const TakeQuizPage({super.key, required this.quizId});
@@ -308,7 +339,13 @@ class _TakeQuizPageState extends State<TakeQuizPage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _load();
+    _load().then((_) {
+      if (mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _confirmStartAttempt();
+        });
+      }
+    });
     _refreshMonitoringPrereqs();
   }
 
@@ -331,6 +368,7 @@ class _TakeQuizPageState extends State<TakeQuizPage>
       return;
     }
 
+    /* Password check removed as it is handled in the dialog before navigation
     if (quiz.password != null && quiz.password!.isNotEmpty) {
       // Enforce password for everyone to ensure security and allow creators to test it.
       if (mounted) {
@@ -381,6 +419,7 @@ class _TakeQuizPageState extends State<TakeQuizPage>
         }
       }
     }
+    */
 
     var qs = await _firestore.getQuizQuestions(widget.quizId);
 
@@ -557,72 +596,283 @@ class _TakeQuizPageState extends State<TakeQuizPage>
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setState) {
-            return AlertDialog(
-              title: const Text('Violation Policy Notice'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Please read and acknowledge the exam conduct policy before starting. Violations such as collaboration, screen sharing, use of unauthorised resources, or attempting to circumvent monitoring may be detected and penalised.',
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'If you understand and agree to abide by the policy, check the box below to enable Start.',
-                    ),
-                    const SizedBox(height: 12),
-                    _monitoringStatusRow(
-                      'Usage access permission required',
-                      _usageAccessGranted == true,
-                      () async {
-                        await _openUsageAccessSettings();
-                        await Future.delayed(const Duration(milliseconds: 500));
-                        await _refreshMonitoringPrereqs();
-                        setState(() {});
-                      },
-                    ),
-                    const SizedBox(height: 6),
-                    _monitoringStatusRow(
-                      'Accessibility service required',
-                      _accessibilityServiceEnabled == true,
-                      () async {
-                        await _openAccessibilitySettings();
-                        await Future.delayed(const Duration(milliseconds: 500));
-                        await _refreshMonitoringPrereqs();
-                        setState(() {});
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    const Divider(),
-                    const SizedBox(height: 12),
-                    CheckboxListTile(
-                      contentPadding: EdgeInsets.zero,
-                      value: acknowledged,
-                      onChanged: (v) =>
-                          setState(() => acknowledged = v ?? false),
-                      title: const Text(
-                        'I have read and agree to the conduct policy',
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              child: Center(
+                child: SingleChildScrollView(
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: SizedBox(
+                      width: 420,
+                      child: CustomPaint(
+                        painter: _GradientPainter(
+                          strokeWidth: 2,
+                          radius: 24,
+                          gradient: const LinearGradient(
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                            colors: [
+                              Color.fromARGB(255, 0, 0, 0),
+                              Color(0xFFFFFFFF),
+                              Color.fromARGB(255, 170, 170, 170),
+                              Color(0xFFFFFFFF),
+                              Color(0xFFFFFFFF),
+                            ],
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(2),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Color.fromARGB(251, 238, 238, 238),
+                                  Color.fromARGB(251, 173, 173, 173),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(22),
+                            ),
+                            padding: const EdgeInsets.all(28),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Violation Policy Notice',
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF000000),
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                const Text(
+                                  'Please read and acknowledge the exam conduct policy before starting. Violations such as collaboration, screen sharing, use of unauthorised resources, or attempting to circumvent monitoring may be detected and penalised.',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Color.fromARGB(220, 0, 0, 0),
+                                    height: 1.6,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                const Text(
+                                  'If you understand and agree to abide by the policy, check the box below to enable Start.',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Color.fromARGB(220, 0, 0, 0),
+                                    height: 1.6,
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                CustomPaint(
+                                  painter: _GradientPainter(
+                                    strokeWidth: 1.5,
+                                    radius: 12,
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Color.fromARGB(255, 0, 0, 0),
+                                        Color.fromARGB(255, 151, 151, 151),
+                                        Color.fromARGB(255, 180, 180, 180),
+                                        Color.fromARGB(255, 255, 255, 255),
+                                      ],
+                                    ),
+                                  ),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.transparent,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    padding: const EdgeInsets.all(14),
+                                    child: Column(
+                                      children: [
+                                        _monitoringStatusRow(
+                                          'Usage access permission',
+                                          _usageAccessGranted == true,
+                                          () async {
+                                            await _openUsageAccessSettings();
+                                            await Future.delayed(const Duration(milliseconds: 500));
+                                            await _refreshMonitoringPrereqs();
+                                            setState(() {});
+                                          },
+                                        ),
+                                        const SizedBox(height: 10),
+                                        _monitoringStatusRow(
+                                          'Accessibility service',
+                                          _accessibilityServiceEnabled == true,
+                                          () async {
+                                            await _openAccessibilitySettings();
+                                            await Future.delayed(const Duration(milliseconds: 500));
+                                            await _refreshMonitoringPrereqs();
+                                            setState(() {});
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                                  child: Row(
+                                    children: List.generate(
+                                      35,
+                                      (index) => Expanded(
+                                        child: Container(
+                                          height: 1,
+                                          margin: const EdgeInsets.symmetric(horizontal: 2),
+                                          color: Colors.black26,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                Row(
+                                  children: [
+                                    Checkbox(
+                                      value: acknowledged,
+                                      onChanged: (v) => setState(() => acknowledged = v ?? false),
+                                      activeColor: const Color(0xFFFF1F00),
+                                      checkColor: Colors.white,
+                                      side: const BorderSide(
+                                        color: Color(0xFF222222),
+                                        width: 2,
+                                      ),
+                                    ),
+                                    const Expanded(
+                                      child: Text(
+                                        'I have read and agree to the conduct policy',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Color(0xFF222222),
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 24),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: MouseRegion(
+                                        cursor: SystemMouseCursors.click,
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            Navigator.of(ctx).pop();
+                                            Navigator.of(context).pop();
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.all(3),
+                                            decoration: BoxDecoration(
+                                              gradient: const LinearGradient(
+                                                begin: Alignment.topCenter,
+                                                end: Alignment.bottomCenter,
+                                                colors: [
+                                                  Color.fromARGB(255, 248, 248, 248),
+                                                  Color.fromARGB(255, 199, 199, 199),
+                                                  Color.fromARGB(255, 248, 248, 248),
+                                                  Color.fromARGB(255, 116, 116, 116),
+                                                  Color.fromARGB(242, 61, 61, 61),
+                                                ],
+                                              ),
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            child: Container(
+                                              height: 42,
+                                              width: double.infinity,
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFF6B6B6B),
+                                                borderRadius: BorderRadius.circular(10),
+                                              ),
+                                              child: const Center(
+                                                child: Text(
+                                                  'Cancel',
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: MouseRegion(
+                                        cursor: acknowledged ? SystemMouseCursors.click : SystemMouseCursors.basic,
+                                        child: Opacity(
+                                          opacity: acknowledged ? 1.0 : 0.6,
+                                          child: GestureDetector(
+                                            onTap: acknowledged
+                                                ? () => Navigator.of(ctx).pop(true)
+                                                : null,
+                                            child: Container(
+                                              padding: const EdgeInsets.all(3),
+                                              decoration: BoxDecoration(
+                                                gradient: const LinearGradient(
+                                                  begin: Alignment.topCenter,
+                                                  end: Alignment.bottomCenter,
+                                                  colors: [
+                                                    Color.fromARGB(255, 248, 248, 248),
+                                                    Color.fromARGB(255, 199, 199, 199),
+                                                    Color.fromARGB(255, 248, 248, 248),
+                                                    Color.fromARGB(255, 116, 116, 116),
+                                                    Color.fromARGB(242, 61, 61, 61),
+                                                  ],
+                                                ),
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: Container(
+                                                height: 42,
+                                                width: double.infinity,
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFFDD3A1A),
+                                                  borderRadius: BorderRadius.circular(10),
+                                                ),
+                                                child: Center(
+                                                  child: ShaderMask(
+                                                    shaderCallback: (bounds) {
+                                                      return const LinearGradient(
+                                                        begin: Alignment.centerLeft,
+                                                        end: Alignment.centerRight,
+                                                        colors: [Color(0xFFE9E9E9), Color(0xFFFFFFFF)],
+                                                      ).createShader(bounds);
+                                                    },
+                                                    child: const Text(
+                                                      'Start Attempt',
+                                                      style: TextStyle(
+                                                        fontSize: 14,
+                                                        fontWeight: FontWeight.w600,
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
-                      controlAffinity: ListTileControlAffinity.leading,
                     ),
-                  ],
+                  ),
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(ctx).pop(false),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: acknowledged
-                      ? () {
-                          Navigator.of(ctx).pop(true);
-                        }
-                      : null,
-                  child: const Text('Start Attempt'),
-                ),
-              ],
             );
           },
         );
@@ -1553,8 +1803,7 @@ class _TakeQuizPageState extends State<TakeQuizPage>
                                         ),
                                       ),
                                     ),
-
-                                    // Overlay when not started: blurred and with centered Start button
+                                    // Blur overlay when not started
                                     if (!started)
                                       Positioned.fill(
                                         child: ClipRect(
@@ -1569,25 +1818,6 @@ class _TakeQuizPageState extends State<TakeQuizPage>
                                                 0,
                                                 0,
                                                 0.25,
-                                              ),
-                                              alignment: Alignment.center,
-                                              child: ElevatedButton(
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: const Color(0xFF222222),
-                                                  foregroundColor: Colors.white,
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 32,
-                                                        vertical: 16,
-                                                      ),
-                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                                  elevation: 10,
-                                                ),
-                                                onPressed: _confirmStartAttempt,
-                                                child: const Text(
-                                                  'Start Attempt',
-                                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                                                ),
                                               ),
                                             ),
                                           ),
