@@ -36,6 +36,52 @@ class _GradientPainter extends CustomPainter {
 
 // models imported via FirestoreService responses; no direct model types required here
 
+Widget _buildDetailCard({required List<Widget> children}) {
+  return CustomPaint(
+    painter: _GradientPainter(
+      strokeWidth: 1.5,
+      radius: 12,
+      gradient: const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color.fromARGB(255, 0, 0, 0), Color.fromARGB(255, 151, 151, 151), Color.fromARGB(255, 180, 180, 180), Color.fromARGB(255, 255, 255, 255)],
+      ),
+    ),
+    child: Container(
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Column(children: children),
+    ),
+  );
+}
+
+Widget _buildDetailRow(String label, String value) {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Text(
+        label,
+        style: const TextStyle(
+          fontSize: 14,
+          color: Colors.black54,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      Text(
+        value,
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF000000),
+        ),
+      ),
+    ],
+  );
+}
+
 Future<void> showTakeQuizDialog(BuildContext context) async {
   final codeController = TextEditingController();
   final passwordController = TextEditingController();
@@ -102,33 +148,213 @@ Future<void> showTakeQuizDialog(BuildContext context) async {
                     ? normalizeDuplicateTrailingWords(displayNameRaw)
                     : normalizeDuplicateTrailingWords('$firstName $lastName');
 
-                return AlertDialog(
-                  title: Text(currentQuiz.title),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (currentQuiz.description.isNotEmpty) Text(currentQuiz.description),
-                      const SizedBox(height: 8),
-                      Text('Questions: $questionCount'),
-                      const SizedBox(height: 8),
-                      Text('Author: ${authorName.isNotEmpty ? authorName : 'Unknown'}'),
-                    ],
-                  ),
-                  actions: [
-                    TextButton(onPressed: () => Navigator.of(sctx).pop(false), child: const Text('Close')),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(sctx).pop(true);
-                      },
-                      child: const Text('Attempt Quiz'),
+                return Dialog(
+                  backgroundColor: Colors.transparent,
+                  child: Center(
+                    child: SingleChildScrollView(
+                      child: Material(
+                        type: MaterialType.transparency,
+                        child: SizedBox(
+                          width: 360,
+                          child: CustomPaint(
+                            painter: _GradientPainter(
+                              strokeWidth: 2,
+                              radius: 24,
+                              gradient: const LinearGradient(
+                                begin: Alignment.bottomCenter,
+                                end: Alignment.topCenter,
+                                colors: [
+                                  Color.fromARGB(255, 0, 0, 0),
+                                  Color(0xFFFFFFFF),
+                                  Color.fromARGB(255, 170, 170, 170),
+                                  Color(0xFFFFFFFF),
+                                  Color(0xFFFFFFFF),
+                                ],
+                              ),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(2),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Color.fromARGB(251, 238, 238, 238),
+                                      Color.fromARGB(251, 173, 173, 173),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(22),
+                                ),
+                                padding: const EdgeInsets.all(24),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                  Text(
+                                    currentQuiz.title,
+                                    style: const TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF000000),
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  if (currentQuiz.description.isNotEmpty)
+                                    Text(
+                                      currentQuiz.description,
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        color: Color.fromARGB(202, 0, 0, 0),
+                                        height: 1.5,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  if (currentQuiz.description.isNotEmpty)
+                                    const SizedBox(height: 20),
+                                  // Quiz Details Card
+                                  _buildDetailCard(
+                                    children: [
+                                      _buildDetailRow('Questions', '$questionCount'),
+                                      const SizedBox(height: 12),
+                                      _buildDetailRow('Author', authorName.isNotEmpty ? authorName : 'Unknown'),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 20),
+                                  // Action Buttons
+                                  Column(
+                                    children: [
+                                      MouseRegion(
+                                        cursor: SystemMouseCursors.click,
+                                        child: GestureDetector(
+                                          onTap: () => Navigator.of(sctx).pop(true),
+                                          child: Container(
+                                            padding: const EdgeInsets.all(3),
+                                            decoration: BoxDecoration(
+                                              gradient: const LinearGradient(
+                                                begin: Alignment.topCenter,
+                                                end: Alignment.bottomCenter,
+                                                colors: [
+                                                  Color.fromARGB(255, 248, 248, 248),
+                                                  Color.fromARGB(255, 199, 199, 199),
+                                                  Color.fromARGB(255, 248, 248, 248),
+                                                  Color.fromARGB(255, 116, 116, 116),
+                                                  Color.fromARGB(242, 61, 61, 61),
+                                                ],
+                                              ),
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                            child: Container(
+                                              height: 40,
+                                              width: double.infinity,
+                                              decoration: BoxDecoration(
+                                                gradient: const LinearGradient(
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
+                                                  colors: [
+                                                    Color(0xFFFF1F00),
+                                                    Color(0xFFDD1700),
+                                                  ],
+                                                ),
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: Center(
+                                                child: ShaderMask(
+                                                  shaderCallback: (bounds) {
+                                                    return const LinearGradient(
+                                                      begin: Alignment.centerLeft,
+                                                      end: Alignment.centerRight,
+                                                      colors: [Color(0xFFE9E9E9), Color(0xFFFFFFFF)],
+                                                    ).createShader(bounds);
+                                                  },
+                                                  child: const Text(
+                                                    'Attempt Quiz',
+                                                    style: TextStyle(
+                                                      fontSize: 14,
+                                                      fontWeight: FontWeight.w600,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      MouseRegion(
+                                        cursor: SystemMouseCursors.click,
+                                        child: GestureDetector(
+                                          onTap: () => Navigator.of(sctx).pop(false),
+                                          child: Container(
+                                            padding: const EdgeInsets.all(3),
+                                            decoration: BoxDecoration(
+                                              gradient: const LinearGradient(
+                                                begin: Alignment.topCenter,
+                                                end: Alignment.bottomCenter,
+                                                colors: [
+                                                  Color.fromARGB(255, 248, 248, 248),
+                                                  Color.fromARGB(255, 199, 199, 199),
+                                                  Color.fromARGB(255, 248, 248, 248),
+                                                  Color.fromARGB(255, 116, 116, 116),
+                                                  Color.fromARGB(242, 61, 61, 61),
+                                                ],
+                                              ),
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                            child: Container(
+                                              height: 40,
+                                              width: double.infinity,
+                                              decoration: BoxDecoration(
+                                                gradient: const LinearGradient(
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
+                                                  colors: [
+                                                    Color(0xFF808080),
+                                                    Color(0xFF505050),
+                                                  ],
+                                                ),
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: Center(
+                                                child: ShaderMask(
+                                                  shaderCallback: (bounds) {
+                                                    return const LinearGradient(
+                                                      begin: Alignment.centerLeft,
+                                                      end: Alignment.centerRight,
+                                                      colors: [Color(0xFFE9E9E9), Color(0xFFFFFFFF)],
+                                                    ).createShader(bounds);
+                                                  },
+                                                  child: const Text(
+                                                    'Close',
+                                                    style: TextStyle(
+                                                      fontSize: 14,
+                                                      fontWeight: FontWeight.w600,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                  ],
-                );
-              },
-            );
-            if (confirmed == true) {
-              nav.pushNamed('/take_quiz', arguments: currentQuiz.id);
+                  ),
+                ),
+              );
+            },
+          );
+          if (confirmed == true) {
+            nav.pushNamed('/take_quiz', arguments: currentQuiz.id);
             }
           } catch (e) {
             if (!ctx.mounted) return;
@@ -194,33 +420,213 @@ Future<void> showTakeQuizDialog(BuildContext context) async {
                       ? normalizeDuplicateTrailingWords(displayNameRaw)
                       : normalizeDuplicateTrailingWords('$firstName $lastName');
 
-                  return AlertDialog(
-                    title: Text(quiz.title),
-                    content: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (quiz.description.isNotEmpty) Text(quiz.description),
-                        const SizedBox(height: 8),
-                        Text('Questions: $questionCount'),
-                        const SizedBox(height: 8),
-                        Text('Author: ${authorName.isNotEmpty ? authorName : 'Unknown'}'),
-                      ],
-                    ),
-                    actions: [
-                      TextButton(onPressed: () => Navigator.of(sctx).pop(false), child: const Text('Close')),
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(sctx).pop(true);
-                        },
-                        child: const Text('Attempt Quiz'),
+                  return Dialog(
+                    backgroundColor: Colors.transparent,
+                    child: Center(
+                      child: SingleChildScrollView(
+                        child: Material(
+                          type: MaterialType.transparency,
+                          child: SizedBox(
+                            width: 360,
+                            child: CustomPaint(
+                              painter: _GradientPainter(
+                                strokeWidth: 2,
+                                radius: 20,
+                                gradient: const LinearGradient(
+                                  begin: Alignment.bottomCenter,
+                                  end: Alignment.topCenter,
+                                  colors: [
+                                    Color.fromARGB(255, 0, 0, 0),
+                                    Color(0xFFFFFFFF),
+                                    Color.fromARGB(255, 170, 170, 170),
+                                    Color(0xFFFFFFFF),
+                                    Color(0xFFFFFFFF),
+                                  ],
+                                ),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(2),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Color.fromARGB(228, 238, 238, 238),
+                                        Color.fromARGB(235, 173, 173, 173),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(22),
+                                  ),
+                                  padding: const EdgeInsets.all(24),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        quiz.title,
+                                        style: const TextStyle(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFF000000),
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      if (quiz.description.isNotEmpty)
+                                        Text(
+                                          quiz.description,
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                          color: Color.fromARGB(202, 0, 0, 0),
+                                          height: 1.5,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    if (quiz.description.isNotEmpty)
+                                      const SizedBox(height: 20),
+                                    // Quiz Details Card
+                                    _buildDetailCard(
+                                      children: [
+                                        _buildDetailRow('Questions', '$questionCount'),
+                                        const SizedBox(height: 12),
+                                        _buildDetailRow('Author', authorName.isNotEmpty ? authorName : 'Unknown'),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 20),
+                                    // Action Buttons
+                                    Column(
+                                      children: [
+                                        MouseRegion(
+                                          cursor: SystemMouseCursors.click,
+                                          child: GestureDetector(
+                                            onTap: () => Navigator.of(sctx).pop(true),
+                                            child: Container(
+                                              padding: const EdgeInsets.all(3),
+                                              decoration: BoxDecoration(
+                                                gradient: const LinearGradient(
+                                                  begin: Alignment.topCenter,
+                                                  end: Alignment.bottomCenter,
+                                                  colors: [
+                                                    Color.fromARGB(255, 248, 248, 248),
+                                                    Color.fromARGB(255, 199, 199, 199),
+                                                    Color.fromARGB(255, 248, 248, 248),
+                                                    Color.fromARGB(255, 116, 116, 116),
+                                                    Color.fromARGB(242, 61, 61, 61),
+                                                  ],
+                                                ),
+                                                borderRadius: BorderRadius.circular(10),
+                                              ),
+                                              child: Container(
+                                                height: 40,
+                                                width: double.infinity,
+                                                decoration: BoxDecoration(
+                                                  gradient: const LinearGradient(
+                                                    begin: Alignment.topLeft,
+                                                    end: Alignment.bottomRight,
+                                                    colors: [
+                                                      Color(0xFFFF1F00),
+                                                      Color(0xFFDD1700),
+                                                    ],
+                                                  ),
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: Center(
+                                                  child: ShaderMask(
+                                                    shaderCallback: (bounds) {
+                                                      return const LinearGradient(
+                                                        begin: Alignment.centerLeft,
+                                                        end: Alignment.centerRight,
+                                                        colors: [Color(0xFFE9E9E9), Color(0xFFFFFFFF)],
+                                                      ).createShader(bounds);
+                                                    },
+                                                    child: const Text(
+                                                      'Attempt Quiz',
+                                                      style: TextStyle(
+                                                        fontSize: 14,
+                                                        fontWeight: FontWeight.w600,
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        MouseRegion(
+                                          cursor: SystemMouseCursors.click,
+                                          child: GestureDetector(
+                                            onTap: () => Navigator.of(sctx).pop(false),
+                                            child: Container(
+                                              padding: const EdgeInsets.all(3),
+                                              decoration: BoxDecoration(
+                                                gradient: const LinearGradient(
+                                                  begin: Alignment.topCenter,
+                                                  end: Alignment.bottomCenter,
+                                                  colors: [
+                                                    Color.fromARGB(255, 248, 248, 248),
+                                                    Color.fromARGB(255, 199, 199, 199),
+                                                    Color.fromARGB(255, 248, 248, 248),
+                                                    Color.fromARGB(255, 116, 116, 116),
+                                                    Color.fromARGB(242, 61, 61, 61),
+                                                  ],
+                                                ),
+                                                borderRadius: BorderRadius.circular(10),
+                                              ),
+                                              child: Container(
+                                                height: 40,
+                                                width: double.infinity,
+                                                decoration: BoxDecoration(
+                                                  gradient: const LinearGradient(
+                                                    begin: Alignment.topLeft,
+                                                    end: Alignment.bottomRight,
+                                                    colors: [
+                                                      Color(0xFF808080),
+                                                      Color(0xFF505050),
+                                                    ],
+                                                  ),
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: Center(
+                                                  child: ShaderMask(
+                                                    shaderCallback: (bounds) {
+                                                      return const LinearGradient(
+                                                        begin: Alignment.centerLeft,
+                                                        end: Alignment.centerRight,
+                                                        colors: [Color(0xFFE9E9E9), Color(0xFFFFFFFF)],
+                                                      ).createShader(bounds);
+                                                    },
+                                                    child: const Text(
+                                                      'Close',
+                                                      style: TextStyle(
+                                                        fontSize: 14,
+                                                        fontWeight: FontWeight.w600,
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
-                    ],
-                  );
-                },
-              );
-              if (confirmed == true) {
-                nav.pushNamed('/take_quiz', arguments: quiz.id);
+                    ),
+                  ),
+                );
+              },
+            );
+            if (confirmed == true) {
+              nav.pushNamed('/take_quiz', arguments: currentQuiz.id);
               }
             }
           } catch (e) {

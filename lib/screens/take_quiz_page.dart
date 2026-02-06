@@ -215,7 +215,7 @@ class _TakeQuizPageState extends State<TakeQuizPage>
   }
 
   Future<void> _refreshMonitoringPrereqs() async {
-    if (!Platform.isAndroid) {
+    if (kIsWeb || !Platform.isAndroid) {
       if (!mounted) return;
       setState(() {
         _usageAccessGranted = true;
@@ -237,7 +237,7 @@ class _TakeQuizPageState extends State<TakeQuizPage>
   }
 
   Future<bool> _ensureAccessibilityService() async {
-    if (!Platform.isAndroid) {
+    if (kIsWeb || !Platform.isAndroid) {
       await _refreshMonitoringPrereqs();
       return true;
     }
@@ -293,12 +293,12 @@ class _TakeQuizPageState extends State<TakeQuizPage>
   }
 
   Future<void> _openUsageAccessSettings() async {
-    if (!Platform.isAndroid) return;
+    if (kIsWeb || !Platform.isAndroid) return;
     await UsageStats.grantUsagePermission();
   }
 
   Future<void> _openAccessibilitySettings() async {
-    if (!Platform.isAndroid) return;
+    if (kIsWeb || !Platform.isAndroid) return;
     final monitor = AccessibilityMonitor.instance;
     await monitor.initialize();
     await monitor.openAccessibilitySettings();
@@ -408,7 +408,7 @@ class _TakeQuizPageState extends State<TakeQuizPage>
   }
 
   Future<bool> _ensureUsageAccessPermission() async {
-    if (!Platform.isAndroid) {
+    if (kIsWeb || !Platform.isAndroid) {
       await _refreshMonitoringPrereqs();
       return true;
     }
