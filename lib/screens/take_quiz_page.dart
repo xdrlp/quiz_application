@@ -52,6 +52,80 @@ class _GradientPainter extends CustomPainter {
   bool shouldRepaint(CustomPainter oldDelegate) => true;
 }
 
+class _CircleProgressPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+  final double strokeWidth;
+
+  _CircleProgressPainter({
+    required this.progress,
+    required this.color,
+    required this.strokeWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width - strokeWidth) / 2;
+
+    // Neumorphic background circle - light shadow
+    final lightShadow = Paint()
+      ..color = const Color.fromARGB(255, 255, 255, 255)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6;
+    canvas.drawCircle(center, radius - 2, lightShadow);
+
+    // Neumorphic background circle - dark shadow
+    final darkShadow = Paint()
+      ..color = const Color.fromARGB(108, 66, 66, 66)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.5;
+    canvas.drawCircle(center, radius + 2, darkShadow);
+
+    // Background circle (base)
+    final backgroundPaint = Paint()
+      ..color = const Color.fromARGB(49, 88, 88, 88)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth + 5
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1);
+    canvas.drawCircle(center, radius, backgroundPaint);
+
+    // Progress arc - dark side (bottom-right)
+    final progressDarkPaint = Paint()
+      ..color = const Color.fromARGB(153, 12, 12, 12)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth + 1
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -3.14159 / 2,
+      2 * 3.14159 * progress,
+      false,
+      progressDarkPaint,
+    );
+
+    // Progress arc - light side (top-left)
+    final progressLightPaint = Paint()
+      ..color = const Color.fromARGB(218, 126, 126, 126)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth * 0.7
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius + 1),
+      -3.14159 / 2,
+      2 * 3.14159 * progress,
+      false,
+      progressLightPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_CircleProgressPainter oldDelegate) =>
+      oldDelegate.progress != progress;
+}
+
 class TakeQuizPage extends StatefulWidget {
   final String quizId;
   const TakeQuizPage({super.key, required this.quizId});
@@ -72,6 +146,7 @@ class _TakeQuizPageState extends State<TakeQuizPage>
   final Map<String, String> _answers = {}; // questionId -> response
   final Map<String, List<String>> _multiAnswers = {}; // for checkbox
   String? _attemptId;
+  bool _isAnswering = false; // prevents multiple answer selections
   Timer? _timer;
   int? _remainingSeconds;
   Size? _reportedScreenSize;
@@ -1280,10 +1355,10 @@ class _TakeQuizPageState extends State<TakeQuizPage>
   }
 
   void _answerCheckbox(String qid, String choiceId, bool selected) {
-    if (_lockedQuestionIds.contains(qid)) {
-      // ignore changes to locked (flagged) questions
+    if (_isAnswering || _lockedQuestionIds.contains(qid)) {
+      // ignore changes to locked (flagged) questions or if already answering
       // ignore: avoid_print
-      print('[TakeQuizPage] _answerCheckbox ignored for locked qid=$qid');
+      print('[TakeQuizPage] _answerCheckbox ignored for qid=$qid (isAnswering=$_isAnswering)');
       return;
     }
     final list = _multiAnswers[qid] ?? [];
@@ -1297,12 +1372,13 @@ class _TakeQuizPageState extends State<TakeQuizPage>
   }
 
   void _answerSingle(String qid, String choiceId) {
-    if (_lockedQuestionIds.contains(qid)) {
-      // ignore single-choice changes for locked questions
+    if (_isAnswering || _lockedQuestionIds.contains(qid)) {
+      // ignore single-choice changes if already answering or locked
       // ignore: avoid_print
-      print('[TakeQuizPage] _answerSingle ignored for locked qid=$qid');
+      print('[TakeQuizPage] _answerSingle ignored for qid=$qid (isAnswering=$_isAnswering)');
       return;
     }
+    _isAnswering = true;
     _answers[qid] = choiceId;
     final now = DateTime.now();
     final duration = _questionStartTime != null
@@ -1325,8 +1401,11 @@ class _TakeQuizPageState extends State<TakeQuizPage>
       '[TakeQuizPage] _answerSingle wrote for qid=$qid model=${_answerModels[qid]} flagged=${_flaggedQuestionIds.contains(qid)}',
     );
     _antiCheat.onQuestionAnswered();
-    Future.delayed(const Duration(milliseconds: 600), () {
-      if (mounted) _nextQuestion();
+    Future.delayed(const Duration(milliseconds: 200), () {
+      if (mounted) {
+        _isAnswering = false;
+        _nextQuestion();
+      }
     });
   }
 
@@ -1342,6 +1421,9 @@ class _TakeQuizPageState extends State<TakeQuizPage>
   }
 
   Future<void> _submitAttempt() async {
+    // Stop the timer when submitting
+    _timer?.cancel();
+    
     if (_attemptId == null) {
       return;
     }
@@ -1447,20 +1529,350 @@ class _TakeQuizPageState extends State<TakeQuizPage>
     } catch (_) {}
 
     if (mounted) {
+      final scorePercentage = attempt.totalPoints > 0 
+          ? (attempt.score / attempt.totalPoints * 100).round() 
+          : 0;
+      
+      // Calculate time taken
+      final timeDiff = attempt.submittedAt?.difference(attempt.startedAt) ?? Duration.zero;
+      final int totalMilliseconds = timeDiff.inMilliseconds;
+      final int totalSeconds = timeDiff.inSeconds;
+      String timeTaken;
+      if (totalSeconds < 60) {
+        final seconds = totalMilliseconds ~/ 1000;
+        final centiseconds = (totalMilliseconds % 1000) ~/ 10; // Only 2 decimal places
+        timeTaken = '$seconds.${centiseconds.toString().padLeft(2, '0')} sec';
+      } else {
+        final minutes = totalSeconds ~/ 60;
+        final seconds = totalSeconds % 60;
+        timeTaken = '$minutes:${seconds.toString().padLeft(2, '0')} mins';
+      }
+      
+      final incorrectAnswers = attempt.totalPoints - attempt.score;
+      final passingGrade = 70; // percentage
+      
       showDialog(
         context: context,
-        builder: (_) => AlertDialog(
-          title: const Text('Submitted'),
-          content: Text('Score: ${attempt.score}/${attempt.totalPoints}'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                if (!mounted) return;
-                Navigator.of(context).popUntil((r) => r.isFirst);
-              },
-              child: const Text('OK'),
+        builder: (_) => Dialog(
+          backgroundColor: Colors.transparent,
+          child: Center(
+            child: SingleChildScrollView(
+              child: SizedBox(
+                width: 320,
+                child: CustomPaint(
+                  painter: _GradientPainter(
+                    strokeWidth: 2,
+                    radius: 20,
+                    gradient: const LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [
+                        Color.fromARGB(255, 0, 0, 0),
+                        Color(0xFFFFFFFF),
+                        Color.fromARGB(255, 170, 170, 170),
+                        Color(0xFFFFFFFF),
+                        Color(0xFFFFFFFF),
+                      ],
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(2),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color.fromARGB(251, 238, 238, 238),
+                            Color.fromARGB(251, 173, 173, 173),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            'Quiz Results',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF222222),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          // Circular Score Display
+                          SizedBox(
+                            width: 140,
+                            height: 140,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // Progress circle overlay
+                                CustomPaint(
+                                  painter: _CircleProgressPainter(
+                                    progress: scorePercentage / 100,
+                                    color: const Color(0xFF222222),
+                                    strokeWidth: 9,
+                                  ),
+                                  size: const Size(140, 140),
+                                ),
+                                // Center content
+                                Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      '$scorePercentage%',
+                                      style: const TextStyle(
+                                        fontSize: 36,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF222222),
+                                      ),
+                                    ),
+                                    const Text(
+                                      'Correct',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Color(0xFF888888),
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          // Stats container
+                          CustomPaint(
+                            painter: _GradientPainter(
+                              strokeWidth: 1.5,
+                              radius: 14,
+                              gradient: const LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Color.fromARGB(255, 0, 0, 0),
+                                  Color.fromARGB(255, 100, 100, 100),
+                                  Color.fromARGB(255, 255, 255, 255),
+                                ],
+                              ),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                children: [
+                                  // Time Taken
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text(
+                                        'Time Taken',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Color.fromARGB(255, 102, 102, 102),
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      Text(
+                                        timeTaken,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF222222),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  // Incorrect Answers
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text(
+                                        'Incorrect',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Color.fromARGB(255, 102, 102, 102),
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      Text(
+                                        incorrectAnswers.toString(),
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF222222),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  // Passing Grade
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text(
+                                        'Passing Grade',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Color.fromARGB(255, 102, 102, 102),
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      Text(
+                                        '$passingGrade%',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF222222),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  // Total Score
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text(
+                                        'Total Score',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Color.fromARGB(255, 102, 102, 102),
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      Text(
+                                        '${attempt.score}/${attempt.totalPoints}',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF222222),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          // Button Row
+                          Row(
+                            children: [
+                              // View Details button
+                              Expanded(
+                                child: MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      if (!mounted) return;
+                                      Navigator.of(context).pop();
+                                      Navigator.of(context).pushNamed('/attempt_review', arguments: _attemptId);
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.all(3),
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: [
+                                            Color.fromARGB(255, 248, 248, 248),
+                                            Color.fromARGB(255, 199, 199, 199),
+                                            Color.fromARGB(255, 248, 248, 248),
+                                            Color.fromARGB(255, 116, 116, 116),
+                                            Color.fromARGB(242, 61, 61, 61),
+                                          ],
+                                        ),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Container(
+                                        height: 42,
+                                        decoration: BoxDecoration(
+                                          gradient: const LinearGradient(
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                            colors: [
+                                              Color(0xFF808080),
+                                              Color(0xFF505050),
+                                            ],
+                                          ),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: const Center(
+                                          child: Text(
+                                            'View Details',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w400,
+                                              color: Color.fromARGB(255, 255, 255, 255),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              // Continue button
+                              Expanded(
+                                child: MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      if (!mounted) return;
+                                      Navigator.of(context).popUntil((r) => r.isFirst);
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.all(3),
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: [
+                                            Color.fromARGB(255, 248, 248, 248),
+                                            Color.fromARGB(255, 199, 199, 199),
+                                            Color.fromARGB(255, 248, 248, 248),
+                                            Color.fromARGB(255, 116, 116, 116),
+                                            Color.fromARGB(242, 61, 61, 61),
+                                          ],
+                                        ),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Container(
+                                        height: 42,
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFDD3A1A),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: const Center(
+                                          child: Text(
+                                            'Continue',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w400,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
-          ],
+          ),
         ),
       );
     }

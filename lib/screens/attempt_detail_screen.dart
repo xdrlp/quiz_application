@@ -322,7 +322,7 @@ class _AttemptDetailScreenState extends State<AttemptDetailScreen> {
                 centerTitle: true,
                 leading: IconButton(
                   icon: const Icon(Icons.arrow_back, color: Colors.black),
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/quiz_history', (route) => route.isFirst),
                 ),
               ),
             ),
@@ -409,7 +409,7 @@ class _AttemptDetailScreenState extends State<AttemptDetailScreen> {
                 centerTitle: true,
                 leading: IconButton(
                   icon: const Icon(Icons.arrow_back, color: Colors.black),
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/quiz_history', (route) => route.isFirst),
                 ),
               ),
             ),
@@ -468,10 +468,37 @@ class _AttemptDetailScreenState extends State<AttemptDetailScreen> {
                       ),
                       const SizedBox(height: 16),
                       if (attempt.submittedAt != null)
-                       Text(
-                          'Completed on ${DateFormat.yMMMd().add_jm().format(attempt.submittedAt!)}',
-                           style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                        ),
+                       Column(
+                         crossAxisAlignment: CrossAxisAlignment.center,
+                         children: [
+                           Text(
+                             'Completed on ${DateFormat.yMMMd().add_jm().format(attempt.submittedAt!)}',
+                             style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                           ),
+                           const SizedBox(height: 4),
+                           Builder(
+                             builder: (context) {
+                               final timeDiff = attempt.submittedAt!.difference(attempt.startedAt);
+                               final totalSeconds = timeDiff.inSeconds;
+                               final totalMilliseconds = timeDiff.inMilliseconds;
+                               String timeTaken;
+                               if (totalSeconds < 60) {
+                                 final seconds = totalMilliseconds ~/ 1000;
+                                 final centiseconds = (totalMilliseconds % 1000) ~/ 10;
+                                 timeTaken = '$seconds.${centiseconds.toString().padLeft(2, '0')} sec';
+                               } else {
+                                 final minutes = totalSeconds ~/ 60;
+                                 final secs = totalSeconds % 60;
+                                 timeTaken = '$minutes:${secs.toString().padLeft(2, '0')} mins';
+                               }
+                               return Text(
+                                 'Time taken: $timeTaken',
+                                 style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                               );
+                             },
+                           ),
+                         ],
+                       ),
                     ],
                   ),
                 ),
@@ -486,7 +513,6 @@ class _AttemptDetailScreenState extends State<AttemptDetailScreen> {
             const SizedBox(height: 16),
 
             ..._questions.map((q) {
-              final idx = _questions.indexOf(q) + 1;
               final attemptAnswer = attempt.answers.firstWhere(
                 (a) => a.questionId == q.id,
                 orElse: () => AttemptAnswerModel(
@@ -535,12 +561,12 @@ class _AttemptDetailScreenState extends State<AttemptDetailScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF222222),
+                                    color: isCorrect ? const Color.fromARGB(255, 0, 201, 0) : const Color.fromARGB(255, 204, 0, 0),
                                     borderRadius: BorderRadius.circular(6),
                                     boxShadow: [
                                       const BoxShadow(
@@ -555,9 +581,10 @@ class _AttemptDetailScreenState extends State<AttemptDetailScreen> {
                                       ),
                                     ],
                                   ),
-                                  child: Text(
-                                    'Q$idx',
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white),
+                                  child: Icon(
+                                    isCorrect ? Icons.check : Icons.close,
+                                    color: Colors.white,
+                                    size: 16,
                                   ),
                                 ),
                                 const SizedBox(width: 12),

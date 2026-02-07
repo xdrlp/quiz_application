@@ -374,7 +374,7 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
                 centerTitle: true,
                 leading: IconButton(
                   icon: const Icon(Icons.arrow_back, color: Colors.black),
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => route.isFirst),
                 ),
                 title: const Text('Quiz History', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20)),
               ),

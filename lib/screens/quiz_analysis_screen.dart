@@ -9,7 +9,6 @@ import 'package:quiz_application/models/attempt_model.dart';
 import 'package:quiz_application/models/violation_model.dart';
 import 'package:quiz_application/models/user_model.dart';
 import 'package:quiz_application/utils/answer_utils.dart';
-
 class _GradientPainter extends CustomPainter {
   final double radius;
   final double strokeWidth;
@@ -516,7 +515,7 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
       icon: Icons.schedule, title: 'Behavior & Time', accent: const Color(0xFF222222), children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Average time', style: TextStyle(color: Color.fromARGB(255, 94, 94, 94))), Text('${avgTimeFormatted.inMinutes}:${(avgTimeFormatted.inSeconds % 60).toString().padLeft(2, '0')}', style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF222222)))]),
         const SizedBox(height: 12),
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Total violations', style: TextStyle(color: Color.fromARGB(255, 94, 94, 94))), Row(children: [totalViolations == 0 ? const Icon(Icons.check_circle, color: Colors.green, size: 18) : const SizedBox(width: 18), const SizedBox(width: 8), Text('$totalViolations', style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF222222)))])]),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Total violations', style: TextStyle(color: Color.fromARGB(255, 94, 94, 94))), Text('$totalViolations', style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF222222)))]),
       ],
     );
 
@@ -1032,16 +1031,16 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '${percentFlagged.toStringAsFixed(1)}%',
+                                '${attemptsWithViol.length}/${_attempts.length}',
                                 style: TextStyle(
-                                  fontSize: 32,
+                                  fontSize: 28,
                                   fontWeight: FontWeight.bold,
                                   color: impactColor(percentFlagged),
                                 ),
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                '${attemptsWithViol.length} out of ${_attempts.length} attempts',
+                                'attempts with violations',
                                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                   color: const Color.fromARGB(255, 78, 78, 78),
                                 ),
@@ -1181,6 +1180,10 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
                             decoration: BoxDecoration(
                               color: badgeColor.withAlpha((0.12 * 255).round()),
                               borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: const Color.fromARGB(78, 0, 0, 0),
+                                width: 1.0,
+                              ),
                             ),
                             child: Text(
                               '$correct/$total',
@@ -1261,6 +1264,10 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
                             decoration: BoxDecoration(
                               color: badgeColor.withAlpha((0.12 * 255).round()),
                               borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: const Color.fromARGB(78, 0, 0, 0),
+                                width: 1.0,
+                              ),
                             ),
                             child: Text(
                               '$correct/$total',

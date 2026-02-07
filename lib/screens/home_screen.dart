@@ -40,6 +40,8 @@ class _GradientPainter extends CustomPainter {
   bool shouldRepaint(CustomPainter oldDelegate) => true;
 }
 
+
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -525,6 +527,8 @@ class _HomeScreenState extends State<HomeScreen> {
     if (diff.inHours < 48) return '${diff.inHours} hours ago';
     return '${diff.inDays} days ago';
   }
+
+  
 
   Widget _neumorphicCard({required VoidCallback onTap, required Widget child}) {
     return _NeuomorphicCardWidget(onTap: onTap, child: child);
