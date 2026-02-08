@@ -4,7 +4,6 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -17,7 +16,6 @@ import 'package:quiz_application/models/question_model.dart';
 import 'package:quiz_application/utils/answer_utils.dart';
 import 'package:quiz_application/models/attempt_model.dart';
 import 'package:quiz_application/providers/auth_provider.dart';
-import 'package:quiz_application/services/local_violation_store.dart';
 import 'package:usage_stats/usage_stats.dart';
 import 'package:quiz_application/services/screen_protector.dart';
 import 'package:quiz_application/utils/snackbar_utils.dart';
@@ -162,6 +160,8 @@ class _TakeQuizPageState extends State<TakeQuizPage>
   bool _isShowingViolationDialog = false;
   bool? _usageAccessGranted;
   bool? _accessibilityServiceEnabled;
+  bool _blinkUsageAccess = false;
+  bool _blinkAccessibility = false;
 
   String? _extractDetailValue(String? details, String key) {
     if (details == null || details.isEmpty) return null;
@@ -261,7 +261,6 @@ class _TakeQuizPageState extends State<TakeQuizPage>
         consequence =
             'Final violation: your attempt will be automatically submitted.';
       }
-      final message = '$base\n\n$consequence';
       await showDialog(
         context: context,
         builder: (_) => Dialog(
@@ -767,12 +766,13 @@ class _TakeQuizPageState extends State<TakeQuizPage>
           builder: (ctx, setState) {
             return Dialog(
               backgroundColor: Colors.transparent,
+              insetPadding: EdgeInsets.zero,
               child: Center(
                 child: SingleChildScrollView(
                   child: Material(
                     type: MaterialType.transparency,
                     child: SizedBox(
-                      width: 420,
+                      width: 350,
                       child: CustomPaint(
                         painter: _GradientPainter(
                           strokeWidth: 2,
@@ -863,10 +863,12 @@ class _TakeQuizPageState extends State<TakeQuizPage>
                                           _usageAccessGranted == true,
                                           () async {
                                             await _openUsageAccessSettings();
-                                            await Future.delayed(const Duration(milliseconds: 500));
+                                            // Wait longer for user to enable permission and return
+                                            await Future.delayed(const Duration(seconds: 5));
                                             await _refreshMonitoringPrereqs();
                                             setState(() {});
                                           },
+                                          blinkRed: _blinkUsageAccess,
                                         ),
                                         const SizedBox(height: 10),
                                         _monitoringStatusRow(
@@ -874,10 +876,12 @@ class _TakeQuizPageState extends State<TakeQuizPage>
                                           _accessibilityServiceEnabled == true,
                                           () async {
                                             await _openAccessibilitySettings();
-                                            await Future.delayed(const Duration(milliseconds: 500));
+                                            // Wait longer for user to enable permission and return
+                                            await Future.delayed(const Duration(seconds: 5));
                                             await _refreshMonitoringPrereqs();
                                             setState(() {});
                                           },
+                                          blinkRed: _blinkAccessibility,
                                         ),
                                       ],
                                     ),
@@ -904,7 +908,37 @@ class _TakeQuizPageState extends State<TakeQuizPage>
                                   children: [
                                     Checkbox(
                                       value: acknowledged,
-                                      onChanged: (v) => setState(() => acknowledged = v ?? false),
+                                      onChanged: (v) {
+                                        final bothEnabled = (_usageAccessGranted == true) && (_accessibilityServiceEnabled == true);
+                                        if (v == true && !bothEnabled) {
+                                          // Prevent checking if permissions not enabled
+                                          setState(() {
+                                            _blinkUsageAccess = _usageAccessGranted != true;
+                                            _blinkAccessibility = _accessibilityServiceEnabled != true;
+                                          });
+                                          // Start blinking timer
+                                          Timer.periodic(const Duration(milliseconds: 200), (timer) {
+                                            if (timer.tick >= 6) { // 6 ticks = 1.2 seconds of blinking
+                                              timer.cancel();
+                                              if (mounted) {
+                                                setState(() {
+                                                  _blinkUsageAccess = false;
+                                                  _blinkAccessibility = false;
+                                                });
+                                              }
+                                              return;
+                                            }
+                                            if (mounted) {
+                                              setState(() {
+                                                _blinkUsageAccess = !_blinkUsageAccess && (_usageAccessGranted != true);
+                                                _blinkAccessibility = !_blinkAccessibility && (_accessibilityServiceEnabled != true);
+                                              });
+                                            }
+                                          });
+                                          return;
+                                        }
+                                        setState(() => acknowledged = v ?? false);
+                                      },
                                       activeColor: const Color(0xFFFF1F00),
                                       checkColor: Colors.white,
                                       side: const BorderSide(
@@ -1229,8 +1263,9 @@ class _TakeQuizPageState extends State<TakeQuizPage>
   Widget _monitoringStatusRow(
     String label,
     bool ready,
-    Future<void> Function()? onPressed,
-  ) {
+    Future<void> Function()? onPressed, {
+    bool blinkRed = false,
+  }) {
     final icon = ready ? Icons.check_circle : Icons.warning_amber_rounded;
     final color = ready ? const Color(0xFF222222) : Colors.orange;
     return Padding(
@@ -1240,9 +1275,14 @@ class _TakeQuizPageState extends State<TakeQuizPage>
           Icon(icon, color: color, size: 20),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF222222)),
+            child: AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 500),
+              style: TextStyle(
+                fontWeight: blinkRed ? FontWeight.bold : FontWeight.bold,
+                color: blinkRed ? const Color(0xFFFF0000) : const Color(0xFF222222),
+                fontSize: blinkRed ? 14 : 13,
+              ),
+              child: Text(label),
             ),
           ),
           if (!ready)
@@ -1255,68 +1295,6 @@ class _TakeQuizPageState extends State<TakeQuizPage>
               style: TextButton.styleFrom(foregroundColor: const Color(0xFF222222)),
               child: const Text('Open settings'),
             ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMonitoringBanner() {
-    final usageReady = _usageAccessGranted == true;
-    final accessibilityReady = _accessibilityServiceEnabled == true;
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F5),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          const BoxShadow(
-            color: Colors.white,
-            offset: Offset(-4, -4),
-            blurRadius: 10,
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            offset: const Offset(4, 4),
-            blurRadius: 10,
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.shield_outlined, color: Colors.orange),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Text(
-                  'Enable monitoring protections',
-                  style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF222222)),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Usage access and accessibility monitoring must be enabled before starting the quiz.',
-            style: TextStyle(color: Color(0xFF7F8C8D)),
-          ),
-          const SizedBox(height: 12),
-          _monitoringStatusRow(
-            'Usage access permission',
-            usageReady,
-            () async {
-              await _openUsageAccessSettings();
-            },
-          ),
-          const SizedBox(height: 6),
-          _monitoringStatusRow(
-            'Accessibility service',
-            accessibilityReady,
-            () async {
-              await _openAccessibilitySettings();
-            },
-          ),
         ],
       ),
     );
@@ -2180,12 +2158,6 @@ class _TakeQuizPageState extends State<TakeQuizPage>
                       ),
                       const SizedBox(height: 32),
                     ],
-                    if ((_usageAccessGranted ?? false) == false ||
-                        (_accessibilityServiceEnabled ?? false) == false)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12.0),
-                        child: _buildMonitoringBanner(),
-                      ),
                     Expanded(
                       child: _questions.isEmpty
                           ? const SizedBox.shrink()
