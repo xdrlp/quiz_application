@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -51,6 +52,7 @@ class AntiCheatService {
   String? _currentAttemptId;
   String? _currentUserId;
   int _violationCount = 0;
+  int _currentQuestionIndex = 0;
   Size? _lastScreenSize;
   bool _isQuizActive = false;
   DateTime? _lastViolationAt;
@@ -81,37 +83,43 @@ class AntiCheatService {
   /// Set a callback to receive violation events.
   void setOnViolation(void Function(ViolationModel) cb) => onViolation = cb;
 
+  /// Set the current question index for violation logging.
+  void setCurrentQuestionIndex(int index) => _currentQuestionIndex = index;
+
   // Initialize anti-cheat for current attempt
   void startAntiCheat(String attemptId, String userId) async {
     _currentAttemptId = attemptId;
     _currentUserId = userId;
     _violationCount = 0;
+    _currentQuestionIndex = 0;
     _isQuizActive = true;
     // Debug log
     // ignore: avoid_print
     print('[AntiCheat] startAntiCheat attempt=$attemptId user=$userId');
 
-    await _accessibilityMonitor.initialize();
-    _accessibilityMonitor.reset();
+    if (!kIsWeb && Platform.isAndroid) {
+      await _accessibilityMonitor.initialize();
+      _accessibilityMonitor.reset();
 
-    // Start capturing accessibility events for the duration of the attempt so
-    // we can include raw event timing in local logs for diagnostics.
-    try {
-      _accessibilitySubscription = _accessibilityMonitor.stream.listen((ev) {
-        try {
-          _capturedAccessibilityEvents.add({
-            'package': ev.packageName,
-            'class': ev.className,
-            'type': ev.eventType,
-            'ts': ev.timestamp,
-          });
-          // Keep memory bounded
-          if (_capturedAccessibilityEvents.length > 1000) {
-            _capturedAccessibilityEvents.removeRange(0, _capturedAccessibilityEvents.length - 1000);
-          }
-        } catch (_) {}
-      });
-    } catch (_) {}
+      // Start capturing accessibility events for the duration of the attempt so
+      // we can include raw event timing in local logs for diagnostics.
+      try {
+        _accessibilitySubscription = _accessibilityMonitor.stream.listen((ev) {
+          try {
+            _capturedAccessibilityEvents.add({
+              'package': ev.packageName,
+              'class': ev.className,
+              'type': ev.eventType,
+              'ts': ev.timestamp,
+            });
+            // Keep memory bounded
+            if (_capturedAccessibilityEvents.length > 1000) {
+              _capturedAccessibilityEvents.removeRange(0, _capturedAccessibilityEvents.length - 1000);
+            }
+          } catch (_) {}
+        });
+      } catch (_) {}
+    }
       // Start a periodic sampler to capture foreground app via UsageStats as a
       // supplemental signal (some devices do not emit accessibility events).
       try {
@@ -120,7 +128,7 @@ class AntiCheatService {
         });
       } catch (_) {}
 
-    if (Platform.isAndroid && _packageName == null) {
+    if (!kIsWeb && Platform.isAndroid && _packageName == null) {
       try {
         final info = await PackageInfo.fromPlatform();
         _packageName = info.packageName;
@@ -179,10 +187,12 @@ class AntiCheatService {
     }
     _accessibilitySubscription = null;
     _capturedAccessibilityEvents.clear();
-    try {
-      await _accessibilityMonitor.dispose();
-    } catch (_) {
-      // Ignore disposal errors
+    if (!kIsWeb && Platform.isAndroid) {
+      try {
+        await _accessibilityMonitor.dispose();
+      } catch (_) {
+        // Ignore disposal errors
+      }
     }
     try {
       _foregroundSampler?.cancel();
@@ -293,7 +303,7 @@ class AntiCheatService {
   }
 
   Future<String?> _resolveLastForegroundApp() async {
-    if (!Platform.isAndroid) return null;
+    if (kIsWeb || !Platform.isAndroid) return null;
     try {
       final granted = await UsageStats.checkUsagePermission();
       if (granted != true) return null;
@@ -333,7 +343,7 @@ class AntiCheatService {
   }
 
   Future<String?> _resolveAppLabel(String package) async {
-    if (!Platform.isAndroid) return null;
+    if (kIsWeb || !Platform.isAndroid) return null;
     if (_appLabelCache.containsKey(package)) return _appLabelCache[package];
     if (_appLabelMisses.contains(package)) return null;
 
@@ -402,12 +412,14 @@ class AntiCheatService {
 
       // Also ingest any accessibility events that occurred since the last
       // persisted entry.
-      final acc = _accessibilityMonitor.recentEvents(window: Duration(seconds: _usageLookbackSeconds));
-      acc.sort((a, b) => a.timestamp.compareTo(b.timestamp));
-      for (final ev in acc) {
-        final pkg = ev.packageName;
-        if (pkg == _packageName) continue;
-        await _recordOpenedApp(pkg, ev.timestamp);
+      if (!kIsWeb && Platform.isAndroid) {
+        final acc = _accessibilityMonitor.recentEvents(window: Duration(seconds: _usageLookbackSeconds));
+        acc.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+        for (final ev in acc) {
+          final pkg = ev.packageName;
+          if (pkg == _packageName) continue;
+          await _recordOpenedApp(pkg, ev.timestamp);
+        }
       }
 
       // Persist a snapshot (best-effort)
@@ -433,7 +445,7 @@ class AntiCheatService {
   }
 
   Future<_AppSwitchTimeline?> _collectAppSwitchTimeline(DateTime? since) async {
-    if (!Platform.isAndroid) return null;
+    if (kIsWeb || !Platform.isAndroid) return null;
     try {
       final granted = await UsageStats.checkUsagePermission();
       if (granted != true) return null;
@@ -624,7 +636,7 @@ class AntiCheatService {
           // consult the accessibility event buffer for any subsequent app
           // launches that may have been missed by UsageStats on some devices.
           final onlyLauncher = ordered.length == 1 && _isLikelyLauncher(ordered.first, null);
-          if (onlyLauncher) {
+          if (onlyLauncher && !kIsWeb && Platform.isAndroid) {
             try {
               final events = _accessibilityMonitor.recentEvents(since: backgroundSince, window: Duration(seconds: _usageLookbackSeconds));
               // Order by timestamp ascending
@@ -653,18 +665,20 @@ class AntiCheatService {
         // If the resolved package looks like the launcher or is null, try the
         // accessibility event buffer for a later app that the user opened.
         if (switchedTo == null || _isLikelyLauncher(switchedTo, null)) {
-          try {
-            final events = _accessibilityMonitor.recentEvents(since: backgroundSince, window: Duration(seconds: _usageLookbackSeconds));
-            events.sort((a, b) => a.timestamp.compareTo(b.timestamp));
-            for (final ev in events) {
-              final pkg = ev.packageName;
-              if (pkg.isEmpty) continue;
-              if (pkg == _packageName) continue;
-              if (_isLikelyLauncher(pkg, ev.className)) continue;
-              switchedTo = pkg;
-              break;
-            }
-          } catch (_) {}
+          if (!kIsWeb && Platform.isAndroid) {
+            try {
+              final events = _accessibilityMonitor.recentEvents(since: backgroundSince, window: Duration(seconds: _usageLookbackSeconds));
+              events.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+              for (final ev in events) {
+                final pkg = ev.packageName;
+                if (pkg.isEmpty) continue;
+                if (pkg == _packageName) continue;
+                if (_isLikelyLauncher(pkg, ev.className)) continue;
+                switchedTo = pkg;
+                break;
+              }
+            } catch (_) {}
+          }
         }
 
         if (switchedTo != null) {
@@ -690,6 +704,9 @@ class AntiCheatService {
     if (_deviceInfoSummary != null) {
       augmentedDetails = '$augmentedDetails | device: $_deviceInfoSummary';
     }
+
+    // Add current question index
+    augmentedDetails = '$augmentedDetails | questionIndex:$_currentQuestionIndex';
 
     final violation = ViolationModel(
       id: '', // Firestore will generate
@@ -737,6 +754,7 @@ class AntiCheatService {
   }
 
   Future<String?> _buildAccessibilityNarrative(DateTime? since) async {
+    if (kIsWeb || !Platform.isAndroid) return null;
     final events = _accessibilityMonitor.recentEvents(
       since: since,
       window: const Duration(seconds: 45),

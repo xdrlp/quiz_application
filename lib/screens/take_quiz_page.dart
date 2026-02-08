@@ -20,6 +20,7 @@ import 'package:quiz_application/providers/auth_provider.dart';
 import 'package:quiz_application/services/local_violation_store.dart';
 import 'package:usage_stats/usage_stats.dart';
 import 'package:quiz_application/services/screen_protector.dart';
+import 'package:quiz_application/utils/snackbar_utils.dart';
 
 class _GradientPainter extends CustomPainter {
   final double radius;
@@ -242,37 +243,6 @@ class _TakeQuizPageState extends State<TakeQuizPage>
     }
   }
 
-  Future<void> _showDebugInfoDialog() async {
-    final flagged = _flaggedQuestionIds.toList();
-    final answersMap = _answerModels.map((k, v) => MapEntry(k, v.toMap()));
-    final events = LocalViolationStore.getAllEvents();
-    final payload = {
-      'flagged': flagged,
-      'answers': answersMap,
-      'localEvents': events,
-    };
-    final pretty = const JsonEncoder.withIndent('  ').convert(payload);
-    if (!mounted) {
-      return;
-    }
-    await showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Debug: Anti-cheat state'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: SingleChildScrollView(child: Text(pretty)),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _showViolationAlert(ViolationModel v) async {
     if (!mounted) return;
     if (_isShowingViolationDialog) return;
@@ -294,20 +264,146 @@ class _TakeQuizPageState extends State<TakeQuizPage>
       final message = '$base\n\n$consequence';
       await showDialog(
         context: context,
-        builder: (_) => AlertDialog(
-          title: const Text('Policy notice'),
-          content: Text(message),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Continue'),
+        builder: (_) => Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(16),
+          child: CustomPaint(
+            painter: _GradientPainter(
+              strokeWidth: 2,
+              radius: 14,
+              gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.black, Colors.white],
+              ),
             ),
-          ],
+            child: Container(
+              width: double.maxFinite,
+              constraints: const BoxConstraints(maxWidth: 350),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFFFFFFFF),
+                    Color.fromARGB(255, 197, 197, 197),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.warning, color: Colors.redAccent, size: 24),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Policy Notice',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF222222),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1, color: Color.fromARGB(255, 94, 94, 94)),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          base,
+                          style: const TextStyle(color: Color(0xFF222222), fontSize: 14),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          consequence,
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: GestureDetector(
+                            onTap: () => Navigator.of(context).pop(),
+                            child: Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Color.fromARGB(255, 248, 248, 248),
+                                    Color.fromARGB(255, 199, 199, 199),
+                                    Color.fromARGB(255, 248, 248, 248),
+                                    Color.fromARGB(255, 116, 116, 116),
+                                    Color.fromARGB(242, 61, 61, 61),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Container(
+                                height: 40,
+                                width: 300,
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Color(0xFF222222),
+                                      Color(0xFF1a1a1a),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Center(
+                                  child: ShaderMask(
+                                    shaderCallback: (bounds) {
+                                      return const LinearGradient(
+                                        colors: [Color(0xFFE9E9E9), Color(0xFFFFFFFF)],
+                                      ).createShader(bounds);
+                                    },
+                                    child: const Text(
+                                      'Okay, I understand',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       );
       if (!mounted) return;
       // Apply consequences after user acknowledges
-      _applyViolationConsequences();
+      _applyViolationConsequences(count);
     } catch (e, st) {
       // If dialog failed due to routing races, buffer the violation instead
       // and apply consequences when the user returns.
@@ -387,12 +483,10 @@ class _TakeQuizPageState extends State<TakeQuizPage>
     await _refreshMonitoringPrereqs();
 
     if (!recheck && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Accessibility service not enabled. Please turn it on and try again.',
-          ),
-        ),
+      SnackBarUtils.showThemedSnackBar(
+        ScaffoldMessenger.of(context),
+        'Accessibility service not enabled. Please turn it on and try again.',
+        leading: Icons.error_outline,
       );
     }
 
@@ -487,8 +581,10 @@ class _TakeQuizPageState extends State<TakeQuizPage>
             authenticated = true;
           } else {
             if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Incorrect password')),
+              SnackBarUtils.showThemedSnackBar(
+                ScaffoldMessenger.of(context),
+                'Incorrect password',
+                leading: Icons.error_outline,
               );
             }
           }
@@ -568,12 +664,10 @@ class _TakeQuizPageState extends State<TakeQuizPage>
     }
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Usage Access permission not granted. Please enable it in system settings and then try again.',
-          ),
-        ),
+      SnackBarUtils.showThemedSnackBar(
+        ScaffoldMessenger.of(context),
+        'Usage Access permission not granted. Please enable it in system settings and then try again.',
+        leading: Icons.error_outline,
       );
     }
     return false;
@@ -634,11 +728,10 @@ class _TakeQuizPageState extends State<TakeQuizPage>
     _antiCheat.startAntiCheat(id, user.uid);
     // quick confirmation so tester knows monitoring is active
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Anti-cheat monitoring enabled'),
-          duration: Duration(seconds: 1),
-        ),
+      SnackBarUtils.showThemedSnackBar(
+        ScaffoldMessenger.of(context),
+        'Anti-cheat monitoring enabled',
+        leading: Icons.check_circle_outline,
       );
     }
     await _refreshMonitoringPrereqs();
@@ -862,7 +955,14 @@ class _TakeQuizPageState extends State<TakeQuizPage>
                                               height: 42,
                                               width: double.infinity,
                                               decoration: BoxDecoration(
-                                                color: const Color(0xFF6B6B6B),
+                                                gradient: const LinearGradient(
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
+                                                  colors: [
+                                                    Color(0xFF6B6B6B),
+                                                    Color(0xFF4A4A4A),
+                                                  ],
+                                                ),
                                                 borderRadius: BorderRadius.circular(10),
                                               ),
                                               child: const Center(
@@ -1040,21 +1140,83 @@ class _TakeQuizPageState extends State<TakeQuizPage>
       if (openedApps.isNotEmpty) {
         message += '\nOpened apps: ${openedApps.join(' | ')}.';
       }
+      final count = _antiCheat.getViolationCount();
       await showDialog(
         context: context,
-        builder: (_) => AlertDialog(
-          title: const Text('Policy notice'),
-          content: Text(message),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Continue'),
+        builder: (_) => Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(16),
+          child: CustomPaint(
+            painter: _GradientPainter(
+              strokeWidth: 2,
+              radius: 14,
+              gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.black, Colors.white],
+              ),
             ),
-          ],
+            child: Container(
+              width: double.maxFinite,
+              constraints: const BoxConstraints(maxWidth: 400),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFFFFFFFF),
+                    Color.fromARGB(255, 197, 197, 197),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.warning, color: Colors.redAccent, size: 24),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Policy Notice',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF222222),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1, color: Color.fromARGB(255, 94, 94, 94)),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      message,
+                      style: const TextStyle(color: Color(0xFF222222), fontSize: 14),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text('Continue', style: TextStyle(color: Color(0xFF222222))),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       );
       if (!mounted) return;
-      _applyViolationConsequences();
+      _applyViolationConsequences(count);
     } catch (e, st) {
       // ignore: avoid_print
       print('[TakeQuizPage] _showViolationsSummary failed: $e\n$st');
@@ -1305,12 +1467,11 @@ class _TakeQuizPageState extends State<TakeQuizPage>
     return true;
   }
 
-  // Apply consequences depending on the current violation count.
+  // Apply consequences depending on the violation count at the time of violation.
   // 1st violation: warning only (already shown)
-  // 2nd violation: flag current question incorrect
+  // 2nd violation: flag current question incorrect (locked, cannot change)
   // 3rd+ violation: auto-submit attempt (unanswered default to incorrect)
-  void _applyViolationConsequences() {
-    final count = _antiCheat.getViolationCount();
+  void _applyViolationConsequences(int count) {
     if (count <= 1) {
       // nothing more than the warning
       return;
@@ -1318,19 +1479,18 @@ class _TakeQuizPageState extends State<TakeQuizPage>
     if (count == 2) {
       final flagged = _flagCurrentQuestionIncorrect();
       if (flagged && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Current question flagged as incorrect due to policy violation',
-            ),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
-          ),
+        SnackBarUtils.showThemedSnackBar(
+          ScaffoldMessenger.of(context),
+          'Current question flagged as incorrect due to policy violation',
+          leading: Icons.error_outline,
         );
-        // advance the user automatically so they can't change the flagged answer
-        Future.microtask(() {
-          if (mounted) _nextQuestion();
-        });
+        // Advance to next question if not the last one
+        if (_currentQuestionIndex + 1 < _questions.length) {
+          Future.microtask(() {
+            if (mounted) _nextQuestion();
+          });
+        }
+        // If last question, stay on it (locked), timer will submit eventually
       }
       return;
     }
@@ -1338,14 +1498,10 @@ class _TakeQuizPageState extends State<TakeQuizPage>
     // ensure current question is flagged as incorrect as well
     final flagged = _flagCurrentQuestionIncorrect();
     if (flagged && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Current question flagged as incorrect due to policy violation',
-          ),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 2),
-        ),
+      SnackBarUtils.showThemedSnackBar(
+        ScaffoldMessenger.of(context),
+        'Current question flagged as incorrect due to policy violation',
+        leading: Icons.error_outline,
       );
     }
     // small delay so the snackbar/changes have a moment to settle
@@ -1926,15 +2082,68 @@ class _TakeQuizPageState extends State<TakeQuizPage>
                   onPressed: () => Navigator.of(context).pop(),
                 ),
                 title: Text(_quizTitle ?? 'Quiz Guard', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20)),
-                actions: kDebugMode
-                    ? [
-                        IconButton(
-                          icon: const Icon(Icons.bug_report, color: Colors.black),
-                          onPressed: _showDebugInfoDialog,
-                          tooltip: 'Debug state',
+                actions: _attemptId != null ? [
+                  Container(
+                    margin: const EdgeInsets.only(right: 16),
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: _submitAttempt,
+                        child: Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Color.fromARGB(255, 248, 248, 248),
+                                Color.fromARGB(255, 199, 199, 199),
+                                Color.fromARGB(255, 248, 248, 248),
+                                Color.fromARGB(255, 116, 116, 116),
+                                Color.fromARGB(242, 61, 61, 61),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Container(
+                            height: 35,
+                            width: 95,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Color(0xFF000000),
+                                  Color(0xFF333333),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Center(
+                              child: ShaderMask(
+                                shaderCallback: (bounds) {
+                                  return const LinearGradient(
+                                    begin: Alignment.centerLeft,
+                                    end: Alignment.centerRight,
+                                    colors: [Color(0xFFE9E9E9), Color(0xFFFFFFFF)],
+                                  ).createShader(bounds);
+                                },
+                                child: const Text(
+                                  'Submit',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
-                      ]
-                    : null,
+                      ),
+                    ),
+                  ),
+                ] : null,
               ),
             ),
           ),

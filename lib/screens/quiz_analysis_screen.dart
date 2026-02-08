@@ -9,6 +9,7 @@ import 'package:quiz_application/models/attempt_model.dart';
 import 'package:quiz_application/models/violation_model.dart';
 import 'package:quiz_application/models/user_model.dart';
 import 'package:quiz_application/utils/answer_utils.dart';
+import 'package:quiz_application/utils/snackbar_utils.dart';
 class _GradientPainter extends CustomPainter {
   final double radius;
   final double strokeWidth;
@@ -974,7 +975,28 @@ class _QuizAnalysisScreenState extends State<QuizAnalysisScreen> with TickerProv
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.chevron_right, color: Color.fromARGB(255, 94, 94, 94)),
-                                  onPressed: () { /* open details */ },
+                                  onPressed: () async {
+                                    AttemptModel? attempt;
+                                    try {
+                                      attempt = _attempts.firstWhere((a) => a.userId == uid);
+                                    } catch (_) {
+                                      attempt = null;
+                                    }
+                                    if (attempt != null) {
+                                      final result = await showDialog<bool>(
+                                        context: context,
+                                        builder: (ctx) => _AttemptDetailViewer(
+                                          attempt: attempt!,
+                                          questions: _questions,
+                                          violations: _violationsByAttempt[attempt.id] ?? [],
+                                          user: user,
+                                        ),
+                                      );
+                                      if (result == true) {
+                                        await _loadAll();
+                                      }
+                                    }
+                                  },
                                 ),
                               ],
                             ),
@@ -1793,10 +1815,22 @@ class _AttemptDetailViewerState extends State<_AttemptDetailViewer> {
   void _toggleCorrect(int index) {
     setState(() {
       final a = _attempt.answers[index];
-      final updated = a.copyWith(isCorrect: !a.isCorrect);
+      final updated = a.copyWith(isCorrect: !a.isCorrect, manuallyEdited: true);
       final newAnswers = List.of(_attempt.answers);
       newAnswers[index] = updated;
-      _attempt = _attempt.copyWith(answers: newAnswers);
+      int newScore = 0;
+      for (var ans in newAnswers) {
+        if (ans.isCorrect) {
+          QuestionModel? q;
+          try {
+            q = widget.questions.firstWhere((q) => q.id == ans.questionId);
+          } catch (_) {
+            q = null;
+          }
+          if (q != null) newScore += q.points;
+        }
+      }
+      _attempt = _attempt.copyWith(answers: newAnswers, score: newScore);
     });
   }
 
@@ -1823,10 +1857,22 @@ class _AttemptDetailViewerState extends State<_AttemptDetailViewer> {
         final normCorrect = q.correctAnswers.isNotEmpty ? normalizeAnswerForComparison(q.correctAnswers.first) : '';
         correct = normUser == normCorrect;
       }
-      newAnswers.add(a.copyWith(isCorrect: correct));
+      newAnswers.add(a.copyWith(isCorrect: correct, manuallyEdited: false));
     }
     setState(() {
-      _attempt = _attempt.copyWith(answers: newAnswers);
+      int newScore = 0;
+      for (var ans in newAnswers) {
+        if (ans.isCorrect) {
+          QuestionModel? q;
+          try {
+            q = widget.questions.firstWhere((q) => q.id == ans.questionId);
+          } catch (_) {
+            q = null;
+          }
+          if (q != null) newScore += q.points;
+        }
+      }
+      _attempt = _attempt.copyWith(answers: newAnswers, score: newScore);
     });
   }
 
@@ -1840,7 +1886,7 @@ class _AttemptDetailViewerState extends State<_AttemptDetailViewer> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to save: $e')));
+      if (mounted) SnackBarUtils.showThemedSnackBar(ScaffoldMessenger.of(context), 'Failed to save: $e', leading: Icons.error_outline);
     }
   }
 

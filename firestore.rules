@@ -195,17 +195,6 @@ service cloud.firestore {
                        isQuizCreator(get(/databases/$(database)/documents/attempts/$(resource.data.attemptId)).data.quizId);
     }
 
-    // ========== QUIZ BACKUPS COLLECTION ==========
-    match /quiz_backups/{backupId} {
-      // Allow create if backup belongs to a quiz created by the user
-      allow create: if isAuthenticated() && 
-                       request.resource.data.quiz.createdBy == request.auth.uid;
-
-      // Allow read/delete if user owns the backup
-      allow read, delete: if isAuthenticated() && 
-                             resource.data.quiz.createdBy == request.auth.uid;
-    }
-
     // ========== DEFAULT DENY ==========
     match /{document=**} {
       allow read, write: if false;

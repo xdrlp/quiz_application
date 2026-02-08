@@ -5,6 +5,7 @@ import 'package:quiz_application/services/firestore_service.dart';
 import 'package:quiz_application/providers/auth_provider.dart';
 import 'package:quiz_application/models/attempt_model.dart';
 import 'package:quiz_application/models/quiz_model.dart';
+import 'package:quiz_application/utils/snackbar_utils.dart';
 
 // ignore_for_file: use_super_parameters
 
@@ -121,35 +122,159 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
   Future<void> _batchDeleteSelected() async {
     if (_selected.isEmpty) return;
     final messenger = ScaffoldMessenger.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Delete selected attempts'),
-        content: const Text('Delete selected quiz attempts? This action cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+
+    // Get attempts to delete
+    final attemptsToDelete = _attempts.where((a) => _selected.contains(a.id)).toList();
+    final attemptInfos = <String>[];
+    for (final attempt in attemptsToDelete) {
+      final quizTitle = _quizCache[attempt.quizId]?.title ?? 'Unknown Quiz';
+      attemptInfos.add(quizTitle);
+    }
+
+    // Optimistic UI update: Remove from display immediately
+    setState(() {
+      _attempts.removeWhere((a) => _selected.contains(a.id));
+      _selected.clear();
+    });
+
+    final attemptInfo = attemptInfos.length == 1
+        ? '${attemptInfos.first} attempt deleted'
+        : '${attemptInfos.length} attempts deleted';
+
+    bool undoPressed = false;
+
+    // Show undo snackbar
+    final controller = _showUndoSnackBar(
+      messenger: messenger,
+      onUndo: () {
+        undoPressed = true;
+        // Restore items to UI
+        setState(() {
+          _attempts.addAll(attemptsToDelete);
+        });
+        SnackBarUtils.showThemedSnackBar(messenger, 'Attempts restored', leading: Icons.check_circle_outline);
+      },
+      attemptInfo: attemptInfo,
+      hasFloatingButtons: false,  // FABs are gone since selection is cleared
+    );
+
+    // When snackbar closes, if not undone and timer ran out, perform actual delete
+    controller.closed.then((reason) {
+      if (!undoPressed && reason == SnackBarClosedReason.timeout) {
+        for (final attempt in attemptsToDelete) {
+          _fs.deleteAttempt(attempt.id).catchError((e) {
+            debugPrint('Delete failed for attempt ${attempt.id}: $e');
+          });
+        }
+      }
+    });
+  }
+
+  ScaffoldFeatureController<SnackBar, SnackBarClosedReason> _showUndoSnackBar({
+    required ScaffoldMessengerState messenger, 
+    required VoidCallback onUndo, 
+    required String attemptInfo, 
+    bool hasFloatingButtons = false
+  }) {
+    // Replace any existing snackbar so each delete shows an undo option.
+    const snackDur = Duration(seconds: 5);
+    // Adjust margin if floating buttons are present
+    final margin = hasFloatingButtons
+        ? const EdgeInsets.fromLTRB(48, 12, 48, 120)  // Extra bottom margin for FABs
+        : const EdgeInsets.fromLTRB(48, 12, 48, 20);
+        
+    messenger.hideCurrentSnackBar();
+    return messenger.showSnackBar(SnackBar(
+      duration: snackDur,
+      behavior: SnackBarBehavior.floating,
+      margin: margin,
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      content: CustomPaint(
+        painter: _GradientPainter(
+          strokeWidth: 1.5,
+          radius: 16,
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color.fromARGB(255, 0, 0, 0), Color.fromARGB(255, 151, 151, 151), Color.fromARGB(255, 180, 180, 180), Color.fromARGB(255, 255, 255, 255)],
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE74C3C)),
-            child: const Text('Delete'),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color.fromARGB(34, 143, 143, 143),
+            borderRadius: BorderRadius.circular(14),
           ),
-        ],
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(children: [
+                const Icon(Icons.delete_outline, size: 20, color: Colors.black54),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    attemptInfo,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                    minimumSize: const Size(64, 32),
+                  ),
+                  onPressed: () {
+                    messenger.hideCurrentSnackBar();
+                    onUndo();
+                  },
+                  child: const Text('Undo'),
+                ),
+              ]),
+              const SizedBox(height: 4),
+              SnackBarTimer(startTime: DateTime.now(), duration: snackDur, height: 6.0),
+            ],
+          ),
+        ),
+      ),
+    ));
+  }
+
+  Widget _buildOutlinedButton({
+    required VoidCallback onPressed,
+    required IconData icon,
+    required Color hoverColor,
+    required Color splashColor,
+  }) {
+    return SizedBox(
+      width: 56,
+      height: 56,
+      child: InkWell(
+        onTap: onPressed,
+        hoverColor: hoverColor,
+        splashColor: splashColor,
+        borderRadius: BorderRadius.circular(20),
+        child: CustomPaint(
+          painter: _GradientPainter(
+            strokeWidth: 2,
+            radius: 16,
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.black, Color(0xFF333333), Color(0xFF666666), Colors.white],
+            ),
+          ),
+          child: Container(
+            alignment: Alignment.center,
+            child: Icon(icon, color: Colors.black, size: 24),
+          ),
+        ),
       ),
     );
-    if (confirmed != true) return;
-
-    final ids = List<String>.from(_selected);
-    for (final id in ids) {
-      try {
-        await _fs.deleteAttempt(id);
-      } catch (_) {}
-    }
-    setState(() => _selected.clear());
-    _load();
-    messenger.showSnackBar(const SnackBar(content: Text('Selected attempts deleted')));
   }
 
   Widget _modeChip(String label) {
@@ -381,41 +506,45 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
             ),
           ),
         ),
-        floatingActionButton: _selected.isNotEmpty
-            ? Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  FloatingActionButton(
-                    onPressed: () {
-                      setState(() {
-                        if (_selected.length == _filterAndSort(_attempts).length) {
-                          _selected.clear();
-                        } else {
-                          _selected.addAll(_filterAndSort(_attempts).map((a) => a.id));
-                        }
-                      });
-                    },
-                    backgroundColor: const Color(0xFF2196F3),
-                    child: Icon(
-                      _selected.length == _filterAndSort(_attempts).length ? Icons.done_all : Icons.select_all,
-                      color: Colors.white,
+        floatingActionButton: AnimatedSwitcher(
+          duration: Duration.zero,
+          child: _selected.isNotEmpty
+              ? Column(
+                  key: const ValueKey('fab_column'),
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    _buildOutlinedButton(
+                      onPressed: () {
+                        setState(() {
+                          if (_selected.length == _filterAndSort(_attempts).length) {
+                            _selected.clear();
+                          } else {
+                            _selected.addAll(_filterAndSort(_attempts).map((a) => a.id));
+                          }
+                        });
+                      },
+                      icon: _selected.length == _filterAndSort(_attempts).length ? Icons.done_all : Icons.select_all,
+                      hoverColor: const Color(0xFF2196F3).withValues(alpha: 0.9),
+                      splashColor: const Color(0xFF2196F3).withValues(alpha: 1),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  FloatingActionButton(
-                    onPressed: () => setState(() => _selected.clear()),
-                    backgroundColor: Colors.grey,
-                    child: const Icon(Icons.close, color: Colors.white),
-                  ),
-                  const SizedBox(height: 8),
-                  FloatingActionButton(
-                    onPressed: _batchDeleteSelected,
-                    backgroundColor: const Color(0xFFE74C3C),
-                    child: const Icon(Icons.delete, color: Colors.white),
-                  ),
-                ],
-              )
-            : null,
+                    const SizedBox(height: 8),
+                    _buildOutlinedButton(
+                      onPressed: () => setState(() => _selected.clear()),
+                      icon: Icons.close,
+                      hoverColor: const Color.fromARGB(255, 143, 143, 143).withValues(alpha: 0.9),
+                      splashColor: const Color.fromARGB(255, 77, 77, 77).withValues(alpha: 1),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildOutlinedButton(
+                      onPressed: _batchDeleteSelected,
+                      icon: Icons.delete,
+                      hoverColor: const Color.fromARGB(255, 255, 25, 0).withValues(alpha: 0.9),
+                      splashColor: const Color.fromARGB(255, 255, 25, 0).withValues(alpha: 1),
+                    ),
+                  ],
+                )
+              : const SizedBox.shrink(key: ValueKey('fab_empty')),
+        ),
         body: _loading
             ? _buildSkeletonHistorySection()
             : _attempts.isEmpty

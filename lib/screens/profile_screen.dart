@@ -13,6 +13,7 @@ import 'package:quiz_application/services/storage_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img; // Generic image manipulation
 import 'dart:math' as math;
+import 'package:quiz_application/utils/snackbar_utils.dart';
 import 'starter_screen.dart';
 
 class _GradientPainter extends CustomPainter {
@@ -116,9 +117,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (auth.currentUser == null) {
       final fuser = fb.FirebaseAuth.instance.currentUser;
       if (fuser == null) {
-        messenger.showSnackBar(
-          const SnackBar(content: Text('No signed-in user')),
-        );
+        SnackBarUtils.showThemedSnackBar(messenger, 'No signed-in user', leading: Icons.error_outline);
         return;
       }
       final fs = FirestoreService();
@@ -139,16 +138,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       try {
         await fs.createUser(fuser.uid, newUser);
         if (!mounted) return;
-        messenger.showSnackBar(
-          const SnackBar(content: Text('Profile created')),
-        );
+        SnackBarUtils.showThemedSnackBar(messenger, 'Profile created', leading: Icons.check_circle_outline);
         await auth.reloadAndCheckVerified();
         setState(() => _isEditing = false);
       } catch (e) {
         if (!mounted) return;
-        messenger.showSnackBar(
-          SnackBar(content: Text('Failed to create profile: $e')),
-        );
+        SnackBarUtils.showThemedSnackBar(messenger, 'Failed to create profile: $e', leading: Icons.error_outline);
       }
       return;
     }
@@ -165,14 +160,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
     if (!mounted) return;
     if (ok) {
-      messenger.showSnackBar(const SnackBar(content: Text('Profile updated')));
+      SnackBarUtils.showThemedSnackBar(messenger, 'Profile updated', leading: Icons.check_circle_outline);
       setState(() => _isEditing = false);
     } else {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(auth.errorMessage ?? 'Failed to update profile'),
-        ),
-      );
+      SnackBarUtils.showThemedSnackBar(messenger, auth.errorMessage ?? 'Failed to update profile', leading: Icons.error_outline);
     }
   }
 
@@ -222,9 +213,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final len = processedBytes.length;
       if (len > 1024 * 1024) {
          if (!mounted) return;
-         ScaffoldMessenger.of(context).showSnackBar(
-           SnackBar(content: Text('Image is too large (${(len / 1024).round()}KB). Max 1MB.')),
-         );
+         SnackBarUtils.showThemedSnackBar(ScaffoldMessenger.of(context), 'Image is too large (${(len / 1024).round()}KB). Max 1MB.', leading: Icons.error_outline);
          return;
       }
       
@@ -241,15 +230,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile picture updated')),
-        );
+        SnackBarUtils.showThemedSnackBar(ScaffoldMessenger.of(context), 'Profile picture updated', leading: Icons.check_circle_outline);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to upload image: $e')),
-        );
+        SnackBarUtils.showThemedSnackBar(ScaffoldMessenger.of(context), 'Failed to upload image: $e', leading: Icons.error_outline);
       }
     } finally {
       if (mounted) setState(() => _isUploading = false);

@@ -589,9 +589,19 @@ class _AttemptDetailScreenState extends State<AttemptDetailScreen> {
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
-                                  child: Text(
-                                    q.prompt,
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF222222)),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        q.prompt,
+                                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF222222)),
+                                      ),
+                                      if (attemptAnswer.manuallyEdited) 
+                                        Text(
+                                          'Author manually corrected',
+                                          style: TextStyle(color: Colors.red[400], fontSize: 12, fontStyle: FontStyle.italic),
+                                        ),
+                                    ],
                                   ),
                                 ),
                               ],

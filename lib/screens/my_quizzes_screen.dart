@@ -3,9 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import 'package:quiz_application/providers/auth_provider.dart';
 import 'package:quiz_application/services/firestore_service.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:quiz_application/models/quiz_model.dart';
 import 'package:quiz_application/screens/quiz_analysis_screen.dart';
+import 'package:quiz_application/utils/snackbar_utils.dart';
 
 // ignore_for_file: use_super_parameters
 
@@ -47,61 +47,9 @@ class MyQuizzesScreen extends StatefulWidget {
   State<MyQuizzesScreen> createState() => _MyQuizzesScreenState();
 }
 
-class _SnackBarTimer extends StatefulWidget {
-  final DateTime startTime;
-  final Duration duration;
-  final double height;
-  const _SnackBarTimer({Key? key, required this.startTime, required this.duration, this.height = 4.0}) : super(key: key);
-
-  @override
-  State<_SnackBarTimer> createState() => _SnackBarTimerState();
-}
-
-class _SnackBarTimerState extends State<_SnackBarTimer> {
-  late final Ticker _ticker;
-  double _progress = 0.0;
-
-  @override
-  void initState() {
-    super.initState();
-    _ticker = Ticker(_onTick);
-    _updateProgress();
-    if (_progress < 1.0) {
-      _ticker.start();
-    }
-  }
-
-  void _onTick(Duration _) => _updateProgress();
-
-  void _updateProgress() {
-    final elapsed = DateTime.now().difference(widget.startTime);
-    final p = elapsed.inMilliseconds / widget.duration.inMilliseconds;
-    final newProgress = p.clamp(0.0, 1.0);
-    if (mounted) setState(() => _progress = newProgress);
-    if (newProgress >= 1.0) _ticker.stop();
-  }
-
-  @override
-  void dispose() {
-    _ticker.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: widget.height,
-      child: LinearProgressIndicator(
-        value: _progress,
-        backgroundColor: Theme.of(context).colorScheme.onSurface.withAlpha((0.06 * 255).round()),
-        valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
-      ),
-    );
-  }
-}
-
 class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
-  late Future<List<QuizModel>> _future;
+  bool _loading = true;
+  List<QuizModel> _quizzes = [];
   String _searchQuery = '';
   String _selectedMode = 'Recent'; // 'Recent' | 'Name' | 'Created' | 'Incomplete' | 'Popular'
   bool _sortAscending = false; // Default false (Descending/Newest First) for Recent/Created. True for Name.
@@ -110,71 +58,120 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
   final Map<String, DateTime> _lastCopyTime = {};
   // snack showing state intentionally not tracked (we replace snackbars)
 
-  void _showUndoSnackBar({required ScaffoldMessengerState messenger, required Future<String?> backupFuture, required VoidCallback onRestoreSuccess, required String quizTitle}) {
+  ScaffoldFeatureController<SnackBar, SnackBarClosedReason> _showUndoSnackBar({
+    required ScaffoldMessengerState messenger, 
+    required VoidCallback onUndo, 
+    required String itemInfo, 
+    bool hasFloatingButtons = false
+  }) {
     // Replace any existing snackbar so each delete shows an undo option.
-    const snackDur = Duration(seconds: 3);
-    // show (replacing any existing)
+    const snackDur = Duration(seconds: 5);
+    // Adjust margin if floating buttons are present
+    final margin = hasFloatingButtons
+        ? const EdgeInsets.fromLTRB(48, 12, 48, 120)  // Extra bottom margin for FABs
+        : const EdgeInsets.fromLTRB(48, 12, 48, 20);
+        
     messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(
-      SnackBar(
-        duration: snackDur,
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(children: [
-              Expanded(
-                child: Text(
-                  "Quiz ${quizTitle.replaceAll('\n', ' ')} deleted",
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+    return messenger.showSnackBar(SnackBar(
+      duration: snackDur,
+      behavior: SnackBarBehavior.floating,
+      margin: margin,
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      content: CustomPaint(
+        painter: GradientPainter(
+          strokeWidth: 1.5,
+          radius: 16,
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color.fromARGB(255, 0, 0, 0), Color.fromARGB(255, 151, 151, 151), Color.fromARGB(255, 180, 180, 180), Color.fromARGB(255, 255, 255, 255)],
+          ),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color.fromARGB(34, 143, 143, 143),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(children: [
+                const Icon(Icons.delete_outline, size: 20, color: Colors.black54),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    itemInfo,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-                  minimumSize: const Size(64, 32),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                    minimumSize: const Size(64, 32),
+                  ),
+                  onPressed: () {
+                    messenger.hideCurrentSnackBar();
+                    onUndo();
+                  },
+                  child: const Text('Undo'),
                 ),
-                onPressed: () async {
-                  messenger.hideCurrentSnackBar();
-                  try {
-                    final backupId = await backupFuture;
-                    if (backupId != null) {
-                      await FirestoreService().restoreQuizFromBackup(backupId);
-                      if (!mounted) return;
-                      setState(() => _load());
-                      onRestoreSuccess();
-                      messenger.showSnackBar(const SnackBar(duration: Duration(seconds: 2), content: Text('Quiz restored')));
-                    } else {
-                      messenger.showSnackBar(const SnackBar(content: Text('Undo unavailable')));
-                    }
-                  } catch (e) {
-                    if (!mounted) return;
-                    messenger.showSnackBar(SnackBar(content: Text('Failed to restore: $e')));
-                  }
-                },
-                child: const Text('Undo'),
-              ),
-            ]),
-            const SizedBox(height: 4),
-            _SnackBarTimer(startTime: DateTime.now(), duration: snackDur, height: 6.0),
-          ],
+              ]),
+              const SizedBox(height: 4),
+              SnackBarTimer(startTime: DateTime.now(), duration: snackDur, height: 6.0),
+            ],
+          ),
+        ),
+      ),
+    ));
+  }
+
+  Widget _buildOutlinedButton({
+    required VoidCallback onPressed,
+    required IconData icon,
+    required Color hoverColor,
+    required Color splashColor,
+  }) {
+    return SizedBox(
+      width: 56,
+      height: 56,
+      child: InkWell(
+        onTap: onPressed,
+        hoverColor: hoverColor,
+        splashColor: splashColor,
+        borderRadius: BorderRadius.circular(20),
+        child: CustomPaint(
+          painter: _GradientPainter(
+            strokeWidth: 2,
+            radius: 16,
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.black, Color(0xFF333333), Color(0xFF666666), Colors.white],
+            ),
+          ),
+          child: Container(
+            alignment: Alignment.center,
+            child: Icon(icon, color: Colors.black, size: 24),
+          ),
         ),
       ),
     );
-
-    // nothing else to track; snackbar will dismiss automatically
   }
 
-  void _load() {
+  Future<void> _load() async {
     final uid = context.read<AuthProvider>().currentUser?.uid ?? '';
-    _future = FirestoreService().getQuizzesByTeacher(uid);
+    setState(() => _loading = true);
+    try {
+      _quizzes = await FirestoreService().getQuizzesByTeacher(uid);
+    } catch (_) {}
+    if (mounted) setState(() => _loading = false);
   }
 
   List<QuizModel> _filterAndSort(List<QuizModel> items) {
@@ -270,14 +267,18 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
     await Clipboard.setData(ClipboardData(text: text));
     if (!mounted) return;
     messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(SnackBar(duration: const Duration(seconds: 1), content: Text(message)));
+    _showThemedSnackBar(messenger, message, duration: const Duration(seconds: 1));
+  }
+
+  void _showThemedSnackBar(ScaffoldMessengerState messenger, String message, {Duration? duration, IconData? leading, bool showClose = true}) {
+    SnackBarUtils.showThemedSnackBar(messenger, message, duration: duration, leading: leading, showClose: showClose);
   }
 
   Widget _buildSkeletonQuizCard() {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       child: CustomPaint(
-        painter: _GradientPainter(
+        painter: GradientPainter(
           strokeWidth: 2,
           radius: 14,
           gradient: const LinearGradient(
@@ -352,7 +353,7 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
           Row(children: [
             Expanded(
               child: CustomPaint(
-                painter: _GradientPainter(
+                painter: GradientPainter(
                   strokeWidth: 1.5,
                   radius: 12,
                   gradient: const LinearGradient(
@@ -461,178 +462,200 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
                 ),
                 title: const Text('My Quizzes', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20)),
                 actions: [
-                  if (_selected.isNotEmpty) ...[
-                    IconButton(onPressed: () => setState(() => _selected.clear()), tooltip: 'Cancel selection', icon: const Icon(Icons.close, color: Colors.black54)),
-                    IconButton(onPressed: _batchPublishSelected, tooltip: 'Publish selected', icon: const Icon(Icons.publish, color: Colors.black54)),
-                    IconButton(onPressed: _batchDeleteSelected, tooltip: 'Delete selected', icon: const Icon(Icons.delete_forever, color: Colors.black54)),
-                  ]
+                  // Debug button: temporarily show the Undo snackbar for testing
+                  IconButton(
+                    icon: const Icon(Icons.bug_report, color: Colors.black54),
+                    tooltip: 'Debug: show Undo snackbar',
+                    onPressed: () {
+                      final messenger = ScaffoldMessenger.of(context);
+                      _showUndoSnackBar(
+                        messenger: messenger,
+                        onUndo: () => SnackBarUtils.showThemedSnackBar(messenger, 'Undo pressed'),
+                        itemInfo: 'Debug Quiz deleted',
+                        hasFloatingButtons: false,
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
           ),
         ),
-        floatingActionButton: _selected.isNotEmpty ? FloatingActionButton.extended(
-          onPressed: () {},
-          backgroundColor: const Color(0xFF222222),
-          foregroundColor: Colors.white,
-          icon: const Icon(Icons.check_box),
-          label: Text('${_selected.length} selected'),
-        ) : null,
-        body: FutureBuilder<List<QuizModel>>(
-          future: _future,
-          builder: (context, snap) {
-            if (snap.connectionState != ConnectionState.done) {
-              return _buildSkeletonQuizzesSection();
-            }
-            if (snap.hasError) {
-              final err = snap.error.toString();
-              // Try to extract an index creation URL from the error message
-              final urlRegex = RegExp(r'https?://[^\s)]+');
-              final match = urlRegex.firstMatch(err);
-              if (match != null) {
-                final url = match.group(0)!;
-                return Center(
-                  child: Padding(
+        floatingActionButton: AnimatedSwitcher(
+          duration: Duration.zero,
+          child: _selected.isNotEmpty
+              ? Column(
+                  key: const ValueKey('fab_column'),
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    if (_areAllSelectedDrafts())
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: _buildOutlinedButton(
+                          onPressed: _batchPublishSelected,
+                          icon: Icons.publish,
+                          hoverColor: const Color.fromARGB(255, 76, 175, 80).withValues(alpha: 0.9),
+                          splashColor: const Color.fromARGB(255, 76, 175, 80).withValues(alpha: 1),
+                        ),
+                      ),
+                    if (_areAllSelectedPublished())
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: _buildOutlinedButton(
+                          onPressed: _batchDraftSelected,
+                          icon: Icons.visibility_off,
+                          hoverColor: const Color.fromARGB(255, 255, 152, 0).withValues(alpha: 0.9),
+                          splashColor: const Color.fromARGB(255, 255, 152, 0).withValues(alpha: 1),
+                        ),
+                      ),
+                    _buildOutlinedButton(
+                      onPressed: () {
+                        setState(() {
+                          if (_selected.length == _filterAndSort(_quizzes).length) {
+                            _selected.clear();
+                          } else {
+                            _selected.addAll(_filterAndSort(_quizzes).map((q) => q.id));
+                          }
+                        });
+                      },
+                      icon: _selected.length == _filterAndSort(_quizzes).length ? Icons.done_all : Icons.select_all,
+                      hoverColor: const Color(0xFF2196F3).withValues(alpha: 0.9),
+                      splashColor: const Color(0xFF2196F3).withValues(alpha: 1),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildOutlinedButton(
+                      onPressed: () => setState(() => _selected.clear()),
+                      icon: Icons.close,
+                      hoverColor: const Color.fromARGB(255, 143, 143, 143).withValues(alpha: 0.9),
+                      splashColor: const Color.fromARGB(255, 77, 77, 77).withValues(alpha: 1),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildOutlinedButton(
+                      onPressed: _batchDeleteSelected,
+                      icon: Icons.delete,
+                      hoverColor: const Color.fromARGB(255, 255, 25, 0).withValues(alpha: 0.9),
+                      splashColor: const Color.fromARGB(255, 255, 25, 0).withValues(alpha: 1),
+                    ),
+                  ],
+                )
+              : const SizedBox.shrink(key: ValueKey('fab_empty')),
+        ),
+        body: _loading
+            ? _buildSkeletonQuizzesSection()
+            : _quizzes.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(mainAxisSize: MainAxisSize.min, children: [
+                        const Icon(Icons.quiz, size: 84, color: Color.fromARGB(255, 0, 0, 0)),
+                        const SizedBox(height: 16),
+                        const Text('No quizzes yet', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF222222))),
+                        const SizedBox(height: 8),
+                        const Text('Create your first quiz to get started. It will appear here and you can publish or share it.' , textAlign: TextAlign.center, style: TextStyle(color: Color(0xFF7F8C8D))),
+                        const SizedBox(height: 24),
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            await Navigator.of(context).pushNamed('/create_quiz');
+                            if (mounted) await _load();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF222222),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          icon: const Icon(Icons.add),
+                          label: const Text('Create Quiz'),
+                        ),
+                      ]),
+                    ),
+                  )
+                : Padding(
                     padding: const EdgeInsets.all(12.0),
                     child: Column(
-                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text('Firestore query requires a composite index.'),
-                        const SizedBox(height: 8),
-                        const Text('Create the index using the link below, then refresh this screen.'),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(child: SelectableText(url)),
-                            IconButton(
-                              tooltip: 'Copy index URL',
-                              icon: const Icon(Icons.copy),
-                              onPressed: () async {
-                                await _copyWithCooldown(url, url, 'Index URL copied');
-                              },
+                        // Search & controls
+                        Row(children: [
+                          Expanded(
+                            child: CustomPaint(
+                              painter: GradientPainter(
+                                strokeWidth: 1.5,
+                                radius: 12,
+                                gradient: const LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [Colors.black, Colors.white],
+                                ),
+                              ),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.transparent,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: TextField(
+                                  decoration: InputDecoration(
+                                    hintText: 'Search quizzes',
+                                    prefixIcon: const Icon(Icons.search, color: Color(0xFF999999)),
+                                    hintStyle: const TextStyle(color: Color(0xFF999999), fontSize: 14),
+                                    filled: false,
+                                    border: InputBorder.none,
+                                    enabledBorder: InputBorder.none,
+                                    focusedBorder: InputBorder.none,
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  ),
+                                  onChanged: (v) => setState(() => _searchQuery = v),
+                                ),
+                              ),
                             ),
-                          ],
+                          ),
+                        ]),
+                        const SizedBox(height: 12),
+                        // Quick filters
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(children: [
+                            _modeChip('Recent'),
+                            const SizedBox(width: 8),
+                            _modeChip('Name'),
+                            const SizedBox(width: 8),
+                            _modeChip('Created'),
+                            const SizedBox(width: 8),
+                            _modeChip('Popular'),
+                          ]),
+                        ),
+                        const SizedBox(height: 12),
+                        if (_selected.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    '${_selected.length} selected',
+                                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF222222)),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        Expanded(
+                          child: RefreshIndicator(
+                            onRefresh: _load,
+                            child: ListView(
+                              children: [
+                                _sectionHeader('Drafts', _filterAndSort(_quizzes).where((q) => q.published == false).length),
+                                for (var q in _filterAndSort(_quizzes).where((q) => q.published == false)) _buildQuizCard(q, isPublished: false),
+                                const SizedBox(height: 12),
+                                _sectionHeader('Published', _filterAndSort(_quizzes).where((q) => q.published == true).length),
+                                for (var q in _filterAndSort(_quizzes).where((q) => q.published == true)) _buildQuizCard(q, isPublished: true),
+                                const SizedBox(height: 24),
+                              ],
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                );
-              }
-              return Center(child: Text('Error: $err'));
-            }
-            final allQuizzes = snap.data ?? [];
-            final processed = _filterAndSort(allQuizzes);
-            final drafts = processed.where((q) => q.published == false).toList();
-            final published = processed.where((q) => q.published == true).toList();
-
-            if (allQuizzes.isEmpty) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.quiz, size: 84, color: Color.fromARGB(255, 0, 0, 0)),
-                    const SizedBox(height: 16),
-                    const Text('No quizzes yet', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF222222))),
-                    const SizedBox(height: 8),
-                    const Text('Create your first quiz to get started. It will appear here and you can publish or share it.' , textAlign: TextAlign.center, style: TextStyle(color: Color(0xFF7F8C8D))),
-                    const SizedBox(height: 24),
-                    ElevatedButton.icon(
-                      onPressed: () async {
-                        await Navigator.of(context).pushNamed('/create_quiz');
-                        if (mounted) setState(() => _load());
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF222222),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      icon: const Icon(Icons.add),
-                      label: const Text('Create Quiz'),
-                    ),
-                  ]),
-                ),
-              );
-            }
-
-            return Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
-                children: [
-                  // Search & controls
-                  Row(children: [
-                    Expanded(
-                      child: CustomPaint(
-                        painter: _GradientPainter(
-                          strokeWidth: 1.5,
-                          radius: 12,
-                          gradient: const LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [Colors.black, Colors.white],
-                          ),
-                        ),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: TextField(
-                            decoration: InputDecoration(
-                              hintText: 'Search quizzes',
-                              prefixIcon: const Icon(Icons.search, color: Color(0xFF999999)),
-                              hintStyle: const TextStyle(color: Color(0xFF999999), fontSize: 14),
-                              filled: false,
-                              border: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            ),
-                            onChanged: (v) => setState(() => _searchQuery = v),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ]),
-                  const SizedBox(height: 12),
-                  // Quick filters
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(children: [
-                      _modeChip('Recent'),
-                      const SizedBox(width: 8),
-                      _modeChip('Name'),
-                      const SizedBox(width: 8),
-                      _modeChip('Created'),
-                      const SizedBox(width: 8),
-                      _modeChip('Popular'),
-                    ]),
-                  ),
-                  const SizedBox(height: 12),
-                  Expanded(
-                    child: RefreshIndicator(
-                      onRefresh: () async {
-                        _load();
-                        // wait for future
-                        await _future;
-                      },
-                      child: ListView(
-                        children: [
-                          _sectionHeader('Drafts', drafts.length),
-                          for (var q in drafts) _buildQuizCard(q, isPublished: false),
-                          const SizedBox(height: 12),
-                          _sectionHeader('Published', published.length),
-                          for (var q in published) _buildQuizCard(q, isPublished: true),
-                          const SizedBox(height: 24),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
+                  )
       ),
     );
   }
@@ -697,11 +720,51 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
     );
   }
 
+  bool _areAllSelectedDrafts() {
+    if (_selected.isEmpty) return false;
+    return _quizzes.where((q) => _selected.contains(q.id)).every((q) => !q.published);
+  }
+
+  bool _areAllSelectedPublished() {
+    if (_selected.isEmpty) return false;
+    return _quizzes.where((q) => _selected.contains(q.id)).every((q) => q.published);
+  }
+
+  Future<void> _batchDraftSelected() async {
+    if (_selected.isEmpty) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final ids = List<String>.from(_selected);
+    final failures = <String>[];
+    for (final id in ids) {
+      try {
+        await FirestoreService().publishQuiz(id, false);
+        // Update local list
+        final index = _quizzes.indexWhere((q) => q.id == id);
+        if (index != -1) {
+          _quizzes[index] = _quizzes[index].copyWith(published: false);
+        }
+      } catch (e) {
+        failures.add('$id: $e');
+      }
+    }
+    if (mounted) {
+      setState(() {
+        _selected.clear();
+      });
+    }
+    if (failures.isEmpty) {
+      _showThemedSnackBar(messenger, 'Selected quizzes drafted', leading: Icons.check_circle_outline);
+    } else {
+      _showThemedSnackBar(messenger, 'Some failed: ${failures.join(', ')}', leading: Icons.error_outline);
+    }
+  }
+
   Future<void> _batchPublishSelected() async {
     if (_selected.isEmpty) return;
     final messenger = ScaffoldMessenger.of(context);
+    final ids = List<String>.from(_selected);
     final failures = <String>[];
-    for (final id in _selected) {
+    for (final id in ids) {
       try {
         final qs = await FirestoreService().getQuizQuestions(id);
         if (qs.isEmpty) {
@@ -709,52 +772,72 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
           continue;
         }
         await FirestoreService().publishQuiz(id, true);
+        // Update local list
+        final index = _quizzes.indexWhere((q) => q.id == id);
+        if (index != -1) {
+          _quizzes[index] = _quizzes[index].copyWith(published: true);
+        }
       } catch (e) {
         failures.add('$id: $e');
       }
     }
-    setState(() => _selected.clear());
-    _load();
+    if (mounted) {
+      setState(() {
+        _selected.clear();
+      });
+    }
     if (failures.isEmpty) {
-      messenger.showSnackBar(const SnackBar(content: Text('Selected quizzes published')));
+      _showThemedSnackBar(messenger, 'Selected quizzes published', leading: Icons.check_circle_outline);
     } else {
-      messenger.showSnackBar(SnackBar(content: Text('Some failed: ${failures.join(', ')}')));
+      _showThemedSnackBar(messenger, 'Some failed: ${failures.join(', ')}', leading: Icons.error_outline);
     }
   }
 
   Future<void> _batchDeleteSelected() async {
     if (_selected.isEmpty) return;
     final messenger = ScaffoldMessenger.of(context);
-    final confirmed = await showDialog<bool>(context: context, builder: (_) => AlertDialog(title: const Text('Delete selected quizzes'), content: const Text('Delete selected quizzes? You can undo this from the snackbar immediately after.'), actions: [TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')), ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Delete'))]));
-    if (confirmed != true) return;
-    final ids = List<String>.from(_selected);
-    // create backups
-    final Map<String, String> backups = {};
-    for (final id in ids) {
-      try {
-        final b = await FirestoreService().backupQuiz(id);
-        backups[id] = b;
-      } catch (_) {}
-    }
-    // delete
-    for (final id in ids) {
-      try {
-        await FirestoreService().deleteQuiz(id);
-      } catch (_) {}
-    }
-    setState(() => _selected.clear());
-    _load();
 
-    // Show undo snackbar that restores backups for any that were created
-    final Future<String?> backupFuture = backups.isEmpty ? Future.value(null) : Future.value(backups.values.join(','));
-    _showUndoSnackBar(messenger: messenger, backupFuture: backupFuture, onRestoreSuccess: () async {
-      for (final b in backups.values) {
-        try {
-          await FirestoreService().restoreQuizFromBackup(b);
-        } catch (_) {}
+    // Get quizzes to delete
+    final quizzesToDelete = _quizzes.where((q) => _selected.contains(q.id)).toList();
+    final quizTitles = quizzesToDelete.map((q) => q.title).toList();
+
+    final quizInfo = quizTitles.length == 1 
+        ? 'Quiz "${quizTitles.first}" deleted'
+        : '${quizTitles.length} quizzes deleted';
+
+    // Optimistic UI update: Remove from display immediately
+    setState(() {
+      _quizzes.removeWhere((q) => _selected.contains(q.id));
+      _selected.clear();
+    });
+
+    bool undoPressed = false;
+
+    // Show undo snackbar
+    final controller = _showUndoSnackBar(
+      messenger: messenger,
+      onUndo: () {
+        undoPressed = true;
+        // Restore items to UI
+        setState(() {
+          _quizzes.addAll(quizzesToDelete);
+        });
+        SnackBarUtils.showThemedSnackBar(messenger, 'Quizzes restored', leading: Icons.check_circle_outline);
+      },
+      itemInfo: quizInfo,
+      hasFloatingButtons: false,  // FABs are gone since selection is cleared
+    );
+
+    // When snackbar closes, if not undone and timer ran out, perform actual delete
+    controller.closed.then((reason) {
+      if (!undoPressed && reason == SnackBarClosedReason.timeout) {
+        for (final quiz in quizzesToDelete) {
+          FirestoreService().deleteQuiz(quiz.id).catchError((e) {
+            debugPrint('Delete failed for quiz ${quiz.id}: $e');
+          });
+        }
       }
-      if (mounted) setState(() => _load());
-    }, quizTitle: '${ids.length} quizzes');
+    });
   }
 
   Widget _buildQuizCard(QuizModel q, {required bool isPublished}) {
@@ -763,7 +846,7 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
       key: ValueKey(q.id),
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       child: CustomPaint(
-        painter: _GradientPainter(
+        painter: GradientPainter(
           strokeWidth: 2,
           radius: 14,
           gradient: const LinearGradient(
@@ -787,7 +870,14 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
                 if (_selected.contains(q.id)) {
                   _selected.remove(q.id);
                 } else {
-                  _selected.add(q.id);
+                  // Check if adding this quiz would mix categories
+                  final firstSelectedQuiz = _quizzes.firstWhere((quiz) => _selected.contains(quiz.id));
+                  if (firstSelectedQuiz.published == q.published) {
+                    _selected.add(q.id);
+                  } else {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    _showThemedSnackBar(ScaffoldMessenger.of(context), 'Can only select quizzes from the same category (draft or published)', leading: Icons.info_outline);
+                  }
                 }
               });
               return;
@@ -874,55 +964,78 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
                         final qs = await FirestoreService().getQuizQuestions(q.id);
                         if (qs.isEmpty) {
                           messenger.hideCurrentSnackBar();
-                          messenger.showSnackBar(const SnackBar(content: Text('Cannot publish an empty quiz — add at least one question')));
+                          _showThemedSnackBar(messenger, 'Cannot publish an empty quiz — add at least one question', leading: Icons.error_outline);
                           return;
                         }
                         await FirestoreService().publishQuiz(q.id, true);
-                        setState(() => _load());
+                        // Update local list
+                        if (mounted) {
+                          setState(() {
+                            final index = _quizzes.indexWhere((quiz) => quiz.id == q.id);
+                            if (index != -1) {
+                              _quizzes[index] = _quizzes[index].copyWith(published: true);
+                            }
+                          });
+                        }
                       } catch (e) {
                         messenger.hideCurrentSnackBar();
-                        messenger.showSnackBar(SnackBar(content: Text('Failed to publish: $e')));
+                        _showThemedSnackBar(messenger, 'Failed to publish: $e', leading: Icons.error_outline);
                       }
                       break;
                     case 'unpublish':
                       try {
                         await FirestoreService().publishQuiz(q.id, false);
-                        setState(() => _load());
+                        // Update local list
+                        if (mounted) {
+                          setState(() {
+                            final index = _quizzes.indexWhere((quiz) => quiz.id == q.id);
+                            if (index != -1) {
+                              _quizzes[index] = _quizzes[index].copyWith(published: false);
+                            }
+                          });
+                        }
                       } catch (e) {
                         messenger.hideCurrentSnackBar();
-                        messenger.showSnackBar(SnackBar(content: Text('Failed to unpublish: $e')));
+                        _showThemedSnackBar(messenger, 'Failed to unpublish: $e', leading: Icons.error_outline);
                       }
                       break;
                     case 'delete':
-                      final confirmed = await showDialog<bool>(context: context, builder: (_) => AlertDialog(title: const Text('Delete Quiz'), content: const Text('Delete this quiz?'), actions: [TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')), ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Delete'))]));
-                      if (confirmed == true) {
-                        final backupFuture = (() async { try { return await FirestoreService().backupQuiz(q.id); } catch (_) { return null; }})();
-                        final deleteFuture = backupFuture.then((backupId) async {
-                          try {
-                            await FirestoreService().deleteQuiz(q.id);
-                          } catch (_) {}
-                          if (!mounted) {
-                            return backupId;
-                          }
-                          setState(() => _load());
-                          return backupId;
-                        });
-                        _showUndoSnackBar(messenger: messenger, backupFuture: backupFuture, onRestoreSuccess: () {}, quizTitle: q.title);
-                        deleteFuture.catchError((e) {
-                          if (!mounted) {
-                            return null;
-                          }
-                          messenger.hideCurrentSnackBar();
-                          messenger.showSnackBar(SnackBar(content: Text('Failed to delete: $e')));
-                          return null;
-                        });
-                      }
+                      // Optimistic UI update: Remove from display immediately
+                      setState(() {
+                        _quizzes.removeWhere((quiz) => quiz.id == q.id);
+                      });
+
+                      bool undoPressed = false;
+
+                      // Show undo snackbar
+                      final controller = _showUndoSnackBar(
+                        messenger: messenger,
+                        onUndo: () {
+                          undoPressed = true;
+                          // Restore item to UI
+                          setState(() {
+                            _quizzes.add(q);
+                          });
+                          SnackBarUtils.showThemedSnackBar(messenger, 'Quiz restored', leading: Icons.check_circle_outline);
+                        },
+                        itemInfo: 'Quiz "${q.title}" deleted',
+                        hasFloatingButtons: false,
+                      );
+
+                      // When snackbar closes, if not undone and timer ran out, perform actual delete
+                      controller.closed.then((reason) {
+                        if (!undoPressed && reason == SnackBarClosedReason.timeout) {
+                          FirestoreService().deleteQuiz(q.id).catchError((e) {
+                            debugPrint('Delete failed for quiz ${q.id}: $e');
+                          });
+                        }
+                      });
                       break;
                   }
                 },
                 itemBuilder: (_) => [
                   if (!isPublished) const PopupMenuItem(value: 'edit', child: Text('Edit', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500))),
-                  const PopupMenuItem(value: 'copy', child: Text('Copy code', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500))),
+                  if (isPublished) const PopupMenuItem(value: 'copy', child: Text('Copy code', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500))),
                   if (!isPublished) const PopupMenuItem(value: 'publish', child: Text('Publish', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500))),
                   if (isPublished) const PopupMenuItem(value: 'unpublish', child: Text('Unpublish', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500))),
                   const PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500))),

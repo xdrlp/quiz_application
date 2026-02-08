@@ -4,6 +4,7 @@ import 'package:quiz_application/services/firestore_service.dart';
 import 'package:quiz_application/models/quiz_model.dart';
 import 'package:quiz_application/models/question_model.dart';
 import 'package:quiz_application/screens/question_editor.dart';
+import 'package:quiz_application/utils/snackbar_utils.dart';
 
 class _GradientPainter extends CustomPainter {
   final double radius;
@@ -115,9 +116,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
   Future<bool> _saveQuizSettings({bool showSnack = true}) async {
     if (_enablePassword && _passwordController.text.trim().isEmpty) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter a password or disable password protection')),
-        );
+        SnackBarUtils.showThemedSnackBar(ScaffoldMessenger.of(context), 'Please enter a password or disable password protection', leading: Icons.error_outline);
       }
       return false;
     }
@@ -135,7 +134,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
     });
     await _load();
     if (showSnack && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Settings saved')));
+      SnackBarUtils.showThemedSnackBar(ScaffoldMessenger.of(context), 'Settings saved', leading: Icons.check_circle_outline);
     }
     return true;
   }
@@ -173,7 +172,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
 
     if (_questions.isEmpty) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Add at least one question before publishing')));
+      SnackBarUtils.showThemedSnackBar(ScaffoldMessenger.of(context), 'Add at least one question before publishing', leading: Icons.error_outline);
       return;
     }
 
@@ -185,7 +184,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
     final invalid = _questions.where((q) => requiresCorrect.contains(q.type) && (q.correctAnswers.isEmpty)).toList();
     if (invalid.isNotEmpty) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Some questions are missing correct answers. Mark them before publishing.')));
+      SnackBarUtils.showThemedSnackBar(ScaffoldMessenger.of(context), 'Some questions are missing correct answers. Mark them before publishing.', leading: Icons.error_outline);
       return;
     }
 
@@ -558,7 +557,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                                             'Copy Code',
                                             style: TextStyle(
                                               fontSize: 14,
-                                              fontWeight: FontWeight.w600,
+                                              fontWeight: FontWeight.w500,
                                               color: Colors.white,
                                             ),
                                           ),
@@ -584,7 +583,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to publish: $e')));
+      SnackBarUtils.showThemedSnackBar(ScaffoldMessenger.of(context), 'Failed to publish: $e', leading: Icons.error_outline);
     }
   }
 
@@ -642,22 +641,68 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
                       child: Tooltip(
                         message: (!_quiz!.published && _questions.isEmpty) ? 'Add at least one question before publishing' : '',
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _quiz!.published ? const Color(0xFFC0392B) : const Color(0xFF222222),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: GestureDetector(
+                            onTap: (!_quiz!.published && _questions.isEmpty)
+                                ? null
+                                : _quiz!.published
+                                    ? () async {
+                                        if (!await _saveQuizSettings(showSnack: false)) return;
+                                        await FirestoreService().publishQuiz(quizId, false);
+                                        await _load();
+                                      }
+                                    : _publishQuiz,
+                            child: Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Color.fromARGB(255, 248, 248, 248),
+                                    Color.fromARGB(255, 199, 199, 199),
+                                    Color.fromARGB(255, 248, 248, 248),
+                                    Color.fromARGB(255, 116, 116, 116),
+                                    Color.fromARGB(242, 61, 61, 61),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Container(
+                                height: 40,
+                                width: 100,
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Color.fromARGB(255, 241, 0, 0),
+                                      Color.fromARGB(255, 233, 0, 0),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Center(
+                                  child: ShaderMask(
+                                    shaderCallback: (bounds) {
+                                      return const LinearGradient(
+                                        colors: [Color(0xFFE9E9E9), Color(0xFFFFFFFF)],
+                                      ).createShader(bounds);
+                                    },
+                                    child: Text(
+                                      _quiz!.published ? 'Unpublish' : 'Publish',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
-                          onPressed: (!_quiz!.published && _questions.isEmpty)
-                              ? null
-                              : _quiz!.published
-                                  ? () async {
-                                      if (!await _saveQuizSettings(showSnack: false)) return;
-                                      await FirestoreService().publishQuiz(quizId, false);
-                                      await _load();
-                                    }
-                                  : _publishQuiz,
-                          child: Text(_quiz!.published ? 'Unpublish' : 'Publish'),
                         ),
                       ),
                     ),

@@ -2,6 +2,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
+import 'package:quiz_application/utils/snackbar_utils.dart';
 
 class _GradientPainter extends CustomPainter {
   final double radius;
@@ -84,11 +85,7 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
     final description = _descCtrl.text.trim();
 
     if (name.isEmpty || email.isEmpty || title.isEmpty || description.isEmpty) {
-      messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Please complete all fields before submitting.'),
-        ),
-      );
+      SnackBarUtils.showThemedSnackBar(messenger, 'Please complete all fields before submitting.', leading: Icons.error_outline);
       return;
     }
 
@@ -104,43 +101,16 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
       });
       if (!mounted) return;
 
-      const duration = Duration(seconds: 3);
-      messenger.showSnackBar(
-        SnackBar(
-          duration: duration,
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text('Report submitted successfully! Auto-closing...'),
-              const SizedBox(height: 8),
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0.0, end: 1.0),
-                duration: duration,
-                builder: (context, value, _) => LinearProgressIndicator(
-                  value: value,
-                  valueColor: const AlwaysStoppedAnimation(
-                    Color.fromARGB(255, 0, 0, 0),
-                  ),
-                  backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-                  minHeight: 8,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
+      SnackBarUtils.showThemedSnackBar(messenger, 'Report submitted successfully! Auto-closing...', leading: Icons.check_circle_outline);
 
-      await Future.delayed(duration);
+      await Future.delayed(const Duration(seconds: 3));
       if (!mounted) return;
       Navigator.of(context).pop();
     } on FirebaseFunctionsException catch (e) {
       final message = e.message ?? 'Unable to send the bug report.';
-      messenger.showSnackBar(SnackBar(content: Text(message)));
+      SnackBarUtils.showThemedSnackBar(messenger, message, leading: Icons.error_outline);
     } catch (e) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Unable to send the bug report.')),
-      );
+      SnackBarUtils.showThemedSnackBar(messenger, 'Unable to send the bug report.', leading: Icons.error_outline);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }

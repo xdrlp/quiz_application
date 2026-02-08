@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui' as ui;
 import 'package:quiz_application/services/firestore_service.dart';
+import 'package:quiz_application/utils/snackbar_utils.dart';
 
 class _GradientPainter extends CustomPainter {
   final double radius;
@@ -39,7 +40,7 @@ class _GradientPainter extends CustomPainter {
 Widget _buildDetailCard({required List<Widget> children}) {
   return CustomPaint(
     painter: _GradientPainter(
-      strokeWidth: 1.5,
+      strokeWidth: 2,
       radius: 12,
       gradient: const LinearGradient(
         begin: Alignment.topCenter,
@@ -108,7 +109,7 @@ Future<void> showTakeQuizDialog(BuildContext context) async {
           // Verify password
           if (currentQuiz.password != enteredPassword) {
             if (!ctx.mounted) return;
-            ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Incorrect password')));
+            SnackBarUtils.showThemedSnackBar(ScaffoldMessenger.of(ctx), 'Incorrect password', leading: Icons.error_outline);
             return;
           }
 
@@ -148,10 +149,16 @@ Future<void> showTakeQuizDialog(BuildContext context) async {
                     ? normalizeDuplicateTrailingWords(displayNameRaw)
                     : normalizeDuplicateTrailingWords('$firstName $lastName');
 
-                return Dialog(
-                  backgroundColor: Colors.transparent,
-                  child: Center(
-                    child: SingleChildScrollView(
+                return Stack(
+                  children: [
+                    Positioned.fill(
+                      child: BackdropFilter(
+                        filter: ui.ImageFilter.blur(sigmaX: 4.0, sigmaY: 4.0),
+                        child: Container(color: Colors.transparent),
+                      ),
+                    ),
+                    Center(
+                      child: SingleChildScrollView(
                       child: Material(
                         type: MaterialType.transparency,
                         child: SizedBox(
@@ -349,8 +356,9 @@ Future<void> showTakeQuizDialog(BuildContext context) async {
                       ),
                     ),
                   ),
-                ),
-              );
+                  ),
+                  ],
+                );
             },
           );
           if (confirmed == true) {
@@ -359,7 +367,7 @@ Future<void> showTakeQuizDialog(BuildContext context) async {
           } catch (e) {
             if (!ctx.mounted) return;
             setState(() => isLoading = false);
-            ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('Error: $e')));
+            SnackBarUtils.showThemedSnackBar(ScaffoldMessenger.of(ctx), 'Error: $e', leading: Icons.error_outline);
           }
         }
 
@@ -371,7 +379,7 @@ Future<void> showTakeQuizDialog(BuildContext context) async {
             final quiz = await FirestoreService().getQuizByCode(code);
             if (quiz == null) {
               if (!ctx.mounted) return;
-              ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('No quiz found for that code')));
+              SnackBarUtils.showThemedSnackBar(ScaffoldMessenger.of(ctx), 'No quiz found for that code', leading: Icons.error_outline);
               setState(() => isLoading = false);
               return;
             }
@@ -420,10 +428,16 @@ Future<void> showTakeQuizDialog(BuildContext context) async {
                       ? normalizeDuplicateTrailingWords(displayNameRaw)
                       : normalizeDuplicateTrailingWords('$firstName $lastName');
 
-                  return Dialog(
-                    backgroundColor: Colors.transparent,
-                    child: Center(
-                      child: SingleChildScrollView(
+                  return Stack(
+                    children: [
+                      Positioned.fill(
+                        child: BackdropFilter(
+                          filter: ui.ImageFilter.blur(sigmaX: 4.0, sigmaY: 4.0),
+                          child: Container(color: Colors.transparent),
+                        ),
+                      ),
+                      Center(
+                        child: SingleChildScrollView(
                         child: Material(
                           type: MaterialType.transparency,
                           child: SizedBox(
@@ -456,7 +470,7 @@ Future<void> showTakeQuizDialog(BuildContext context) async {
                                         Color.fromARGB(235, 173, 173, 173),
                                       ],
                                     ),
-                                    borderRadius: BorderRadius.circular(22),
+                                    borderRadius: BorderRadius.circular(16),
                                   ),
                                   padding: const EdgeInsets.all(24),
                                   child: Column(
@@ -622,6 +636,7 @@ Future<void> showTakeQuizDialog(BuildContext context) async {
                       ),
                     ),
                   ),
+                  ],
                 );
               },
             );
@@ -632,7 +647,7 @@ Future<void> showTakeQuizDialog(BuildContext context) async {
           } catch (e) {
             if (!ctx.mounted) return;
             setState(() => isLoading = false);
-            ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('Error: $e')));
+            SnackBarUtils.showThemedSnackBar(ScaffoldMessenger.of(ctx), 'Error: $e', leading: Icons.error_outline);
           }
         }
 

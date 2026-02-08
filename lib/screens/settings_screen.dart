@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:quiz_application/providers/auth_provider.dart';
 import 'package:quiz_application/services/local_violation_store.dart';
 import 'package:quiz_application/screens/report_bug_dialog.dart';
+import 'package:quiz_application/utils/snackbar_utils.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -87,15 +88,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       await LocalViolationStore.clear();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('App cache cleared successfully')),
-        );
+        SnackBarUtils.showThemedSnackBar(ScaffoldMessenger.of(context), 'App cache cleared successfully');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to clear cache: $e')),
-        );
+        SnackBarUtils.showThemedSnackBar(ScaffoldMessenger.of(context), 'Failed to clear cache: $e', leading: Icons.error_outline);
       }
     }
   }
@@ -131,9 +128,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final authProvider = context.read<AuthProvider>();
       await authProvider.deleteAccount();
       if (mounted && authProvider.errorMessage != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${authProvider.errorMessage}')),
-        );
+        SnackBarUtils.showThemedSnackBar(ScaffoldMessenger.of(context), 'Error: ${authProvider.errorMessage}', leading: Icons.error_outline);
       } else if (mounted) {
         Navigator.of(context).pushNamedAndRemoveUntil('/splash', (route) => false);
       }
@@ -146,9 +141,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await launchUrl(uri);
     } else {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open link')),
-        );
+        SnackBarUtils.showThemedSnackBar(ScaffoldMessenger.of(context), 'Could not open link', leading: Icons.error_outline);
       }
     }
   }

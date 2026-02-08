@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:quiz_application/services/firestore_service.dart';
 import 'package:quiz_application/models/quiz_model.dart';
+import 'package:quiz_application/utils/snackbar_utils.dart';
 
 class FindQuizScreen extends StatefulWidget {
   const FindQuizScreen({super.key});
@@ -35,7 +36,7 @@ class _FindQuizScreenState extends State<FindQuizScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _loading = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      SnackBarUtils.showThemedSnackBar(ScaffoldMessenger.of(context), 'Error: $e', leading: Icons.error_outline);
     }
   }
 

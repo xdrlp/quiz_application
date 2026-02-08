@@ -7,6 +7,7 @@ class AttemptAnswerModel {
   final DateTime? answeredAt;
   final bool isCorrect;
   final bool forceIncorrect;
+  final bool manuallyEdited;
 
   AttemptAnswerModel({
     required this.questionId,
@@ -15,6 +16,7 @@ class AttemptAnswerModel {
     this.answeredAt,
     required this.isCorrect,
     this.forceIncorrect = false,
+    this.manuallyEdited = false,
   });
 
   factory AttemptAnswerModel.fromMap(Map<String, dynamic> map) {
@@ -25,6 +27,7 @@ class AttemptAnswerModel {
       answeredAt: map['answeredAt'] != null ? (map['answeredAt'] as Timestamp).toDate() : null,
       isCorrect: map['isCorrect'] ?? false,
       forceIncorrect: map['forceIncorrect'] ?? false,
+      manuallyEdited: map['manuallyEdited'] ?? false,
     );
   }
 
@@ -36,6 +39,7 @@ class AttemptAnswerModel {
       'answeredAt': answeredAt != null ? Timestamp.fromDate(answeredAt!) : null,
       'isCorrect': isCorrect,
       'forceIncorrect': forceIncorrect,
+      'manuallyEdited': manuallyEdited,
     };
   }
 
@@ -46,6 +50,7 @@ class AttemptAnswerModel {
     DateTime? answeredAt,
     bool? isCorrect,
     bool? forceIncorrect,
+    bool? manuallyEdited,
   }) {
     return AttemptAnswerModel(
       questionId: questionId ?? this.questionId,
@@ -54,6 +59,7 @@ class AttemptAnswerModel {
       answeredAt: answeredAt ?? this.answeredAt,
       isCorrect: isCorrect ?? this.isCorrect,
       forceIncorrect: forceIncorrect ?? this.forceIncorrect,
+      manuallyEdited: manuallyEdited ?? this.manuallyEdited,
     );
   }
 }

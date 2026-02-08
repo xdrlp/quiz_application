@@ -340,7 +340,7 @@ class FirestoreService {
           .orderBy('detectedAt', descending: false)
           .get();
       return querySnapshot.docs
-          .map((doc) => ViolationModel.fromFirestore(doc))
+          .map<ViolationModel>((doc) => ViolationModel.fromFirestore(doc))
           .toList();
     } catch (e) {
       rethrow;
@@ -396,109 +396,6 @@ class FirestoreService {
 
       // Finally delete the quiz document itself
       await _firestore.collection(quizzesCollection).doc(quizId).delete();
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  /// Create a backup snapshot for a quiz (quiz doc + questions + attempts + violations).
-  /// Returns the backup document id.
-  Future<String> backupQuiz(String quizId) async {
-    try {
-      final quizDoc = await _firestore.collection(quizzesCollection).doc(quizId).get();
-      if (!quizDoc.exists) throw Exception('Quiz not found');
-
-      final quizData = quizDoc.data();
-
-      final questionsSnap = await _firestore
-          .collection(quizzesCollection)
-          .doc(quizId)
-          .collection(questionsCollection)
-          .get();
-      final questions = questionsSnap.docs.map((d) => {'id': d.id, ...?d.data() as Map<String, dynamic>?}).toList();
-
-      final attemptsSnap = await _firestore
-          .collection(attemptsCollection)
-          .where('quizId', isEqualTo: quizId)
-          .get();
-      final attempts = attemptsSnap.docs.map((d) => {'id': d.id, ...?d.data() as Map<String, dynamic>?}).toList();
-
-      final violations = <Map<String, dynamic>>[];
-      for (var aDoc in attemptsSnap.docs) {
-        final attemptId = aDoc.id;
-        final violSnap = await _firestore
-            .collection(violationsCollection)
-            .where('attemptId', isEqualTo: attemptId)
-            .get();
-        for (var vDoc in violSnap.docs) {
-          violations.add({'id': vDoc.id, ...?vDoc.data() as Map<String, dynamic>?});
-        }
-      }
-
-      final backup = {
-        'quizId': quizId,
-        'quiz': quizData,
-        'questions': questions,
-        'attempts': attempts,
-        'violations': violations,
-        'createdAt': FieldValue.serverTimestamp(),
-      };
-
-      final ref = await _firestore.collection('quiz_backups').add(backup);
-      return ref.id;
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  /// Restore a quiz from a previously created backup. The backup stores
-  /// original document ids and will attempt to recreate documents with the
-  /// same ids. This deletes the backup after successful restore.
-  Future<void> restoreQuizFromBackup(String backupId) async {
-    try {
-      final bDoc = await _firestore.collection('quiz_backups').doc(backupId).get();
-      if (!bDoc.exists) throw Exception('Backup not found');
-      final data = bDoc.data() as Map<String, dynamic>;
-      final quizId = data['quizId'] as String;
-      final quiz = Map<String, dynamic>.from(data['quiz'] ?? {});
-
-      // Restore quiz doc with same id
-      await _firestore.collection(quizzesCollection).doc(quizId).set(quiz);
-
-      // Restore questions
-      final questions = List<Map<String, dynamic>>.from(data['questions'] ?? []);
-      for (var q in questions) {
-        final id = q.remove('id') as String?;
-        if (id != null) {
-          await _firestore
-              .collection(quizzesCollection)
-              .doc(quizId)
-              .collection(questionsCollection)
-              .doc(id)
-              .set(q);
-        }
-      }
-
-      // Restore attempts
-      final attempts = List<Map<String, dynamic>>.from(data['attempts'] ?? []);
-      for (var a in attempts) {
-        final id = a.remove('id') as String?;
-        if (id != null) {
-          await _firestore.collection(attemptsCollection).doc(id).set(a);
-        }
-      }
-
-      // Restore violations
-      final violations = List<Map<String, dynamic>>.from(data['violations'] ?? []);
-      for (var v in violations) {
-        final id = v.remove('id') as String?;
-        if (id != null) {
-          await _firestore.collection(violationsCollection).doc(id).set(v);
-        }
-      }
-
-      // Remove the backup doc after successful restore
-      await _firestore.collection('quiz_backups').doc(backupId).delete();
     } catch (e) {
       rethrow;
     }

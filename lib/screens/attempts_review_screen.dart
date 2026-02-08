@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:quiz_application/services/firestore_service.dart';
-// Local queueing removed intentionally; use FirestoreService directly.
 import 'package:quiz_application/models/attempt_model.dart';
 import 'package:quiz_application/models/question_model.dart';
+import 'package:quiz_application/models/violation_model.dart';
 
 class AttemptsReviewScreen extends StatefulWidget {
   final String quizId;
@@ -138,11 +138,13 @@ class AttemptDetailDialog extends StatefulWidget {
 
 class _AttemptDetailDialogState extends State<AttemptDetailDialog> {
   late AttemptModel _attempt;
+  late Future<List<ViolationModel>> _violationsFuture;
 
   @override
   void initState() {
     super.initState();
     _attempt = widget.attempt;
+    _violationsFuture = FirestoreService().getViolationsByAttempt(_attempt.id);
   }
 
   QuestionModel? _findQuestion(String qid) {
@@ -167,61 +169,92 @@ class _AttemptDetailDialogState extends State<AttemptDetailDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text('Attempt by ${_attempt.userId}'),
-      content: SizedBox(
-        width: double.maxFinite,
-        child: ListView.builder(
-          shrinkWrap: true,
-          itemCount: _attempt.answers.length,
-          itemBuilder: (context, i) {
-            final a = _attempt.answers[i];
-            final q = _findQuestion(a.questionId);
-            final prompt = q?.prompt ?? a.questionId;
-            final type = q?.type;
-            return ListTile(
-              title: Text(prompt),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 6),
-                  Text('Response: ${a.selectedChoiceId}'),
-                  if (type == QuestionType.paragraph)
-                    Row(
-                      children: [
-                        const Text('Mark as correct:'),
-                        Switch(
-                          value: a.isCorrect,
-                          onChanged: (v) {
-                            setState(() {
-                              // update local attempt answer by creating a new instance
-                              final updated = AttemptAnswerModel(
-                                questionId: a.questionId,
-                                selectedChoiceId: a.selectedChoiceId,
-                                timeTakenSeconds: a.timeTakenSeconds,
-                                answeredAt: a.answeredAt,
-                                isCorrect: v,
-                                forceIncorrect: a.forceIncorrect,
-                              );
-                              final list = _attempt.answers.toList();
-                              list[i] = updated;
-                              // recalc score: adjust based on question points
-                              int newScore = 0;
-                              for (var j = 0; j < list.length; j++) {
-                                final ans = list[j];
-                                final qq = _findQuestion(ans.questionId);
-                                if (ans.isCorrect && qq != null) newScore += qq.points;
-                              }
-                              _attempt = _attempt.copyWith(score: newScore, answers: list);
-                            });
-                          },
+      content: FutureBuilder<List<ViolationModel>>(
+        future: _violationsFuture,
+        builder: (context, vsnap) {
+          final violations = vsnap.data ?? [];
+          return SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: _attempt.answers.length,
+              itemBuilder: (context, i) {
+                final a = _attempt.answers[i];
+                final q = _findQuestion(a.questionId);
+                final prompt = q?.prompt ?? a.questionId;
+                final type = q?.type;
+                // Find violations for this question index
+                final questionViolations = violations.where((v) {
+                  final details = v.details ?? '';
+                  final parts = details.split('|');
+                  for (final part in parts) {
+                    if (part.trim().startsWith('questionIndex:')) {
+                      final indexStr = part.trim().substring('questionIndex:'.length);
+                      final index = int.tryParse(indexStr);
+                      return index == i;
+                    }
+                  }
+                  return false;
+                }).toList();
+                return ListTile(
+                  title: Text(prompt),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 6),
+                      Text('Response: ${a.selectedChoiceId}'),
+                      if (questionViolations.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          'Violations: ${questionViolations.length}',
+                          style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
                         ),
+                        for (final v in questionViolations)
+                          Text(
+                            '${v.type.toString().split('.').last}: ${v.details ?? ''}',
+                            style: const TextStyle(color: Colors.red, fontSize: 12),
+                          ),
                       ],
-                    ),
-                ],
-              ),
-              trailing: a.isCorrect ? const Icon(Icons.check, color: Colors.green) : null,
-            );
-          },
-        ),
+                      if (type == QuestionType.paragraph)
+                        Row(
+                          children: [
+                            const Text('Mark as correct:'),
+                            Switch(
+                              value: a.isCorrect,
+                              onChanged: (v) {
+                                setState(() {
+                                  // update local attempt answer by creating a new instance
+                                  final updated = AttemptAnswerModel(
+                                    questionId: a.questionId,
+                                    selectedChoiceId: a.selectedChoiceId,
+                                    timeTakenSeconds: a.timeTakenSeconds,
+                                    answeredAt: a.answeredAt,
+                                    isCorrect: v,
+                                    forceIncorrect: a.forceIncorrect,
+                                  );
+                                  final list = _attempt.answers.toList();
+                                  list[i] = updated;
+                                  // recalc score: adjust based on question points
+                                  int newScore = 0;
+                                  for (var j = 0; j < list.length; j++) {
+                                    final ans = list[j];
+                                    final qq = _findQuestion(ans.questionId);
+                                    if (ans.isCorrect && qq != null) newScore += qq.points;
+                                  }
+                                  _attempt = _attempt.copyWith(score: newScore, answers: list);
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                  trailing: a.isCorrect ? const Icon(Icons.check, color: Colors.green) : null,
+                );
+              },
+            ),
+          );
+        },
       ),
       actions: [
         TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),

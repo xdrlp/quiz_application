@@ -6,37 +6,7 @@ import 'dart:ui' as ui;
 // removed unused import
 import 'package:provider/provider.dart';
 import 'package:quiz_application/providers/auth_provider.dart';
-
-class _GradientPainter extends CustomPainter {
-  final double radius;
-  final double strokeWidth;
-  final Gradient gradient;
-
-  _GradientPainter({
-    required this.gradient,
-    required this.radius,
-    required this.strokeWidth,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final Rect rect = Rect.fromLTWH(
-      strokeWidth / 2,
-      strokeWidth / 2,
-      size.width - strokeWidth,
-      size.height - strokeWidth,
-    );
-    final RRect rRect = RRect.fromRectAndRadius(rect, Radius.circular(radius));
-    final Paint paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..shader = gradient.createShader(rect);
-    canvas.drawRRect(rRect, paint);
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => true;
-}
+import 'package:quiz_application/utils/snackbar_utils.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -55,7 +25,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final FocusNode _passwordFocus = FocusNode();
   final GlobalKey _emailKey = GlobalKey();
   final GlobalKey _passwordKey = GlobalKey();
-  OverlayEntry? _topToastEntry;
   static final RegExp _emailRegExp = RegExp(r"^[^@\s]+@[^@\s]+\.[^@\s]+");
   String? _emailError;
   String? _passwordError;
@@ -102,48 +71,6 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
-  void _showTopToast(String message) {
-    _topToastEntry?.remove();
-    final overlay = Overlay.of(context);
-    final entry = OverlayEntry(
-      builder: (context) {
-        final topPadding = MediaQuery.of(context).padding.top + 8;
-        return Positioned(
-          top: topPadding,
-          left: 16,
-          right: 16,
-          child: Material(
-            elevation: 6,
-            borderRadius: BorderRadius.circular(12),
-            color: Colors.grey.shade900,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                vertical: 12.0,
-                horizontal: 16.0,
-              ),
-              child: Text(
-                message,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ),
-        );
-      },
-    );
-    _topToastEntry = entry;
-    overlay.insert(entry);
-    Future.delayed(const Duration(seconds: 2), () {
-      if (_topToastEntry == entry) {
-        _topToastEntry?.remove();
-        _topToastEntry = null;
-      }
-    });
-  }
-
   Future<void> _submit(BuildContext context) async {
     setState(() {
       _emailError = null;
@@ -166,7 +93,18 @@ class _LoginScreenState extends State<LoginScreen> {
     final ok = await auth.login(email: email, password: password);
     if (!mounted) return;
     if (!ok) {
-      setState(() => _emailError = auth.errorMessage ?? 'Sign in failed');
+      SnackBarUtils.showThemedSnackBar(
+        ScaffoldMessenger.of(context),
+        auth.errorMessage ?? 'Sign in failed',
+        leading: Icons.error_outline,
+      );
+    } else {
+      SnackBarUtils.showThemedSnackBar(
+        ScaffoldMessenger.of(context),
+        'Signed in successfully',
+        leading: Icons.check_circle_outline,
+        duration: const Duration(milliseconds: 500),
+      );
     }
   }
 
@@ -194,7 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: SizedBox(
                   width: 340,
                   child: CustomPaint(
-                    painter: _GradientPainter(
+                    painter: GradientPainter(
                       strokeWidth: 2,
                       radius: 24,
                       gradient: const LinearGradient(
@@ -314,7 +252,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                             // Email TextField
                             CustomPaint(
-                              painter: _GradientPainter(
+                              painter: GradientPainter(
                                 strokeWidth: 2,
                                 radius: 10,
                                 gradient: const LinearGradient(
@@ -459,7 +397,9 @@ class _LoginScreenState extends State<LoginScreen> {
     if (email.isEmpty && result != null) {
       // Only show error if they pressed Submit (returned a string)
       if (result.isEmpty) {
-        _showTopToast('Please enter your email address.');
+        Navigator.of(parentContext).pop();
+        if (!mounted) return;
+        SnackBarUtils.showThemedSnackBar(ScaffoldMessenger.of(context), 'Please enter your email address.', leading: Icons.error_outline);
         return;
       }
     }
@@ -468,17 +408,21 @@ class _LoginScreenState extends State<LoginScreen> {
     if (result == null) return;
 
     if (!_emailRegExp.hasMatch(email)) {
-      _showTopToast('Please enter a valid email address.');
+      Navigator.of(parentContext).pop();
+      if (!mounted) return;
+      SnackBarUtils.showThemedSnackBar(ScaffoldMessenger.of(context), 'Please enter a valid email address.', leading: Icons.error_outline);
       return;
     }
     final ok = await authProvider.requestPasswordReset(email: email);
     if (!mounted) return;
     if (ok) {
-      _showTopToast(
-        'Password reset email sent. Please check your inbox (including spam).',
-      );
+      Navigator.of(parentContext).pop();
+      if (!mounted) return;
+      SnackBarUtils.showThemedSnackBar(ScaffoldMessenger.of(context), 'Password reset email sent. Please check your inbox (including spam).', leading: Icons.check_circle_outline);
     } else {
-      _showTopToast(authProvider.errorMessage ?? 'Failed to send reset email');
+      Navigator.of(parentContext).pop();
+      if (!mounted) return;
+      SnackBarUtils.showThemedSnackBar(ScaffoldMessenger.of(context), authProvider.errorMessage ?? 'Failed to send reset email', leading: Icons.error_outline);
     }
   }
 
@@ -675,7 +619,7 @@ class _LoginScreenState extends State<LoginScreen> {
         borderRadius: BorderRadius.circular(8),
       ),
       child: CustomPaint(
-        painter: _GradientPainter(
+        painter: GradientPainter(
           strokeWidth: 2,
           radius: 8,
           gradient: const LinearGradient(

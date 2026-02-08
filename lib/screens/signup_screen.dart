@@ -1,37 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:quiz_application/providers/auth_provider.dart';
-
-class _GradientPainter extends CustomPainter {
-  final double radius;
-  final double strokeWidth;
-  final Gradient gradient;
-
-  _GradientPainter({
-    required this.gradient,
-    required this.radius,
-    required this.strokeWidth,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final Rect rect = Rect.fromLTWH(
-      strokeWidth / 2,
-      strokeWidth / 2,
-      size.width - strokeWidth,
-      size.height - strokeWidth,
-    );
-    final RRect rRect = RRect.fromRectAndRadius(rect, Radius.circular(radius));
-    final Paint paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..shader = gradient.createShader(rect);
-    canvas.drawRRect(rRect, paint);
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => true;
-}
+import 'package:quiz_application/utils/snackbar_utils.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -115,9 +85,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
     setState(() => _isCreatingAccount = false);
 
     if (success) {
-      Navigator.pop(context);
+      SnackBarUtils.showThemedSnackBar(
+        ScaffoldMessenger.of(context),
+        'Account created successfully!',
+        leading: Icons.check_circle_outline,
+        duration: const Duration(seconds: 1),
+      );
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) Navigator.pop(context);
+      });
     } else {
-      setState(() => _emailError = auth.errorMessage ?? 'Sign up failed.');
+      SnackBarUtils.showThemedSnackBar(
+        ScaffoldMessenger.of(context),
+        auth.errorMessage ?? 'Sign up failed.',
+        leading: Icons.error_outline,
+      );
     }
   }
 
@@ -147,7 +129,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         borderRadius: BorderRadius.circular(8),
       ),
       child: CustomPaint(
-        painter: _GradientPainter(
+        painter: GradientPainter(
           strokeWidth: 2,
           radius: 8,
           gradient: const LinearGradient(

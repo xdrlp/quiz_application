@@ -7,6 +7,7 @@ import 'package:quiz_application/providers/auth_provider.dart';
 import 'package:quiz_application/providers/quiz_provider.dart';
 import 'package:quiz_application/models/quiz_model.dart';
 // user_model import removed — roles simplified
+import 'package:quiz_application/models/attempt_model.dart';
 import 'package:quiz_application/screens/take_quiz_dialog.dart';
 
 class _GradientPainter extends CustomPainter {
@@ -148,8 +149,14 @@ class _HomeScreenState extends State<HomeScreen> {
                avgScore = totalPerc / submittedCount;
             }
 
-            final recent = List<QuizModel>.from(quizzes)
-              ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+            final recent = <dynamic>[];
+            recent.addAll(quizzes);
+            recent.addAll(attempts.where((a) => a.submittedAt != null));
+            recent.sort((a, b) {
+              DateTime ta = a is QuizModel ? a.createdAt : (a as AttemptModel).submittedAt ?? a.startedAt;
+              DateTime tb = b is QuizModel ? b.createdAt : (b as AttemptModel).submittedAt ?? b.startedAt;
+              return tb.compareTo(ta);
+            });
 
             return LayoutBuilder(
               builder: (context, constraints) {
@@ -453,10 +460,39 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: List.generate(
                               math.min(5, recent.length),
                               (i) {
-                                final q = recent[i];
-                                final ago = _relativeTime(q.createdAt);
+                                final item = recent[i];
+                                late String title;
+                                late String ago;
+                                late String status;
+                                late VoidCallback onTap;
+
+                                if (item is QuizModel) {
+                                  final q = item;
+                                  title = q.title;
+                                  ago = _relativeTime(q.createdAt);
+                                  status = q.published ? 'Published' : 'Draft';
+                                  onTap = () => Navigator.of(context).pushNamed('/edit_quiz', arguments: q.id);
+                                } else if (item is AttemptModel) {
+                                  final a = item;
+                                  QuizModel? quiz;
+                                  try {
+                                    quiz = quizzes.firstWhere((qz) => qz.id == a.quizId);
+                                  } catch (_) {
+                                    quiz = null;
+                                  }
+                                  title = quiz?.title ?? 'Unknown Quiz';
+                                  ago = _relativeTime(a.submittedAt ?? a.startedAt);
+                                  status = 'Completed';
+                                  onTap = () => Navigator.of(context).pushNamed('/attempt_review', arguments: a.id);
+                                } else {
+                                  title = 'Unknown';
+                                  ago = '';
+                                  status = '';
+                                  onTap = () {};
+                                }
+
                                 return Container(
-                                  key: ValueKey(q.id),
+                                  key: ValueKey(item is QuizModel ? item.id : (item as AttemptModel).id),
                                   margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                                   child: CustomPaint(
                                     painter: _GradientPainter(
@@ -477,25 +513,26 @@ class _HomeScreenState extends State<HomeScreen> {
                                         color: Colors.transparent,
                                         child: InkWell(
                                           borderRadius: BorderRadius.circular(12),
-                                          onTap: () {
-                                            Navigator.of(context).pushNamed('/edit_quiz', arguments: q.id);
-                                          },
+                                          onTap: onTap,
                                           child: Padding(
                                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                                             child: Row(
                                               children: [
                                                 Expanded(
-                                                  child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    mainAxisAlignment: MainAxisAlignment.center,
-                                                    children: [
-                                                      Text(q.title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF222222))),
-                                                      const SizedBox(height: 4),
-                                                      Text(ago, style: const TextStyle(fontSize: 11, color: Color.fromARGB(255, 139, 139, 139))),
-                                                    ],
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.only(right: 12.0),
+                                                    child: Column(
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      mainAxisAlignment: MainAxisAlignment.center,
+                                                      children: [
+                                                        Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF222222))),
+                                                        const SizedBox(height: 4),
+                                                        Text(ago, style: const TextStyle(fontSize: 11, color: Color.fromARGB(255, 139, 139, 139))),
+                                                      ],
+                                                    ),
                                                   ),
                                                 ),
-                                                Text(q.published ? 'Published' : 'Draft', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color.fromARGB(255, 59, 59, 59))),
+                                                Text(status, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color.fromARGB(255, 59, 59, 59))),
                                                 const SizedBox(width: 8),
                                                 const Icon(Icons.chevron_right, color: Color.fromARGB(255, 141, 141, 141), size: 20),
                                               ],
