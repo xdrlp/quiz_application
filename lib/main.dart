@@ -4,6 +4,7 @@ import 'firebase_options.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:quiz_application/screens/starter_screen.dart';
 import 'package:quiz_application/services/local_violation_store.dart';
@@ -23,6 +24,19 @@ import 'package:quiz_application/screens/profile_screen.dart';
 import 'package:quiz_application/screens/settings_screen.dart';
 import 'package:quiz_application/screens/quiz_history_screen.dart';
 import 'package:quiz_application/screens/attempt_detail_screen.dart';
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+/// Handle background messages
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Initialize Firebase if needed
+  if (kIsWeb) {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  } else {
+    await Firebase.initializeApp();
+  }
+  debugPrint("Handling a background message: ${message.messageId}");
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,6 +60,9 @@ void main() async {
       // Native platforms read their config from google-services.json / plist.
       await Firebase.initializeApp();
     }
+
+    // Set up background message handler
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   } catch (e) {
     firebaseInitError = e.toString();
     // Print to console for debugging; we'll show a friendly error UI below.
@@ -60,6 +77,7 @@ void main() async {
     NotificationService().initialize().catchError((e) {
       debugPrint('Notification init failed: $e');
     });
+    NotificationService.navigatorKey = navigatorKey;
   }
 
   runApp(MyApp(firebaseInitError: firebaseInitError));
@@ -107,6 +125,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         title: 'Quiz Application',
+        navigatorKey: navigatorKey,
         theme: (() {
           // Core colors - Grayscale / Desaturated
           const coldSteel = Color(0xFF1F1F1F); // Dark Grey instead of Blue-Black
@@ -177,7 +196,7 @@ class MyApp extends StatelessWidget {
           '/profile': (context) => const ProfileScreen(),
           '/settings': (context) => const SettingsScreen(),
           '/quiz_history': (context) => const QuizHistoryScreen(),
-          '/attempt_review': (context) {
+          '/attempt_detail': (context) {
             final args = ModalRoute.of(context)!.settings.arguments;
             final attemptId = args is String ? args : '';
             return AttemptDetailScreen(attemptId: attemptId);

@@ -94,13 +94,13 @@ exports.checkEmailExists = functions.https.onCall(async (data, context) => {
 
 /**
  * 3. Notify Teacher on Submission (Firestore Trigger)
- * Trigger: /quizzes/{quizId}/attempts/{attemptId} created
+ * Trigger: /attempts/{attemptId} created
  */
 exports.onAttemptCreated = functions.firestore
-  .document("quizzes/{quizId}/attempts/{attemptId}")
+  .document("attempts/{attemptId}")
   .onCreate(async (snap, context) => {
     const attempt = snap.data();
-    const quizId = context.params.quizId;
+    const quizId = attempt.quizId;
 
     try {
       // Get the Quiz to find the author
@@ -156,13 +156,14 @@ exports.onAttemptCreated = functions.firestore
 
 /**
  * 4. Notify Student on Result Update (Firestore Trigger)
- * Trigger: /quizzes/{quizId}/attempts/{attemptId} updated
+ * Trigger: /attempts/{attemptId} updated
  */
 exports.onAttemptUpdated = functions.firestore
-  .document("quizzes/{quizId}/attempts/{attemptId}")
+  .document("attempts/{attemptId}")
   .onUpdate(async (change, context) => {
     const newData = change.after.data();
     const oldData = change.before.data();
+    const quizId = newData.quizId;
 
     // Check if score changed or status became 'graded'
     const scoreChanged = newData.score !== oldData.score;

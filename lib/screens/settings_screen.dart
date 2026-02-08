@@ -6,6 +6,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:quiz_application/providers/auth_provider.dart';
 import 'package:quiz_application/services/local_violation_store.dart';
+import 'package:quiz_application/services/notification_service.dart';
 import 'package:quiz_application/screens/report_bug_dialog.dart';
 import 'package:quiz_application/utils/snackbar_utils.dart';
 
@@ -135,6 +136,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _testNotification() async {
+    try {
+      await NotificationService().showTestNotification();
+      if (mounted) {
+        SnackBarUtils.showThemedSnackBar(
+          ScaffoldMessenger.of(context),
+          'Test notification sent! Check your system tray.',
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        SnackBarUtils.showThemedSnackBar(
+          ScaffoldMessenger.of(context),
+          'Error: $e',
+          leading: Icons.error_outline,
+        );
+      }
+    }
+  }
+
   void _launchUrl(String url) async {
     final uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
@@ -216,6 +237,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: _buildSettingSwitch(
                     _notifyResultUpdate,
                     (v) => _updateNotificationPref(_notifySubmission, v),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                 _buildSettingItemCard(
+                  title: 'Test Notifications',
+                  subtitle: 'Send a local test notification to verify settings',
+                  child: IconButton(
+                    icon: const Icon(Icons.notifications_active),
+                    onPressed: _testNotification,
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -495,6 +525,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
+
 }
 
 class _GradientPainter extends CustomPainter {

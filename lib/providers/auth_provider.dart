@@ -144,6 +144,7 @@ class AuthProvider with ChangeNotifier {
       );
 
       await _firestoreService.createUser(credential.user!.uid, newUser);
+      await NotificationService().saveTokenToFirestore();
       // Keep the user signed in. We no longer require email verification.
 
       _isLoading = false;
@@ -245,6 +246,7 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
     try {
       await _authService.login(email: email, password: password);
+      await NotificationService().saveTokenToFirestore();
       _isLoading = false;
       notifyListeners();
       return true;

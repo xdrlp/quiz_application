@@ -1879,6 +1879,8 @@ class _AttemptDetailViewerState extends State<_AttemptDetailViewer> {
   Future<void> _saveChanges() async {
     setState(() => _saving = true);
     try {
+      // Mark as graded to trigger notification
+      _attempt = _attempt.copyWith(status: 'graded');
       await FirestoreService().patchAttempt(_attempt.id, _attempt.toFirestore());
       if (!mounted) return;
       setState(() => _saving = false);
