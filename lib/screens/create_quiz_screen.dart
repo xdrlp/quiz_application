@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:quiz_application/models/quiz_model.dart';
 import 'package:quiz_application/providers/auth_provider.dart';
 import 'package:quiz_application/services/firestore_service.dart';
+import 'package:vector_math/vector_math_64.dart' as vm;
 
 class _GradientPainter extends CustomPainter {
   final double radius;
@@ -306,62 +307,28 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
                     ),
                   ),
                 const SizedBox(height: 32),
-                Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Color.fromARGB(255, 248, 248, 248),
-                        Color.fromARGB(255, 199, 199, 199),
-                        Color.fromARGB(255, 248, 248, 248),
-                        Color.fromARGB(255, 116, 116, 116),
-                        Color.fromARGB(242, 61, 61, 61),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: _loading ? null : _submit,
-                      borderRadius: BorderRadius.circular(6),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFF1F00),
-                          borderRadius: BorderRadius.circular(6),
+                _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _GradientButton(
+                        onTap: _submit,
+                        text: 'Create',
+                        backgroundGradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color(0xFFFF1F00),
+                            Color(0xFFDD1700),
+                          ],
                         ),
-                        child: _loading
-                            ? const Center(child: SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)))
-                            : Center(
-                                child: ShaderMask(
-                                  shaderCallback: (bounds) => const LinearGradient(
-                                    begin: Alignment.centerLeft,
-                                    end: Alignment.centerRight,
-                                    colors: [Color(0xFFE9E9E9), Color(0xFFFFFFFF)],
-                                  ).createShader(bounds),
-                                  child: const Text(
-                                    'Create',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Color.fromARGB(255, 247, 247, 247),
-                                      shadows: [
-                                        Shadow(
-                                          offset: Offset(0, 1),
-                                          blurRadius: 0,
-                                          color: Color.fromARGB(181, 0, 0, 0),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
+                        textShadows: const [
+                          Shadow(
+                            color: Color.fromARGB(255, 0, 0, 0),
+                            offset: Offset(1.2, 1.2),
+                            blurRadius: 0.5,
+                          ),
+                        ],
+                        height: 44.0,
                       ),
-                    ),
-                  ),
-                ),
               ],
             ),
           ),

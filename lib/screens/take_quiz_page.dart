@@ -16,9 +16,9 @@ import 'package:quiz_application/models/question_model.dart';
 import 'package:quiz_application/utils/answer_utils.dart';
 import 'package:quiz_application/models/attempt_model.dart';
 import 'package:quiz_application/providers/auth_provider.dart';
-import 'package:usage_stats/usage_stats.dart';
 import 'package:quiz_application/services/screen_protector.dart';
 import 'package:quiz_application/utils/snackbar_utils.dart';
+import 'package:usage_stats/usage_stats.dart';
 
 class _GradientPainter extends CustomPainter {
   final double radius;
