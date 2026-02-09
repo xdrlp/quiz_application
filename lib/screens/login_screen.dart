@@ -3,10 +3,149 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui' as ui;
+import 'package:vector_math/vector_math_64.dart' as vm;
 // removed unused import
 import 'package:provider/provider.dart';
 import 'package:quiz_application/providers/auth_provider.dart';
 import 'package:quiz_application/utils/snackbar_utils.dart';
+
+// Button constants
+const double _kHorizontalPadding = 32.0;
+const double _kButtonHeight = 44.0;
+
+class _GradientButton extends StatefulWidget {
+  final VoidCallback onTap;
+  final String text;
+  final LinearGradient backgroundGradient;
+  final List<Shadow>? textShadows;
+  final double? height;
+
+  const _GradientButton({
+    required this.onTap,
+    required this.text,
+    required this.backgroundGradient,
+    this.textShadows,
+    this.height,
+  });
+
+  @override
+  State<_GradientButton> createState() => _GradientButtonState();
+}
+
+class _GradientButtonState extends State<_GradientButton> {
+  bool _isHovered = false;
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final double available =
+        MediaQuery.of(context).size.width - (_kHorizontalPadding * 2);
+    final double buttonWidth = available > 360.0 ? 360.0 : available;
+
+    return Center(
+      child: SizedBox(
+        width: buttonWidth,
+        height: widget.height ?? _kButtonHeight,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          onEnter: (_) => setState(() => _isHovered = true),
+          onExit: (_) => setState(() => _isHovered = false),
+          child: GestureDetector(
+            onTapDown: (_) => setState(() => _isPressed = true),
+            onTapUp: (_) => setState(() => _isPressed = false),
+            onTapCancel: () => setState(() => _isPressed = false),
+            onTap: widget.onTap,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.easeOut,
+              transform: _isPressed 
+                ? (Matrix4.identity()..scaleByVector3(vm.Vector3(0.98, 0.98, 1.0)))
+                : Matrix4.identity(),
+              transformAlignment: Alignment.center,
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color.fromARGB(
+                      255,
+                      _isHovered ? 255 : 248,
+                      _isHovered ? 255 : 248,
+                      _isHovered ? 255 : 248,
+                    ),
+                    Color.fromARGB(
+                      255,
+                      _isHovered ? 215 : 199,
+                      _isHovered ? 215 : 199,
+                      _isHovered ? 215 : 199,
+                    ),
+                    Color.fromARGB(
+                      255,
+                      _isHovered ? 255 : 248,
+                      _isHovered ? 255 : 248,
+                      _isHovered ? 255 : 248,
+                    ),
+                    Color.fromARGB(
+                      255,
+                      _isHovered ? 130 : 116,
+                      _isHovered ? 130 : 116,
+                      _isHovered ? 130 : 116,
+                    ),
+                    Color.fromARGB(
+                      242,
+                      _isHovered ? 75 : 61,
+                      _isHovered ? 75 : 61,
+                      _isHovered ? 75 : 61,
+                    ),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: _isHovered || _isPressed
+                    ? [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                curve: Curves.easeOut,
+                decoration: BoxDecoration(
+                  gradient: widget.backgroundGradient,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Center(
+                  child: ShaderMask(
+                    shaderCallback: (bounds) {
+                      return const LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [Color(0xFFE9E9E9), Color(0xFFFFFFFF)],
+                      ).createShader(bounds);
+                    },
+                    child: Text(
+                      widget.text,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                        shadows: widget.textShadows,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -301,71 +440,54 @@ class _LoginScreenState extends State<LoginScreen> {
 
                             const SizedBox(height: 24),
 
-                            // Reset Password Button (Image)
-                            SizedBox(
-                              height: 50,
-                              width: double.infinity,
-                              child: Stack(
-                                children: [
-                                  Positioned.fill(
-                                    child: Image.asset(
-                                      'assets/images/reset_button.png',
-                                      fit: BoxFit.contain,
-                                    ),
-                                  ),
-                                  Positioned.fill(
-                                    child: Material(
-                                      color: Colors.transparent,
-                                      child: InkWell(
-                                        onTap: () => Navigator.of(
-                                          dialogContext,
-                                        ).pop(dialogController.text.trim()),
-                                        borderRadius: BorderRadius.circular(25),
-                                        splashColor: Colors.black.withValues(
-                                          alpha: 0.2,
-                                        ),
-                                        highlightColor: Colors.black.withValues(
-                                          alpha: 0.1,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
+                            // Reset Password Button
+                            _GradientButton(
+                              onTap: () => Navigator.of(
+                                dialogContext,
+                              ).pop(dialogController.text.trim()),
+                              text: 'Reset Password',
+                              backgroundGradient: const LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Color(0xFFFF1F00),
+                                  Color(0xFFDD1700),
                                 ],
                               ),
+                              textShadows: const [
+                                Shadow(
+                                  color: Color.fromARGB(255, 0, 0, 0),
+                                  offset: Offset(1.2, 1.2),
+                                  blurRadius: 0.5,
+                                ),
+                              ],
+                              height: 36.0,
                             ),
 
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 12),
 
-                            // Cancel Button (Image)
-                            SizedBox(
-                              height: 50,
-                              width: double.infinity,
-                              child: Stack(
-                                children: [
-                                  Positioned.fill(
-                                    child: Image.asset(
-                                      'assets/images/cancel_button2.png',
-                                      fit: BoxFit.contain,
-                                    ),
-                                  ),
-                                  Positioned.fill(
-                                    child: Material(
-                                      color: Colors.transparent,
-                                      child: InkWell(
-                                        onTap: () =>
-                                            Navigator.of(dialogContext).pop(),
-                                        borderRadius: BorderRadius.circular(25),
-                                        splashColor: Colors.white.withValues(
-                                          alpha: 0.2,
-                                        ),
-                                        highlightColor: Colors.white.withValues(
-                                          alpha: 0.1,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
+                            // Cancel Button
+                            _GradientButton(
+                              onTap: () =>
+                                  Navigator.of(dialogContext).pop(),
+                              text: 'Cancel',
+                              backgroundGradient: const LinearGradient(
+                                begin: Alignment.centerRight,
+                                end: Alignment.centerLeft,
+                                colors: [
+                                  Color.fromARGB(235, 51, 51, 51),
+                                  Color.fromARGB(232, 65, 65, 65),
+                                  Color.fromARGB(232, 20, 20, 20),
                                 ],
                               ),
+                              textShadows: const [
+                                Shadow(
+                                  color: Color.fromARGB(255, 0, 0, 0),
+                                  offset: Offset(1.2, 1.2),
+                                  blurRadius: 0.5,
+                                ),
+                              ],
+                              height: 36.0,
                             ),
                             const SizedBox(height: 4),
                           ],
@@ -500,6 +622,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             top: 8.0,
                             bottom: 24.0,
                           ),
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.click,
                           child: GestureDetector(
                             onTap: () {
                               FocusScope.of(context).unfocus();
@@ -514,39 +638,29 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                         ),
-                      ),
-                      Center(
-                        child: SizedBox(
-                          height: 60,
-                          child: Stack(
-                            children: [
-                              Positioned.fill(
-                                child: Image.asset(
-                                  'assets/images/red_login_button.png',
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
-                              Positioned.fill(
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () {
-                                      FocusScope.of(context).unfocus();
-                                      _submit(context);
-                                    },
-                                    borderRadius: BorderRadius.circular(12),
-                                    splashColor: Colors.black.withValues(
-                                      alpha: 0.3,
-                                    ),
-                                    highlightColor: Colors.black.withValues(
-                                      alpha: 0.1,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
                         ),
+                      ),
+                      _GradientButton(
+                        onTap: () {
+                          FocusScope.of(context).unfocus();
+                          _submit(context);
+                        },
+                        text: 'Log in',
+                        backgroundGradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color(0xFFFF1F00),
+                            Color(0xFFDD1700),
+                          ],
+                        ),
+                        textShadows: const [
+                          Shadow(
+                            color: Color.fromARGB(255, 0, 0, 0),
+                            offset: Offset(1.2, 1.2),
+                            blurRadius: 0.5,
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 20),
                       Row(
@@ -586,14 +700,22 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
             Positioned(
-              top: MediaQuery.of(context).padding.top + 8,
-              left: 6,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back_ios, color: Colors.black87),
-                onPressed: () {
-                  FocusScope.of(context).unfocus();
-                  if (Navigator.canPop(context)) Navigator.pop(context);
-                },
+              top: MediaQuery.of(context).padding.top + 15,
+              left: 8,
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.1),
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back_ios, color: Colors.black87),
+                  onPressed: () {
+                    FocusScope.of(context).unfocus();
+                    if (Navigator.canPop(context)) Navigator.pop(context);
+                  },
+                ),
               ),
             ),
           ],

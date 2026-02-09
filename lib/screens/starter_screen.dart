@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:vector_math/vector_math_64.dart' as vm;
 import 'report_bug_dialog.dart';
 
 // ==========================================
@@ -19,7 +20,6 @@ const double _kLogoSize = 140.0;
 // Buttons
 // Reduced height and corner radius to make buttons less rounded and better sized
 const double _kButtonHeight = 44.0; // slightly smaller
-const double _kButtonRadius = 12.0; // Less rounded
 
 // --- Spacing (Vertical Gaps) ---
 const double _kGapLogoTitle = 16.0;
@@ -168,10 +168,31 @@ class StarterScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: _kGapBulletLogin),
 
-                    // Log in Button (Image Asset)
-                    _ImageButton(
+                    // Log in Button
+                    _GradientButton(
                       onTap: () => Navigator.pushNamed(context, '/login'),
-                      imagePath: 'assets/images/logIn_button.png',
+                      text: 'Log in',
+                      backgroundGradient: const LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [
+                          Color.fromARGB(235, 255, 255, 255),
+                          Color.fromARGB(232, 212, 212, 212),
+                          Color.fromARGB(232, 201, 201, 201),
+                        ],
+                      ),
+                      textGradient: const LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Color.fromARGB(220, 26, 26, 26), Color.fromARGB(246, 0, 0, 0)],
+                      ),
+                      textShadows: const [
+                        Shadow(
+                          color: Color.fromARGB(54, 0, 0, 0),
+                          offset: Offset(1.2, 1.2),
+                          blurRadius: 0.5,
+                        ),
+                      ],
                     ),
 
                     const SizedBox(height: _kGapLoginOr),
@@ -190,10 +211,25 @@ class StarterScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: _kGapOrSignup),
 
-                    // Create Account Button (Image Asset)
-                    _ImageButton(
+                    // Create Account Button
+                    _GradientButton(
                       onTap: () => Navigator.pushNamed(context, '/signup'),
-                      imagePath: 'assets/images/signUp_button.png',
+                      text: 'Create Account',
+                      backgroundGradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color(0xFFFF1F00),
+                          Color(0xFFDD1700),
+                        ],
+                      ),
+                      textShadows: const [
+                        Shadow(
+                          color: Color.fromARGB(255, 0, 0, 0),
+                          offset: Offset(1.2, 1.2),
+                          blurRadius: 0.5,
+                        ),
+                      ],
                     ),
 
                     const SizedBox(height: _kGapSignupFooter),
@@ -272,12 +308,29 @@ class StarterScreen extends StatelessWidget {
   }
 }
 
-// Helper Widget for Image Button with Ripple
-class _ImageButton extends StatelessWidget {
+// Helper Widget for Gradient Button
+class _GradientButton extends StatefulWidget {
   final VoidCallback onTap;
-  final String imagePath;
+  final String text;
+  final LinearGradient backgroundGradient;
+  final LinearGradient? textGradient;
+  final List<Shadow>? textShadows;
 
-  const _ImageButton({required this.onTap, required this.imagePath});
+  const _GradientButton({
+    required this.onTap,
+    required this.text,
+    required this.backgroundGradient,
+    this.textGradient,
+    this.textShadows,
+  });
+
+  @override
+  State<_GradientButton> createState() => _GradientButtonState();
+}
+
+class _GradientButtonState extends State<_GradientButton> {
+  bool _isHovered = false;
+  bool _isPressed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -289,22 +342,102 @@ class _ImageButton extends StatelessWidget {
       child: SizedBox(
         width: buttonWidth,
         height: _kButtonHeight,
-        child: Stack(
-          children: [
-            Positioned.fill(child: Image.asset(imagePath, fit: BoxFit.contain)),
-            Positioned.fill(
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: onTap,
-                  borderRadius: BorderRadius.circular(_kButtonRadius),
-                  // Stronger ripple to ensure visibility over the image
-                  splashColor: Colors.black.withValues(alpha: 0.3),
-                  highlightColor: Colors.black.withValues(alpha: 0.1),
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          onEnter: (_) => setState(() => _isHovered = true),
+          onExit: (_) => setState(() => _isHovered = false),
+          child: GestureDetector(
+            onTapDown: (_) => setState(() => _isPressed = true),
+            onTapUp: (_) => setState(() => _isPressed = false),
+            onTapCancel: () => setState(() => _isPressed = false),
+            onTap: widget.onTap,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.easeOut,
+              transform: _isPressed 
+                ? (Matrix4.identity()..scaleByVector3(vm.Vector3(0.98, 0.98, 1.0)))
+                : Matrix4.identity(),
+              transformAlignment: Alignment.center,
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color.fromARGB(
+                      255,
+                      _isHovered ? 255 : 248,
+                      _isHovered ? 255 : 248,
+                      _isHovered ? 255 : 248,
+                    ),
+                    Color.fromARGB(
+                      255,
+                      _isHovered ? 215 : 199,
+                      _isHovered ? 215 : 199,
+                      _isHovered ? 215 : 199,
+                    ),
+                    Color.fromARGB(
+                      255,
+                      _isHovered ? 255 : 248,
+                      _isHovered ? 255 : 248,
+                      _isHovered ? 255 : 248,
+                    ),
+                    Color.fromARGB(
+                      255,
+                      _isHovered ? 130 : 116,
+                      _isHovered ? 130 : 116,
+                      _isHovered ? 130 : 116,
+                    ),
+                    Color.fromARGB(
+                      242,
+                      _isHovered ? 75 : 61,
+                      _isHovered ? 75 : 61,
+                      _isHovered ? 75 : 61,
+                    ),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: _isHovered || _isPressed
+                    ? [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                curve: Curves.easeOut,
+                decoration: BoxDecoration(
+                  gradient: widget.backgroundGradient,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Center(
+                  child: ShaderMask(
+                    shaderCallback: (bounds) {
+                      return (widget.textGradient ??
+                          const LinearGradient(
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                            colors: [Color(0xFFE9E9E9), Color(0xFFFFFFFF)],
+                          )).createShader(bounds);
+                    },
+                    child: Text(
+                      widget.text,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                        shadows: widget.textShadows,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
-          ],
+          ),
         ),
       ),
     );

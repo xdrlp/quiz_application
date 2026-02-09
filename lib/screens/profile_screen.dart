@@ -15,6 +15,7 @@ import 'package:image/image.dart' as img; // Generic image manipulation
 import 'dart:math' as math;
 import 'package:quiz_application/utils/snackbar_utils.dart';
 import 'starter_screen.dart';
+import 'package:vector_math/vector_math_64.dart' as vm;
 
 class _GradientPainter extends CustomPainter {
   final double radius;
@@ -45,6 +46,138 @@ class _GradientPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => true;
+}
+
+class _GradientButton extends StatefulWidget {
+  final VoidCallback onTap;
+  final String text;
+  final LinearGradient backgroundGradient;
+  final List<Shadow>? textShadows;
+
+  const _GradientButton({
+    required this.onTap,
+    required this.text,
+    required this.backgroundGradient,
+    this.textShadows,
+  });
+
+  @override
+  State<_GradientButton> createState() => _GradientButtonState();
+}
+
+class _GradientButtonState extends State<_GradientButton> {
+  bool _isHovered = false;
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    const double kButtonHeight = 44.0;
+    final double available = MediaQuery.of(context).size.width - (32.0 * 2); // _kHorizontalPadding * 2
+    final double buttonWidth = available > 360.0 ? 360.0 : available;
+
+    return Center(
+      child: SizedBox(
+        width: buttonWidth,
+        height: kButtonHeight,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          onEnter: (_) => setState(() => _isHovered = true),
+          onExit: (_) => setState(() => _isHovered = false),
+          child: GestureDetector(
+            onTapDown: (_) => setState(() => _isPressed = true),
+            onTapUp: (_) => setState(() => _isPressed = false),
+            onTapCancel: () => setState(() => _isPressed = false),
+            onTap: widget.onTap,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.easeOut,
+              transform: _isPressed 
+                ? (Matrix4.identity()..scaleByVector3(vm.Vector3(0.98, 0.98, 1.0)))
+                : Matrix4.identity(),
+              transformAlignment: Alignment.center,
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color.fromARGB(
+                      255,
+                      _isHovered ? 255 : 248,
+                      _isHovered ? 255 : 248,
+                      _isHovered ? 255 : 248,
+                    ),
+                    Color.fromARGB(
+                      255,
+                      _isHovered ? 215 : 199,
+                      _isHovered ? 215 : 199,
+                      _isHovered ? 215 : 199,
+                    ),
+                    Color.fromARGB(
+                      255,
+                      _isHovered ? 255 : 248,
+                      _isHovered ? 255 : 248,
+                      _isHovered ? 255 : 248,
+                    ),
+                    Color.fromARGB(
+                      255,
+                      _isHovered ? 130 : 116,
+                      _isHovered ? 130 : 116,
+                      _isHovered ? 130 : 116,
+                    ),
+                    Color.fromARGB(
+                      242,
+                      _isHovered ? 75 : 61,
+                      _isHovered ? 75 : 61,
+                      _isHovered ? 75 : 61,
+                    ),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: _isHovered || _isPressed
+                    ? [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                curve: Curves.easeOut,
+                decoration: BoxDecoration(
+                  gradient: widget.backgroundGradient,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Center(
+                  child: ShaderMask(
+                    shaderCallback: (bounds) {
+                      return const LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [Color(0xFFE9E9E9), Color(0xFFFFFFFF)],
+                      ).createShader(bounds);
+                    },
+                    child: Text(
+                      widget.text,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                        shadows: widget.textShadows,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class ProfileScreen extends StatefulWidget {
@@ -589,37 +722,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       : '-'),
                             ),
                             const SizedBox(height: 24),
-                            Center(
-                              child: SizedBox(
-                                height: 45,
-                                width: double.infinity,
-                                child: Stack(
-                                  children: [
-                                    Positioned.fill(
-                                      child: Image.asset(
-                                        'assets/images/signOut_button.png',
-                                        fit: BoxFit.contain,
-                                      ),
-                                    ),
-                                    Positioned.fill(
-                                      child: Material(
-                                        color: Colors.transparent,
-                                        child: InkWell(
-                                          onTap: _handleSignOut,
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          splashColor: Colors.black.withValues(
-                                            alpha: 0.3,
-                                          ),
-                                          highlightColor: Colors.black
-                                              .withValues(alpha: 0.1),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                            _GradientButton(
+                              onTap: _handleSignOut,
+                              text: 'Sign Out',
+                              backgroundGradient: const LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Color(0xFFFF1F00),
+                                  Color(0xFFDD1700),
+                                ],
                               ),
+                              textShadows: const [
+                                Shadow(
+                                  color: Color.fromARGB(255, 0, 0, 0),
+                                  offset: Offset(1.2, 1.2),
+                                  blurRadius: 0.5,
+                                ),
+                              ],
                             ),
                           ],
                         ),
