@@ -1021,7 +1021,7 @@ Future<void> showTakeQuizDialog(BuildContext context) async {
                                       blurRadius: 0.5,
                                     ),
                                   ],
-                                  height: 36.0,
+                                  height: 44.0,
                                 ),
                               // Submit Password Button
                               if (showPasswordField)
@@ -1043,10 +1043,10 @@ Future<void> showTakeQuizDialog(BuildContext context) async {
                                       blurRadius: 0.5,
                                     ),
                                   ],
-                                  height: 36.0,
+                                  height: 44.0,
                                 ),
                               if (isLoading && !showPasswordField) const CircularProgressIndicator(),
-                              if (!showPasswordField) const SizedBox(height: 2),
+                              if (!showPasswordField) const SizedBox(height: 12),
                               // Cancel Button
                               if (!showPasswordField)
                                 _GradientButton(
@@ -1056,9 +1056,9 @@ Future<void> showTakeQuizDialog(BuildContext context) async {
                                     begin: Alignment.centerRight,
                                     end: Alignment.centerLeft,
                                     colors: [
-                                      Color.fromARGB(235, 51, 51, 51),
-                                      Color.fromARGB(232, 65, 65, 65),
-                                      Color.fromARGB(232, 20, 20, 20),
+                                      Color(0xFF333333),
+                                      Color(0xFF414141),
+                                      Color(0xFF141414),
                                     ],
                                   ),
                                   textShadows: const [
@@ -1068,11 +1068,11 @@ Future<void> showTakeQuizDialog(BuildContext context) async {
                                       blurRadius: 0.5,
                                     ),
                                   ],
-                                  height: 36.0,
+                                  height: 44.0,
                                 ),
                               // Back Button (for password screen)
                               if (showPasswordField)
-                                const SizedBox(height: 2),
+                                const SizedBox(height: 12),
                               if (showPasswordField)
                                 _GradientButton(
                                   onTap: () {
@@ -1087,9 +1087,9 @@ Future<void> showTakeQuizDialog(BuildContext context) async {
                                     begin: Alignment.centerRight,
                                     end: Alignment.centerLeft,
                                     colors: [
-                                      Color.fromARGB(235, 51, 51, 51),
-                                      Color.fromARGB(232, 65, 65, 65),
-                                      Color.fromARGB(232, 20, 20, 20),
+                                      Color(0xFF333333),
+                                      Color(0xFF414141),
+                                      Color(0xFF141414),
                                     ],
                                   ),
                                   textShadows: const [
@@ -1099,7 +1099,7 @@ Future<void> showTakeQuizDialog(BuildContext context) async {
                                       blurRadius: 0.5,
                                     ),
                                   ],
-                                  height: 36.0,
+                                  height: 44.0,
                                 ),
                               const SizedBox(height: 4),
                             ],

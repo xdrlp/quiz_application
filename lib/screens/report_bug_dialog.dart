@@ -469,9 +469,10 @@ class _ReportBugDialogState extends State<ReportBugDialog> {
                                           begin: Alignment.centerLeft,
                                           end: Alignment.centerRight,
                                           colors: [
-                                            Color.fromARGB(235, 78, 78, 78),
-                                            Color.fromARGB(232, 58, 58, 58),
-                                            Color.fromARGB(232, 49, 49, 49)                                       ],
+                                            Color(0xFF4E4E4E),
+                                            Color(0xFF3A3A3A),
+                                            Color(0xFF313131)
+                                          ],
                                         ),
                                         textShadows: const [
                                           Shadow(

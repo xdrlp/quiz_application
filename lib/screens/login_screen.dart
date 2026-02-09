@@ -475,9 +475,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 begin: Alignment.centerRight,
                                 end: Alignment.centerLeft,
                                 colors: [
-                                  Color.fromARGB(235, 51, 51, 51),
-                                  Color.fromARGB(232, 65, 65, 65),
-                                  Color.fromARGB(232, 20, 20, 20),
+                                  Color(0xFF333333),
+                                  Color(0xFF414141),
+                                  Color(0xFF141414),
                                 ],
                               ),
                               textShadows: const [

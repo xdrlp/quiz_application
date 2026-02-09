@@ -176,9 +176,9 @@ class StarterScreen extends StatelessWidget {
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
                         colors: [
-                          Color.fromARGB(235, 255, 255, 255),
-                          Color.fromARGB(232, 212, 212, 212),
-                          Color.fromARGB(232, 201, 201, 201),
+                          Color(0xFFFFFFFF),
+                          Color(0xFFD4D4D4),
+                          Color(0xFFC9C9C9),
                         ],
                       ),
                       textGradient: const LinearGradient(
@@ -285,7 +285,11 @@ class StarterScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisSize: MainAxisSize.max,
                 children: [
-                  Expanded(child: content),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: content,
+                    ),
+                  ),
                   footer,
                 ],
               );
