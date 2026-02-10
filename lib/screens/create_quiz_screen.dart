@@ -38,6 +38,141 @@ class _GradientPainter extends CustomPainter {
   bool shouldRepaint(CustomPainter oldDelegate) => true;
 }
 
+class _GradientButton extends StatefulWidget {
+  final VoidCallback onTap;
+  final String text;
+  final LinearGradient backgroundGradient;
+  final List<Shadow>? textShadows;
+  final double? height;
+
+  const _GradientButton({
+    required this.onTap,
+    required this.text,
+    required this.backgroundGradient,
+    this.textShadows,
+    this.height,
+  });
+
+  @override
+  State<_GradientButton> createState() => _GradientButtonState();
+}
+
+class _GradientButtonState extends State<_GradientButton> {
+  bool _isHovered = false;
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    const double kButtonHeight = 44.0;
+    final double available = MediaQuery.of(context).size.width - (32.0 * 2);
+    final double buttonWidth = available > 360.0 ? 360.0 : available;
+    final double height = widget.height ?? kButtonHeight;
+
+    return Center(
+      child: SizedBox(
+        width: buttonWidth,
+        height: height,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          onEnter: (_) => setState(() => _isHovered = true),
+          onExit: (_) => setState(() => _isHovered = false),
+          child: GestureDetector(
+            onTapDown: (_) => setState(() => _isPressed = true),
+            onTapUp: (_) => setState(() => _isPressed = false),
+            onTapCancel: () => setState(() => _isPressed = false),
+            onTap: widget.onTap,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.easeOut,
+              transform: _isPressed 
+                ? (Matrix4.identity()..scaleByVector3(vm.Vector3(0.98, 0.98, 1.0)))
+                : Matrix4.identity(),
+              transformAlignment: Alignment.center,
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color.fromARGB(
+                      255,
+                      _isHovered ? 255 : 248,
+                      _isHovered ? 255 : 248,
+                      _isHovered ? 255 : 248,
+                    ),
+                    Color.fromARGB(
+                      255,
+                      _isHovered ? 215 : 199,
+                      _isHovered ? 215 : 199,
+                      _isHovered ? 215 : 199,
+                    ),
+                    Color.fromARGB(
+                      255,
+                      _isHovered ? 255 : 248,
+                      _isHovered ? 255 : 248,
+                      _isHovered ? 255 : 248,
+                    ),
+                    Color.fromARGB(
+                      255,
+                      _isHovered ? 130 : 116,
+                      _isHovered ? 130 : 116,
+                      _isHovered ? 130 : 116,
+                    ),
+                    Color.fromARGB(
+                      242,
+                      _isHovered ? 75 : 61,
+                      _isHovered ? 75 : 61,
+                      _isHovered ? 75 : 61,
+                    ),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: _isHovered || _isPressed
+                    ? [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                curve: Curves.easeOut,
+                decoration: BoxDecoration(
+                  gradient: widget.backgroundGradient,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Center(
+                  child: ShaderMask(
+                    shaderCallback: (bounds) {
+                      return const LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [Color(0xFFE9E9E9), Color(0xFFFFFFFF)],
+                      ).createShader(bounds);
+                    },
+                    child: Text(
+                      widget.text,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                        shadows: widget.textShadows,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class CreateQuizScreen extends StatefulWidget {
   const CreateQuizScreen({super.key});
 
