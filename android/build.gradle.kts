@@ -1,7 +1,10 @@
 plugins {
-    // Add the Google services Gradle plugin so modules can apply it when needed.
+    // Add the Android Gradle Plugin and Google services Gradle plugin so modules can apply them when needed.
+    id("com.android.application") version "8.9.1" apply false
     id("com.google.gms.google-services") version "4.3.15" apply false
 }
+
+import java.io.File
 
 allprojects {
     repositories {
@@ -10,16 +13,7 @@ allprojects {
     }
 }
 
-val newBuildDir: Directory =
-    rootProject.layout.buildDirectory
-        .dir("../../build")
-        .get()
-rootProject.layout.buildDirectory.value(newBuildDir)
-
-subprojects {
-    val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
-    project.layout.buildDirectory.value(newSubprojectBuildDir)
-}
+// Removed custom build directory override to use default output paths
 subprojects {
     project.evaluationDependsOn(":app")
 }

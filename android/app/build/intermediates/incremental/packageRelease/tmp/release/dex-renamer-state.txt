@@ -1,0 +1,7 @@
+#Thu Feb 12 16:36:51 PST 2026
+base.1=D\:\\quiz_application\\quiz_application\\android\\app\\build\\intermediates\\desugar_lib_dex\\release\\l8DexDesugarLibRelease\\classes1000.dex
+path.1=classes1000.dex
+base.0=D\:\\quiz_application\\quiz_application\\android\\app\\build\\intermediates\\dex\\release\\minifyReleaseWithR8\\classes.dex
+renamed.1=classes2.dex
+renamed.0=classes.dex
+path.0=classes.dex

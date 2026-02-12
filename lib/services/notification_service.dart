@@ -18,21 +18,13 @@ class NotificationService {
     const DarwinInitializationSettings iosSettings = DarwinInitializationSettings();
     const InitializationSettings settings = InitializationSettings(android: androidSettings, iOS: iosSettings);
     await _localNotifications.initialize(
-
-      settings,
-
+      settings: settings,
       onDidReceiveNotificationResponse: (NotificationResponse response) async {
-
         if (response.payload != null) {
-
           final data = jsonDecode(response.payload!) as Map<String, dynamic>;
-
           _handleNotificationData(data);
-
         }
-
       },
-
     );
 
     // Create Android notification channel
@@ -126,10 +118,10 @@ class NotificationService {
     const NotificationDetails details = NotificationDetails(android: androidDetails, iOS: iosDetails);
 
     await _localNotifications.show(
-      message.hashCode, // unique id
-      message.notification?.title ?? 'Notification',
-      message.notification?.body ?? '',
-      details,
+      id: message.hashCode, // unique id
+      title: message.notification?.title ?? 'Notification',
+      body: message.notification?.body ?? '',
+      notificationDetails: details,
       payload: jsonEncode(message.data),
     );
   }
@@ -145,10 +137,10 @@ class NotificationService {
     const NotificationDetails details = NotificationDetails(android: androidDetails);
 
     await _localNotifications.show(
-      0,
-      'Test Notification',
-      'This is a test notification to verify settings.',
-      details,
+      id: 0,
+      title: 'Test Notification',
+      body: 'This is a test notification to verify settings.',
+      notificationDetails: details,
     );
   }
 
@@ -165,7 +157,6 @@ class NotificationService {
     if (screen == 'attempt_detail' && attemptId != null) {
       NotificationService.navigatorKey?.currentState?.pushNamed('/attempt_detail', arguments: attemptId);
     } else if (screen == 'quiz_results' && quizId != null) {
-      // TODO: Navigate to quiz results screen
       debugPrint('Navigate to quiz results for quizId: $quizId');
     }
   }

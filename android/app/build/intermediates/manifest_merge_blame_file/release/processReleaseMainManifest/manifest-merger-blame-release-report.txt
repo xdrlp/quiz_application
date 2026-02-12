@@ -1,0 +1,778 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.example.quiz_application"
+4    android:versionCode="1"
+5    android:versionName="1.0.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="24"
+9        android:targetSdkVersion="36" />
+10
+11    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
+11-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:4:5-6:47
+11-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:5:9-62
+12    <uses-permission android:name="android.permission.INTERNET" />
+12-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:7:5-67
+12-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:7:22-64
+13    <!-- Required so installed_apps can resolve human-readable labels for foreground packages during anti-cheat checks. -->
+14    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+14-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:9:5-11:53
+14-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:10:9-61
+15    <!--
+16         Required to query activities that can process text, see:
+17         https://developer.android.com/training/package-visibility and
+18         https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
+19
+20         In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin.
+21    -->
+22    <queries>
+22-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:68:5-73:15
+23        <intent>
+23-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:69:9-72:18
+24            <action android:name="android.intent.action.PROCESS_TEXT" />
+24-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:70:13-72
+24-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:70:21-70
+25
+26            <data android:mimeType="text/plain" />
+26-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:71:13-50
+26-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:71:19-48
+27        </intent>
+28    </queries>
+29
+30    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+30-->[:firebase_analytics] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_analytics-12.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:7:5-79
+30-->[:firebase_analytics] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_analytics-12.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:7:22-76
+31    <uses-permission android:name="android.permission.WAKE_LOCK" />
+31-->[:firebase_analytics] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_analytics-12.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:9:5-68
+31-->[:firebase_analytics] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_analytics-12.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:9:22-65
+32    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+32-->[:installed_apps] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\installed_apps-2.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:8:5-82
+32-->[:installed_apps] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\installed_apps-2.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:8:22-79
+33    <uses-permission android:name="android.permission.VIBRATE" />
+33-->[:flutter_local_notifications] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_local_notifications-20.0.0\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:7:5-66
+33-->[:flutter_local_notifications] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_local_notifications-20.0.0\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:7:22-63
+34    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" /> <!-- Required by older versions of Google Play services to create IID tokens -->
+34-->[:flutter_local_notifications] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_local_notifications-20.0.0\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:8:5-77
+34-->[:flutter_local_notifications] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_local_notifications-20.0.0\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:8:22-74
+35    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
+35-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\34a5c2eafc44c7fccf1b0c8ff471c8a5\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:26:5-82
+35-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\34a5c2eafc44c7fccf1b0c8ff471c8a5\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:26:22-79
+36    <uses-permission android:name="com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE" />
+36-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\c940808ea8535d58cd4bdb0d549b3c0e\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:26:5-110
+36-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\c940808ea8535d58cd4bdb0d549b3c0e\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:26:22-107
+37    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
+37-->[com.google.android.gms:play-services-measurement-impl:23.0.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\b3f5425dc412cfc1fad9b9f23f9f0d3d\transformed\play-services-measurement-impl-23.0.0\AndroidManifest.xml:27:5-79
+37-->[com.google.android.gms:play-services-measurement-impl:23.0.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\b3f5425dc412cfc1fad9b9f23f9f0d3d\transformed\play-services-measurement-impl-23.0.0\AndroidManifest.xml:27:22-76
+38    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_ATTRIBUTION" />
+38-->[com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\24741ae09fd57e5423c3b5347bc4fde6\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:26:5-88
+38-->[com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\24741ae09fd57e5423c3b5347bc4fde6\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:26:22-85
+39    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_AD_ID" />
+39-->[com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\24741ae09fd57e5423c3b5347bc4fde6\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:27:5-82
+39-->[com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\24741ae09fd57e5423c3b5347bc4fde6\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:27:22-79
+40    <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
+40-->[com.google.android.recaptcha:recaptcha:18.6.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\2b5e513cef05915482c6329e6ca7362e\transformed\recaptcha-18.6.1\AndroidManifest.xml:9:5-98
+40-->[com.google.android.recaptcha:recaptcha:18.6.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\2b5e513cef05915482c6329e6ca7362e\transformed\recaptcha-18.6.1\AndroidManifest.xml:9:22-95
+41
+42    <permission
+42-->[androidx.core:core:1.17.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\9360e7e23960e70cacdbebd3d36887f5\transformed\core-1.17.0\AndroidManifest.xml:22:5-24:47
+43        android:name="com.example.quiz_application.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+43-->[androidx.core:core:1.17.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\9360e7e23960e70cacdbebd3d36887f5\transformed\core-1.17.0\AndroidManifest.xml:23:9-81
+44        android:protectionLevel="signature" />
+44-->[androidx.core:core:1.17.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\9360e7e23960e70cacdbebd3d36887f5\transformed\core-1.17.0\AndroidManifest.xml:24:9-44
+45
+46    <uses-permission android:name="com.example.quiz_application.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+46-->[androidx.core:core:1.17.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\9360e7e23960e70cacdbebd3d36887f5\transformed\core-1.17.0\AndroidManifest.xml:26:5-97
+46-->[androidx.core:core:1.17.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\9360e7e23960e70cacdbebd3d36887f5\transformed\core-1.17.0\AndroidManifest.xml:26:22-94
+47
+48    <application
+49        android:name="android.app.Application"
+49-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:14:9-42
+50        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+50-->[androidx.core:core:1.17.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\9360e7e23960e70cacdbebd3d36887f5\transformed\core-1.17.0\AndroidManifest.xml:28:18-86
+51        android:enableOnBackInvokedCallback="true"
+51-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:16:9-51
+52        android:extractNativeLibs="false"
+53        android:icon="@mipmap/launcher_icon"
+53-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:15:9-45
+54        android:label="Quiz Guard" >
+54-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:13:9-35
+55        <activity
+55-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:17:9-38:20
+56            android:name="com.example.quiz_application.MainActivity"
+56-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:18:13-41
+57            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+57-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:23:13-163
+58            android:exported="true"
+58-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:19:13-36
+59            android:hardwareAccelerated="true"
+59-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:24:13-47
+60            android:launchMode="singleTop"
+60-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:20:13-43
+61            android:taskAffinity=""
+61-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:21:13-36
+62            android:theme="@style/LaunchTheme"
+62-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:22:13-47
+63            android:windowSoftInputMode="adjustResize" >
+63-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:25:13-55
+64
+65            <!--
+66                 Specifies an Android theme to apply to this Activity as soon as
+67                 the Android process has started. This theme is visible to the user
+68                 while the Flutter UI initializes. After that, this theme continues
+69                 to determine the Window background behind the Flutter UI.
+70            -->
+71            <meta-data
+71-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:30:13-33:17
+72                android:name="io.flutter.embedding.android.NormalTheme"
+72-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:31:15-70
+73                android:resource="@style/NormalTheme" />
+73-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:32:15-52
+74
+75            <intent-filter>
+75-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:34:13-37:29
+76                <action android:name="android.intent.action.MAIN" />
+76-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:35:17-68
+76-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:35:25-66
+77
+78                <category android:name="android.intent.category.LAUNCHER" />
+78-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:36:17-76
+78-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:36:27-74
+79            </intent-filter>
+80        </activity>
+81        <!--
+82             Don't delete the meta-data below.
+83             This is used by the Flutter tool to generate GeneratedPluginRegistrant.java
+84        -->
+85        <meta-data
+85-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:41:9-43:33
+86            android:name="flutterEmbedding"
+86-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:42:13-44
+87            android:value="2" />
+87-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:43:13-30
+88
+89        <!-- Accessibility service streams foreground app changes for anti-cheat monitoring. -->
+90        <service
+90-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:46:9-57:19
+91            android:name="com.example.quiz_application.AppSwitchAccessibilityService"
+91-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:47:13-58
+92            android:exported="false"
+92-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:48:13-37
+93            android:label="@string/accessibility_service_name"
+93-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:49:13-63
+94            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE" >
+94-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:50:13-79
+95            <intent-filter>
+95-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:51:13-53:29
+96                <action android:name="android.accessibilityservice.AccessibilityService" />
+96-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:52:17-92
+96-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:52:25-89
+97            </intent-filter>
+98
+99            <meta-data
+99-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:54:13-56:76
+100                android:name="android.accessibilityservice"
+100-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:55:17-60
+101                android:resource="@xml/app_switch_accessibility_service" />
+101-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:56:17-73
+102        </service>
+103
+104        <meta-data
+104-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:59:9-61:55
+105            android:name="com.google.firebase.messaging.default_notification_channel_id"
+105-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:60:13-89
+106            android:value="high_importance_channel" />
+106-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:61:13-52
+107
+108        <service
+108-->[:cloud_functions] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\cloud_functions-6.0.6\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:8:9-12:19
+109            android:name="com.google.firebase.components.ComponentDiscoveryService"
+109-->[:cloud_functions] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\cloud_functions-6.0.6\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:8:18-89
+110            android:directBootAware="true"
+110-->[com.google.firebase:firebase-common:22.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\ac1b2c046359c501147f6620dd677a47\transformed\firebase-common-22.0.1\AndroidManifest.xml:32:13-43
+111            android:exported="false" >
+111-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:68:13-37
+112            <meta-data
+112-->[:cloud_functions] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\cloud_functions-6.0.6\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:9:13-11:85
+113                android:name="com.google.firebase.components:io.flutter.plugins.firebase.functions.FlutterFirebaseAppRegistrar"
+113-->[:cloud_functions] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\cloud_functions-6.0.6\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:10:17-128
+114                android:value="com.google.firebase.components.ComponentRegistrar" />
+114-->[:cloud_functions] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\cloud_functions-6.0.6\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:11:17-82
+115            <meta-data
+115-->[:firebase_analytics] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_analytics-12.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:13:13-15:85
+116                android:name="com.google.firebase.components:io.flutter.plugins.firebase.analytics.FlutterFirebaseAppRegistrar"
+116-->[:firebase_analytics] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_analytics-12.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:14:17-128
+117                android:value="com.google.firebase.components.ComponentRegistrar" />
+117-->[:firebase_analytics] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_analytics-12.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:15:17-82
+118            <meta-data
+118-->[:firebase_storage] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_storage-13.0.6\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:9:13-11:85
+119                android:name="com.google.firebase.components:io.flutter.plugins.firebase.storage.FlutterFirebaseAppRegistrar"
+119-->[:firebase_storage] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_storage-13.0.6\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:10:17-126
+120                android:value="com.google.firebase.components.ComponentRegistrar" />
+120-->[:firebase_storage] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_storage-13.0.6\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:11:17-82
+121            <meta-data
+121-->[:cloud_firestore] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\cloud_firestore-6.1.2\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:9:13-11:85
+122                android:name="com.google.firebase.components:io.flutter.plugins.firebase.firestore.FlutterFirebaseFirestoreRegistrar"
+122-->[:cloud_firestore] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\cloud_firestore-6.1.2\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:10:17-134
+123                android:value="com.google.firebase.components.ComponentRegistrar" />
+123-->[:cloud_firestore] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\cloud_firestore-6.1.2\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:11:17-82
+124            <meta-data
+124-->[:firebase_auth] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_auth-6.1.4\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:9:13-11:85
+125                android:name="com.google.firebase.components:io.flutter.plugins.firebase.auth.FlutterFirebaseAuthRegistrar"
+125-->[:firebase_auth] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_auth-6.1.4\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:10:17-124
+126                android:value="com.google.firebase.components.ComponentRegistrar" />
+126-->[:firebase_auth] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_auth-6.1.4\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:11:17-82
+127            <meta-data
+127-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:36:13-38:85
+128                android:name="com.google.firebase.components:io.flutter.plugins.firebase.messaging.FlutterFirebaseAppRegistrar"
+128-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:37:17-128
+129                android:value="com.google.firebase.components.ComponentRegistrar" />
+129-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:38:17-82
+130            <meta-data
+130-->[:firebase_core] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_core-4.4.0\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:9:13-11:85
+131                android:name="com.google.firebase.components:io.flutter.plugins.firebase.core.FlutterFirebaseCoreRegistrar"
+131-->[:firebase_core] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_core-4.4.0\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:10:17-124
+132                android:value="com.google.firebase.components.ComponentRegistrar" />
+132-->[:firebase_core] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_core-4.4.0\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:11:17-82
+133            <meta-data
+133-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:69:13-71:85
+134                android:name="com.google.firebase.components:com.google.firebase.auth.FirebaseAuthRegistrar"
+134-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:70:17-109
+135                android:value="com.google.firebase.components.ComponentRegistrar" />
+135-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:71:17-82
+136            <meta-data
+136-->[com.google.firebase:firebase-firestore:26.0.2] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\410309ad4569539e7769858480182b3b\transformed\firebase-firestore-26.0.2\AndroidManifest.xml:17:13-19:85
+137                android:name="com.google.firebase.components:com.google.firebase.firestore.FirebaseFirestoreKtxRegistrar"
+137-->[com.google.firebase:firebase-firestore:26.0.2] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\410309ad4569539e7769858480182b3b\transformed\firebase-firestore-26.0.2\AndroidManifest.xml:18:17-122
+138                android:value="com.google.firebase.components.ComponentRegistrar" />
+138-->[com.google.firebase:firebase-firestore:26.0.2] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\410309ad4569539e7769858480182b3b\transformed\firebase-firestore-26.0.2\AndroidManifest.xml:19:17-82
+139            <meta-data
+139-->[com.google.firebase:firebase-firestore:26.0.2] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\410309ad4569539e7769858480182b3b\transformed\firebase-firestore-26.0.2\AndroidManifest.xml:20:13-22:85
+140                android:name="com.google.firebase.components:com.google.firebase.firestore.FirestoreRegistrar"
+140-->[com.google.firebase:firebase-firestore:26.0.2] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\410309ad4569539e7769858480182b3b\transformed\firebase-firestore-26.0.2\AndroidManifest.xml:21:17-111
+141                android:value="com.google.firebase.components.ComponentRegistrar" />
+141-->[com.google.firebase:firebase-firestore:26.0.2] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\410309ad4569539e7769858480182b3b\transformed\firebase-firestore-26.0.2\AndroidManifest.xml:22:17-82
+142            <meta-data
+142-->[com.google.firebase:firebase-functions:22.1.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\bfcddfbf53a1a68b075e5bdda22b1807\transformed\firebase-functions-22.1.0\AndroidManifest.xml:15:13-17:85
+143                android:name="com.google.firebase.components:com.google.firebase.functions.FirebaseFunctionsKtxRegistrar"
+143-->[com.google.firebase:firebase-functions:22.1.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\bfcddfbf53a1a68b075e5bdda22b1807\transformed\firebase-functions-22.1.0\AndroidManifest.xml:16:17-122
+144                android:value="com.google.firebase.components.ComponentRegistrar" />
+144-->[com.google.firebase:firebase-functions:22.1.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\bfcddfbf53a1a68b075e5bdda22b1807\transformed\firebase-functions-22.1.0\AndroidManifest.xml:17:17-82
+145            <meta-data
+145-->[com.google.firebase:firebase-functions:22.1.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\bfcddfbf53a1a68b075e5bdda22b1807\transformed\firebase-functions-22.1.0\AndroidManifest.xml:18:13-20:85
+146                android:name="com.google.firebase.components:com.google.firebase.functions.FunctionsRegistrar"
+146-->[com.google.firebase:firebase-functions:22.1.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\bfcddfbf53a1a68b075e5bdda22b1807\transformed\firebase-functions-22.1.0\AndroidManifest.xml:19:17-111
+147                android:value="com.google.firebase.components.ComponentRegistrar" />
+147-->[com.google.firebase:firebase-functions:22.1.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\bfcddfbf53a1a68b075e5bdda22b1807\transformed\firebase-functions-22.1.0\AndroidManifest.xml:20:17-82
+148            <meta-data
+148-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\34a5c2eafc44c7fccf1b0c8ff471c8a5\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:57:13-59:85
+149                android:name="com.google.firebase.components:com.google.firebase.messaging.FirebaseMessagingKtxRegistrar"
+149-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\34a5c2eafc44c7fccf1b0c8ff471c8a5\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:58:17-122
+150                android:value="com.google.firebase.components.ComponentRegistrar" />
+150-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\34a5c2eafc44c7fccf1b0c8ff471c8a5\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:59:17-82
+151            <meta-data
+151-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\34a5c2eafc44c7fccf1b0c8ff471c8a5\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:60:13-62:85
+152                android:name="com.google.firebase.components:com.google.firebase.messaging.FirebaseMessagingRegistrar"
+152-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\34a5c2eafc44c7fccf1b0c8ff471c8a5\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:61:17-119
+153                android:value="com.google.firebase.components.ComponentRegistrar" />
+153-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\34a5c2eafc44c7fccf1b0c8ff471c8a5\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:62:17-82
+154            <meta-data
+154-->[com.google.firebase:firebase-storage:22.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\00e326eadbb8cad5e6cee0dc514ea49c\transformed\firebase-storage-22.0.1\AndroidManifest.xml:30:13-32:85
+155                android:name="com.google.firebase.components:com.google.firebase.storage.FirebaseStorageKtxRegistrar"
+155-->[com.google.firebase:firebase-storage:22.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\00e326eadbb8cad5e6cee0dc514ea49c\transformed\firebase-storage-22.0.1\AndroidManifest.xml:31:17-118
+156                android:value="com.google.firebase.components.ComponentRegistrar" />
+156-->[com.google.firebase:firebase-storage:22.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\00e326eadbb8cad5e6cee0dc514ea49c\transformed\firebase-storage-22.0.1\AndroidManifest.xml:32:17-82
+157            <meta-data
+157-->[com.google.firebase:firebase-storage:22.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\00e326eadbb8cad5e6cee0dc514ea49c\transformed\firebase-storage-22.0.1\AndroidManifest.xml:33:13-35:85
+158                android:name="com.google.firebase.components:com.google.firebase.storage.StorageRegistrar"
+158-->[com.google.firebase:firebase-storage:22.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\00e326eadbb8cad5e6cee0dc514ea49c\transformed\firebase-storage-22.0.1\AndroidManifest.xml:34:17-107
+159                android:value="com.google.firebase.components.ComponentRegistrar" />
+159-->[com.google.firebase:firebase-storage:22.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\00e326eadbb8cad5e6cee0dc514ea49c\transformed\firebase-storage-22.0.1\AndroidManifest.xml:35:17-82
+160            <meta-data
+160-->[com.google.firebase:firebase-appcheck:19.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\03586ad3e59672ced1d1f31077a3018e\transformed\firebase-appcheck-19.0.1\AndroidManifest.xml:25:13-27:85
+161                android:name="com.google.firebase.components:com.google.firebase.appcheck.FirebaseAppCheckKtxRegistrar"
+161-->[com.google.firebase:firebase-appcheck:19.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\03586ad3e59672ced1d1f31077a3018e\transformed\firebase-appcheck-19.0.1\AndroidManifest.xml:26:17-120
+162                android:value="com.google.firebase.components.ComponentRegistrar" />
+162-->[com.google.firebase:firebase-appcheck:19.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\03586ad3e59672ced1d1f31077a3018e\transformed\firebase-appcheck-19.0.1\AndroidManifest.xml:27:17-82
+163            <meta-data
+163-->[com.google.firebase:firebase-appcheck:19.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\03586ad3e59672ced1d1f31077a3018e\transformed\firebase-appcheck-19.0.1\AndroidManifest.xml:28:13-30:85
+164                android:name="com.google.firebase.components:com.google.firebase.appcheck.FirebaseAppCheckRegistrar"
+164-->[com.google.firebase:firebase-appcheck:19.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\03586ad3e59672ced1d1f31077a3018e\transformed\firebase-appcheck-19.0.1\AndroidManifest.xml:29:17-117
+165                android:value="com.google.firebase.components.ComponentRegistrar" />
+165-->[com.google.firebase:firebase-appcheck:19.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\03586ad3e59672ced1d1f31077a3018e\transformed\firebase-appcheck-19.0.1\AndroidManifest.xml:30:17-82
+166            <meta-data
+166-->[com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\24741ae09fd57e5423c3b5347bc4fde6\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:33:13-35:85
+167                android:name="com.google.firebase.components:com.google.firebase.analytics.connector.internal.AnalyticsConnectorRegistrar"
+167-->[com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\24741ae09fd57e5423c3b5347bc4fde6\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:34:17-139
+168                android:value="com.google.firebase.components.ComponentRegistrar" />
+168-->[com.google.android.gms:play-services-measurement-api:23.0.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\24741ae09fd57e5423c3b5347bc4fde6\transformed\play-services-measurement-api-23.0.0\AndroidManifest.xml:35:17-82
+169            <meta-data
+169-->[com.google.firebase:firebase-iid:21.1.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\0abdce0d3a4b68ae9943aae500a0afe1\transformed\firebase-iid-21.1.0\AndroidManifest.xml:32:13-34:85
+170                android:name="com.google.firebase.components:com.google.firebase.iid.Registrar"
+170-->[com.google.firebase:firebase-iid:21.1.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\0abdce0d3a4b68ae9943aae500a0afe1\transformed\firebase-iid-21.1.0\AndroidManifest.xml:33:17-96
+171                android:value="com.google.firebase.components.ComponentRegistrar" />
+171-->[com.google.firebase:firebase-iid:21.1.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\0abdce0d3a4b68ae9943aae500a0afe1\transformed\firebase-iid-21.1.0\AndroidManifest.xml:34:17-82
+172            <meta-data
+172-->[com.google.firebase:firebase-installations:19.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\4254b67a1e3cce9c42f4b4d7b47008fa\transformed\firebase-installations-19.0.1\AndroidManifest.xml:15:13-17:85
+173                android:name="com.google.firebase.components:com.google.firebase.installations.FirebaseInstallationsKtxRegistrar"
+173-->[com.google.firebase:firebase-installations:19.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\4254b67a1e3cce9c42f4b4d7b47008fa\transformed\firebase-installations-19.0.1\AndroidManifest.xml:16:17-130
+174                android:value="com.google.firebase.components.ComponentRegistrar" />
+174-->[com.google.firebase:firebase-installations:19.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\4254b67a1e3cce9c42f4b4d7b47008fa\transformed\firebase-installations-19.0.1\AndroidManifest.xml:17:17-82
+175            <meta-data
+175-->[com.google.firebase:firebase-installations:19.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\4254b67a1e3cce9c42f4b4d7b47008fa\transformed\firebase-installations-19.0.1\AndroidManifest.xml:18:13-20:85
+176                android:name="com.google.firebase.components:com.google.firebase.installations.FirebaseInstallationsRegistrar"
+176-->[com.google.firebase:firebase-installations:19.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\4254b67a1e3cce9c42f4b4d7b47008fa\transformed\firebase-installations-19.0.1\AndroidManifest.xml:19:17-127
+177                android:value="com.google.firebase.components.ComponentRegistrar" />
+177-->[com.google.firebase:firebase-installations:19.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\4254b67a1e3cce9c42f4b4d7b47008fa\transformed\firebase-installations-19.0.1\AndroidManifest.xml:20:17-82
+178            <meta-data
+178-->[com.google.firebase:firebase-common:22.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\ac1b2c046359c501147f6620dd677a47\transformed\firebase-common-22.0.1\AndroidManifest.xml:35:13-37:85
+179                android:name="com.google.firebase.components:com.google.firebase.FirebaseCommonKtxRegistrar"
+179-->[com.google.firebase:firebase-common:22.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\ac1b2c046359c501147f6620dd677a47\transformed\firebase-common-22.0.1\AndroidManifest.xml:36:17-109
+180                android:value="com.google.firebase.components.ComponentRegistrar" />
+180-->[com.google.firebase:firebase-common:22.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\ac1b2c046359c501147f6620dd677a47\transformed\firebase-common-22.0.1\AndroidManifest.xml:37:17-82
+181            <meta-data
+181-->[com.google.firebase:firebase-datatransport:18.2.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\40c0ca490c73b36d1678408e41fc3ec1\transformed\firebase-datatransport-18.2.0\AndroidManifest.xml:25:13-27:85
+182                android:name="com.google.firebase.components:com.google.firebase.datatransport.TransportRegistrar"
+182-->[com.google.firebase:firebase-datatransport:18.2.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\40c0ca490c73b36d1678408e41fc3ec1\transformed\firebase-datatransport-18.2.0\AndroidManifest.xml:26:17-115
+183                android:value="com.google.firebase.components.ComponentRegistrar" />
+183-->[com.google.firebase:firebase-datatransport:18.2.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\40c0ca490c73b36d1678408e41fc3ec1\transformed\firebase-datatransport-18.2.0\AndroidManifest.xml:27:17-82
+184        </service>
+185
+186        <provider
+186-->[:image_picker_android] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.13+13\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:9:9-17:20
+187            android:name="io.flutter.plugins.imagepicker.ImagePickerFileProvider"
+187-->[:image_picker_android] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.13+13\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:10:13-82
+188            android:authorities="com.example.quiz_application.flutter.image_provider"
+188-->[:image_picker_android] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.13+13\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:11:13-74
+189            android:exported="false"
+189-->[:image_picker_android] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.13+13\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:12:13-37
+190            android:grantUriPermissions="true" >
+190-->[:image_picker_android] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.13+13\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:13:13-47
+191            <meta-data
+191-->[:image_picker_android] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.13+13\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:14:13-16:75
+192                android:name="android.support.FILE_PROVIDER_PATHS"
+192-->[:image_picker_android] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.13+13\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:15:17-67
+193                android:resource="@xml/flutter_image_picker_file_paths" />
+193-->[:image_picker_android] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.13+13\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:16:17-72
+194        </provider> <!-- Trigger Google Play services to install the backported photo picker module. -->
+195        <service
+195-->[:image_picker_android] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.13+13\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:19:9-31:19
+196            android:name="com.google.android.gms.metadata.ModuleDependencies"
+196-->[:image_picker_android] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.13+13\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:20:13-78
+197            android:enabled="false"
+197-->[:image_picker_android] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.13+13\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:21:13-36
+198            android:exported="false" >
+198-->[:image_picker_android] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.13+13\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:22:13-37
+199            <intent-filter>
+199-->[:image_picker_android] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.13+13\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:24:13-26:29
+200                <action android:name="com.google.android.gms.metadata.MODULE_DEPENDENCIES" />
+200-->[:image_picker_android] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.13+13\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:25:17-94
+200-->[:image_picker_android] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.13+13\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:25:25-91
+201            </intent-filter>
+202
+203            <meta-data
+203-->[:image_picker_android] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.13+13\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:28:13-30:36
+204                android:name="photopicker_activity:0:required"
+204-->[:image_picker_android] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.13+13\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:29:17-63
+205                android:value="" />
+205-->[:image_picker_android] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.13+13\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:30:17-33
+206        </service>
+207
+208        <activity
+208-->[:url_launcher_android] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_android-6.3.28\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:8:9-11:74
+209            android:name="io.flutter.plugins.urllauncher.WebViewActivity"
+209-->[:url_launcher_android] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_android-6.3.28\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:9:13-74
+210            android:exported="false"
+210-->[:url_launcher_android] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_android-6.3.28\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:10:13-37
+211            android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
+211-->[:url_launcher_android] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_android-6.3.28\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:11:13-71
+212
+213        <service
+213-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:14:9-17:72
+214            android:name="io.flutter.plugins.firebase.messaging.FlutterFirebaseMessagingBackgroundService"
+214-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:15:13-107
+215            android:exported="false"
+215-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:16:13-37
+216            android:permission="android.permission.BIND_JOB_SERVICE" />
+216-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:17:13-69
+217        <service
+217-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:18:9-24:19
+218            android:name="io.flutter.plugins.firebase.messaging.FlutterFirebaseMessagingService"
+218-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:19:13-97
+219            android:exported="false" >
+219-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:20:13-37
+220            <intent-filter>
+220-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:21:13-23:29
+221                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+221-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:22:17-78
+221-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:22:25-75
+222            </intent-filter>
+223        </service>
+224
+225        <receiver
+225-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:26:9-33:20
+226            android:name="io.flutter.plugins.firebase.messaging.FlutterFirebaseMessagingReceiver"
+226-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:27:13-98
+227            android:exported="true"
+227-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:28:13-36
+228            android:permission="com.google.android.c2dm.permission.SEND" >
+228-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:29:13-73
+229            <intent-filter>
+229-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:30:13-32:29
+230                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+230-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:31:17-81
+230-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:31:25-78
+231            </intent-filter>
+232        </receiver>
+233
+234        <provider
+234-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:41:9-45:38
+235            android:name="io.flutter.plugins.firebase.messaging.FlutterFirebaseMessagingInitProvider"
+235-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:42:13-102
+236            android:authorities="com.example.quiz_application.flutterfirebasemessaginginitprovider"
+236-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:43:13-88
+237            android:exported="false"
+237-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:44:13-37
+238            android:initOrder="99" />
+238-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:45:13-35
+239
+240        <activity
+240-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:29:9-46:20
+241            android:name="com.google.firebase.auth.internal.GenericIdpActivity"
+241-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:30:13-80
+242            android:excludeFromRecents="true"
+242-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:31:13-46
+243            android:exported="true"
+243-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:32:13-36
+244            android:launchMode="singleTask"
+244-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:33:13-44
+245            android:theme="@android:style/Theme.Translucent.NoTitleBar" >
+245-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:34:13-72
+246            <intent-filter>
+246-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:35:13-45:29
+247                <action android:name="android.intent.action.VIEW" />
+247-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:36:17-69
+247-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:36:25-66
+248
+249                <category android:name="android.intent.category.DEFAULT" />
+249-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:38:17-76
+249-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:38:27-73
+250                <category android:name="android.intent.category.BROWSABLE" />
+250-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:39:17-78
+250-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:39:27-75
+251
+252                <data
+252-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:71:13-50
+253                    android:host="firebase.auth"
+254                    android:path="/"
+255                    android:scheme="genericidp" />
+256            </intent-filter>
+257        </activity>
+258        <activity
+258-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:47:9-64:20
+259            android:name="com.google.firebase.auth.internal.RecaptchaActivity"
+259-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:48:13-79
+260            android:excludeFromRecents="true"
+260-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:49:13-46
+261            android:exported="true"
+261-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:50:13-36
+262            android:launchMode="singleTask"
+262-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:51:13-44
+263            android:theme="@android:style/Theme.Translucent.NoTitleBar" >
+263-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:52:13-72
+264            <intent-filter>
+264-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:53:13-63:29
+265                <action android:name="android.intent.action.VIEW" />
+265-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:36:17-69
+265-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:36:25-66
+266
+267                <category android:name="android.intent.category.DEFAULT" />
+267-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:38:17-76
+267-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:38:27-73
+268                <category android:name="android.intent.category.BROWSABLE" />
+268-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:39:17-78
+268-->[com.google.firebase:firebase-auth:24.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\e78e2fba25be9f06b4067dc446523fd6\transformed\firebase-auth-24.0.1\AndroidManifest.xml:39:27-75
+269
+270                <data
+270-->D:\quiz_application\quiz_application\android\app\src\main\AndroidManifest.xml:71:13-50
+271                    android:host="firebase.auth"
+272                    android:path="/"
+273                    android:scheme="recaptcha" />
+274            </intent-filter>
+275        </activity>
+276
+277        <uses-library
+277-->[androidx.window:window:1.2.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\a5f65b72b6d268f033bc15e88a97f003\transformed\window-1.2.0\AndroidManifest.xml:23:9-25:40
+278            android:name="androidx.window.extensions"
+278-->[androidx.window:window:1.2.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\a5f65b72b6d268f033bc15e88a97f003\transformed\window-1.2.0\AndroidManifest.xml:24:13-54
+279            android:required="false" />
+279-->[androidx.window:window:1.2.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\a5f65b72b6d268f033bc15e88a97f003\transformed\window-1.2.0\AndroidManifest.xml:25:13-37
+280        <uses-library
+280-->[androidx.window:window:1.2.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\a5f65b72b6d268f033bc15e88a97f003\transformed\window-1.2.0\AndroidManifest.xml:26:9-28:40
+281            android:name="androidx.window.sidecar"
+281-->[androidx.window:window:1.2.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\a5f65b72b6d268f033bc15e88a97f003\transformed\window-1.2.0\AndroidManifest.xml:27:13-51
+282            android:required="false" />
+282-->[androidx.window:window:1.2.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\a5f65b72b6d268f033bc15e88a97f003\transformed\window-1.2.0\AndroidManifest.xml:28:13-37
+283
+284        <receiver
+284-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\34a5c2eafc44c7fccf1b0c8ff471c8a5\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:29:9-40:20
+285            android:name="com.google.firebase.iid.FirebaseInstanceIdReceiver"
+285-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\34a5c2eafc44c7fccf1b0c8ff471c8a5\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:30:13-78
+286            android:exported="true"
+286-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\34a5c2eafc44c7fccf1b0c8ff471c8a5\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:31:13-36
+287            android:permission="com.google.android.c2dm.permission.SEND" >
+287-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\34a5c2eafc44c7fccf1b0c8ff471c8a5\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:32:13-73
+288            <intent-filter>
+288-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:30:13-32:29
+289                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+289-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:31:17-81
+289-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:31:25-78
+290            </intent-filter>
+291
+292            <meta-data
+292-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\34a5c2eafc44c7fccf1b0c8ff471c8a5\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:37:13-39:40
+293                android:name="com.google.android.gms.cloudmessaging.FINISHED_AFTER_HANDLED"
+293-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\34a5c2eafc44c7fccf1b0c8ff471c8a5\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:38:17-92
+294                android:value="true" />
+294-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\34a5c2eafc44c7fccf1b0c8ff471c8a5\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:39:17-37
+295        </receiver>
+296        <!--
+297             FirebaseMessagingService performs security checks at runtime,
+298             but set to not exported to explicitly avoid allowing another app to call it.
+299        -->
+300        <service
+300-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\34a5c2eafc44c7fccf1b0c8ff471c8a5\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:46:9-53:19
+301            android:name="com.google.firebase.messaging.FirebaseMessagingService"
+301-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\34a5c2eafc44c7fccf1b0c8ff471c8a5\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:47:13-82
+302            android:directBootAware="true"
+302-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\34a5c2eafc44c7fccf1b0c8ff471c8a5\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:48:13-43
+303            android:exported="false" >
+303-->[com.google.firebase:firebase-messaging:25.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\34a5c2eafc44c7fccf1b0c8ff471c8a5\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:49:13-37
+304            <intent-filter android:priority="-500" >
+304-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:21:13-23:29
+305                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+305-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:22:17-78
+305-->[:firebase_messaging] C:\Users\ezpro\AppData\Local\Pub\Cache\hosted\pub.dev\firebase_messaging-16.1.1\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:22:25-75
+306            </intent-filter>
+307        </service>
+308        <service
+308-->[androidx.credentials:credentials-play-services-auth:1.2.0-rc01] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\ae2ac16c1b97434290352f18dcf66c9e\transformed\credentials-play-services-auth-1.2.0-rc01\AndroidManifest.xml:24:9-32:19
+309            android:name="androidx.credentials.playservices.CredentialProviderMetadataHolder"
+309-->[androidx.credentials:credentials-play-services-auth:1.2.0-rc01] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\ae2ac16c1b97434290352f18dcf66c9e\transformed\credentials-play-services-auth-1.2.0-rc01\AndroidManifest.xml:25:13-94
+310            android:enabled="true"
+310-->[androidx.credentials:credentials-play-services-auth:1.2.0-rc01] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\ae2ac16c1b97434290352f18dcf66c9e\transformed\credentials-play-services-auth-1.2.0-rc01\AndroidManifest.xml:26:13-35
+311            android:exported="false" >
+311-->[androidx.credentials:credentials-play-services-auth:1.2.0-rc01] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\ae2ac16c1b97434290352f18dcf66c9e\transformed\credentials-play-services-auth-1.2.0-rc01\AndroidManifest.xml:27:13-37
+312            <meta-data
+312-->[androidx.credentials:credentials-play-services-auth:1.2.0-rc01] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\ae2ac16c1b97434290352f18dcf66c9e\transformed\credentials-play-services-auth-1.2.0-rc01\AndroidManifest.xml:29:13-31:104
+313                android:name="androidx.credentials.CREDENTIAL_PROVIDER_KEY"
+313-->[androidx.credentials:credentials-play-services-auth:1.2.0-rc01] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\ae2ac16c1b97434290352f18dcf66c9e\transformed\credentials-play-services-auth-1.2.0-rc01\AndroidManifest.xml:30:17-76
+314                android:value="androidx.credentials.playservices.CredentialProviderPlayServicesImpl" />
+314-->[androidx.credentials:credentials-play-services-auth:1.2.0-rc01] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\ae2ac16c1b97434290352f18dcf66c9e\transformed\credentials-play-services-auth-1.2.0-rc01\AndroidManifest.xml:31:17-101
+315        </service>
+316
+317        <activity
+317-->[androidx.credentials:credentials-play-services-auth:1.2.0-rc01] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\ae2ac16c1b97434290352f18dcf66c9e\transformed\credentials-play-services-auth-1.2.0-rc01\AndroidManifest.xml:34:9-41:20
+318            android:name="androidx.credentials.playservices.HiddenActivity"
+318-->[androidx.credentials:credentials-play-services-auth:1.2.0-rc01] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\ae2ac16c1b97434290352f18dcf66c9e\transformed\credentials-play-services-auth-1.2.0-rc01\AndroidManifest.xml:35:13-76
+319            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+319-->[androidx.credentials:credentials-play-services-auth:1.2.0-rc01] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\ae2ac16c1b97434290352f18dcf66c9e\transformed\credentials-play-services-auth-1.2.0-rc01\AndroidManifest.xml:36:13-87
+320            android:enabled="true"
+320-->[androidx.credentials:credentials-play-services-auth:1.2.0-rc01] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\ae2ac16c1b97434290352f18dcf66c9e\transformed\credentials-play-services-auth-1.2.0-rc01\AndroidManifest.xml:37:13-35
+321            android:exported="false"
+321-->[androidx.credentials:credentials-play-services-auth:1.2.0-rc01] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\ae2ac16c1b97434290352f18dcf66c9e\transformed\credentials-play-services-auth-1.2.0-rc01\AndroidManifest.xml:38:13-37
+322            android:fitsSystemWindows="true"
+322-->[androidx.credentials:credentials-play-services-auth:1.2.0-rc01] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\ae2ac16c1b97434290352f18dcf66c9e\transformed\credentials-play-services-auth-1.2.0-rc01\AndroidManifest.xml:39:13-45
+323            android:theme="@style/Theme.Hidden" >
+323-->[androidx.credentials:credentials-play-services-auth:1.2.0-rc01] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\ae2ac16c1b97434290352f18dcf66c9e\transformed\credentials-play-services-auth-1.2.0-rc01\AndroidManifest.xml:40:13-48
+324        </activity>
+325        <activity
+325-->[com.google.android.gms:play-services-auth:20.7.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\c778e60b5846a85cbc03f54cd7d61f4e\transformed\play-services-auth-20.7.0\AndroidManifest.xml:23:9-27:75
+326            android:name="com.google.android.gms.auth.api.signin.internal.SignInHubActivity"
+326-->[com.google.android.gms:play-services-auth:20.7.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\c778e60b5846a85cbc03f54cd7d61f4e\transformed\play-services-auth-20.7.0\AndroidManifest.xml:24:13-93
+327            android:excludeFromRecents="true"
+327-->[com.google.android.gms:play-services-auth:20.7.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\c778e60b5846a85cbc03f54cd7d61f4e\transformed\play-services-auth-20.7.0\AndroidManifest.xml:25:13-46
+328            android:exported="false"
+328-->[com.google.android.gms:play-services-auth:20.7.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\c778e60b5846a85cbc03f54cd7d61f4e\transformed\play-services-auth-20.7.0\AndroidManifest.xml:26:13-37
+329            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+329-->[com.google.android.gms:play-services-auth:20.7.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\c778e60b5846a85cbc03f54cd7d61f4e\transformed\play-services-auth-20.7.0\AndroidManifest.xml:27:13-72
+330        <!--
+331            Service handling Google Sign-In user revocation. For apps that do not integrate with
+332            Google Sign-In, this service will never be started.
+333        -->
+334        <service
+334-->[com.google.android.gms:play-services-auth:20.7.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\c778e60b5846a85cbc03f54cd7d61f4e\transformed\play-services-auth-20.7.0\AndroidManifest.xml:33:9-37:51
+335            android:name="com.google.android.gms.auth.api.signin.RevocationBoundService"
+335-->[com.google.android.gms:play-services-auth:20.7.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\c778e60b5846a85cbc03f54cd7d61f4e\transformed\play-services-auth-20.7.0\AndroidManifest.xml:34:13-89
+336            android:exported="true"
+336-->[com.google.android.gms:play-services-auth:20.7.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\c778e60b5846a85cbc03f54cd7d61f4e\transformed\play-services-auth-20.7.0\AndroidManifest.xml:35:13-36
+337            android:permission="com.google.android.gms.auth.api.signin.permission.REVOCATION_NOTIFICATION"
+337-->[com.google.android.gms:play-services-auth:20.7.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\c778e60b5846a85cbc03f54cd7d61f4e\transformed\play-services-auth-20.7.0\AndroidManifest.xml:36:13-107
+338            android:visibleToInstantApps="true" />
+338-->[com.google.android.gms:play-services-auth:20.7.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\c778e60b5846a85cbc03f54cd7d61f4e\transformed\play-services-auth-20.7.0\AndroidManifest.xml:37:13-48
+339
+340        <receiver
+340-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\c940808ea8535d58cd4bdb0d549b3c0e\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:29:9-33:20
+341            android:name="com.google.android.gms.measurement.AppMeasurementReceiver"
+341-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\c940808ea8535d58cd4bdb0d549b3c0e\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:30:13-85
+342            android:enabled="true"
+342-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\c940808ea8535d58cd4bdb0d549b3c0e\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:31:13-35
+343            android:exported="false" >
+343-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\c940808ea8535d58cd4bdb0d549b3c0e\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:32:13-37
+344        </receiver>
+345
+346        <service
+346-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\c940808ea8535d58cd4bdb0d549b3c0e\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:35:9-38:40
+347            android:name="com.google.android.gms.measurement.AppMeasurementService"
+347-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\c940808ea8535d58cd4bdb0d549b3c0e\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:36:13-84
+348            android:enabled="true"
+348-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\c940808ea8535d58cd4bdb0d549b3c0e\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:37:13-35
+349            android:exported="false" />
+349-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\c940808ea8535d58cd4bdb0d549b3c0e\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:38:13-37
+350        <service
+350-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\c940808ea8535d58cd4bdb0d549b3c0e\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:39:9-43:72
+351            android:name="com.google.android.gms.measurement.AppMeasurementJobService"
+351-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\c940808ea8535d58cd4bdb0d549b3c0e\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:40:13-87
+352            android:enabled="true"
+352-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\c940808ea8535d58cd4bdb0d549b3c0e\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:41:13-35
+353            android:exported="false"
+353-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\c940808ea8535d58cd4bdb0d549b3c0e\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:42:13-37
+354            android:permission="android.permission.BIND_JOB_SERVICE" />
+354-->[com.google.android.gms:play-services-measurement:23.0.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\c940808ea8535d58cd4bdb0d549b3c0e\transformed\play-services-measurement-23.0.0\AndroidManifest.xml:43:13-69
+355
+356        <activity
+356-->[com.google.android.gms:play-services-base:18.9.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\304cf3b9df20b294f0e22fdd3db0e8b4\transformed\play-services-base-18.9.0\AndroidManifest.xml:20:9-22:45
+357            android:name="com.google.android.gms.common.api.GoogleApiActivity"
+357-->[com.google.android.gms:play-services-base:18.9.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\304cf3b9df20b294f0e22fdd3db0e8b4\transformed\play-services-base-18.9.0\AndroidManifest.xml:20:19-85
+358            android:exported="false"
+358-->[com.google.android.gms:play-services-base:18.9.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\304cf3b9df20b294f0e22fdd3db0e8b4\transformed\play-services-base-18.9.0\AndroidManifest.xml:22:19-43
+359            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+359-->[com.google.android.gms:play-services-base:18.9.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\304cf3b9df20b294f0e22fdd3db0e8b4\transformed\play-services-base-18.9.0\AndroidManifest.xml:21:19-78
+360
+361        <provider
+361-->[com.google.firebase:firebase-common:22.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\ac1b2c046359c501147f6620dd677a47\transformed\firebase-common-22.0.1\AndroidManifest.xml:23:9-28:39
+362            android:name="com.google.firebase.provider.FirebaseInitProvider"
+362-->[com.google.firebase:firebase-common:22.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\ac1b2c046359c501147f6620dd677a47\transformed\firebase-common-22.0.1\AndroidManifest.xml:24:13-77
+363            android:authorities="com.example.quiz_application.firebaseinitprovider"
+363-->[com.google.firebase:firebase-common:22.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\ac1b2c046359c501147f6620dd677a47\transformed\firebase-common-22.0.1\AndroidManifest.xml:25:13-72
+364            android:directBootAware="true"
+364-->[com.google.firebase:firebase-common:22.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\ac1b2c046359c501147f6620dd677a47\transformed\firebase-common-22.0.1\AndroidManifest.xml:26:13-43
+365            android:exported="false"
+365-->[com.google.firebase:firebase-common:22.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\ac1b2c046359c501147f6620dd677a47\transformed\firebase-common-22.0.1\AndroidManifest.xml:27:13-37
+366            android:initOrder="100" />
+366-->[com.google.firebase:firebase-common:22.0.1] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\ac1b2c046359c501147f6620dd677a47\transformed\firebase-common-22.0.1\AndroidManifest.xml:28:13-36
+367        <provider
+367-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\42f7cc7251122e6c6a6b23e415e4186a\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:24:9-32:20
+368            android:name="androidx.startup.InitializationProvider"
+368-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\42f7cc7251122e6c6a6b23e415e4186a\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:25:13-67
+369            android:authorities="com.example.quiz_application.androidx-startup"
+369-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\42f7cc7251122e6c6a6b23e415e4186a\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:26:13-68
+370            android:exported="false" >
+370-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\42f7cc7251122e6c6a6b23e415e4186a\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:27:13-37
+371            <meta-data
+371-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\42f7cc7251122e6c6a6b23e415e4186a\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:29:13-31:52
+372                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+372-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\42f7cc7251122e6c6a6b23e415e4186a\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:30:17-78
+373                android:value="androidx.startup" />
+373-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\42f7cc7251122e6c6a6b23e415e4186a\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:31:17-49
+374            <meta-data
+374-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\4b5e77c5b5c638a46b12e023974db998\transformed\profileinstaller-1.4.0\AndroidManifest.xml:29:13-31:52
+375                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+375-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\4b5e77c5b5c638a46b12e023974db998\transformed\profileinstaller-1.4.0\AndroidManifest.xml:30:17-85
+376                android:value="androidx.startup" />
+376-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\4b5e77c5b5c638a46b12e023974db998\transformed\profileinstaller-1.4.0\AndroidManifest.xml:31:17-49
+377        </provider>
+378
+379        <uses-library
+379-->[androidx.privacysandbox.ads:ads-adservices:1.1.0-beta11] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\234c9826df739afbf251e131606736a1\transformed\ads-adservices-1.1.0-beta11\AndroidManifest.xml:23:9-25:40
+380            android:name="android.ext.adservices"
+380-->[androidx.privacysandbox.ads:ads-adservices:1.1.0-beta11] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\234c9826df739afbf251e131606736a1\transformed\ads-adservices-1.1.0-beta11\AndroidManifest.xml:24:13-50
+381            android:required="false" />
+381-->[androidx.privacysandbox.ads:ads-adservices:1.1.0-beta11] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\234c9826df739afbf251e131606736a1\transformed\ads-adservices-1.1.0-beta11\AndroidManifest.xml:25:13-37
+382
+383        <meta-data
+383-->[com.google.android.gms:play-services-basement:18.9.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\047af329728653b1e5dd61dee58b0a9f\transformed\play-services-basement-18.9.0\AndroidManifest.xml:21:9-23:69
+384            android:name="com.google.android.gms.version"
+384-->[com.google.android.gms:play-services-basement:18.9.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\047af329728653b1e5dd61dee58b0a9f\transformed\play-services-basement-18.9.0\AndroidManifest.xml:22:13-58
+385            android:value="@integer/google_play_services_version" />
+385-->[com.google.android.gms:play-services-basement:18.9.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\047af329728653b1e5dd61dee58b0a9f\transformed\play-services-basement-18.9.0\AndroidManifest.xml:23:13-66
+386
+387        <receiver
+387-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\4b5e77c5b5c638a46b12e023974db998\transformed\profileinstaller-1.4.0\AndroidManifest.xml:34:9-52:20
+388            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+388-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\4b5e77c5b5c638a46b12e023974db998\transformed\profileinstaller-1.4.0\AndroidManifest.xml:35:13-76
+389            android:directBootAware="false"
+389-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\4b5e77c5b5c638a46b12e023974db998\transformed\profileinstaller-1.4.0\AndroidManifest.xml:36:13-44
+390            android:enabled="true"
+390-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\4b5e77c5b5c638a46b12e023974db998\transformed\profileinstaller-1.4.0\AndroidManifest.xml:37:13-35
+391            android:exported="true"
+391-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\4b5e77c5b5c638a46b12e023974db998\transformed\profileinstaller-1.4.0\AndroidManifest.xml:38:13-36
+392            android:permission="android.permission.DUMP" >
+392-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\4b5e77c5b5c638a46b12e023974db998\transformed\profileinstaller-1.4.0\AndroidManifest.xml:39:13-57
+393            <intent-filter>
+393-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\4b5e77c5b5c638a46b12e023974db998\transformed\profileinstaller-1.4.0\AndroidManifest.xml:40:13-42:29
+394                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+394-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\4b5e77c5b5c638a46b12e023974db998\transformed\profileinstaller-1.4.0\AndroidManifest.xml:41:17-91
+394-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\4b5e77c5b5c638a46b12e023974db998\transformed\profileinstaller-1.4.0\AndroidManifest.xml:41:25-88
+395            </intent-filter>
+396            <intent-filter>
+396-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\4b5e77c5b5c638a46b12e023974db998\transformed\profileinstaller-1.4.0\AndroidManifest.xml:43:13-45:29
+397                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+397-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\4b5e77c5b5c638a46b12e023974db998\transformed\profileinstaller-1.4.0\AndroidManifest.xml:44:17-85
+397-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\4b5e77c5b5c638a46b12e023974db998\transformed\profileinstaller-1.4.0\AndroidManifest.xml:44:25-82
+398            </intent-filter>
+399            <intent-filter>
+399-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\4b5e77c5b5c638a46b12e023974db998\transformed\profileinstaller-1.4.0\AndroidManifest.xml:46:13-48:29
+400                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+400-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\4b5e77c5b5c638a46b12e023974db998\transformed\profileinstaller-1.4.0\AndroidManifest.xml:47:17-88
+400-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\4b5e77c5b5c638a46b12e023974db998\transformed\profileinstaller-1.4.0\AndroidManifest.xml:47:25-85
+401            </intent-filter>
+402            <intent-filter>
+402-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\4b5e77c5b5c638a46b12e023974db998\transformed\profileinstaller-1.4.0\AndroidManifest.xml:49:13-51:29
+403                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+403-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\4b5e77c5b5c638a46b12e023974db998\transformed\profileinstaller-1.4.0\AndroidManifest.xml:50:17-95
+403-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\4b5e77c5b5c638a46b12e023974db998\transformed\profileinstaller-1.4.0\AndroidManifest.xml:50:25-92
+404            </intent-filter>
+405        </receiver>
+406
+407        <service
+407-->[com.google.android.datatransport:transport-backend-cct:3.1.9] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\7ffcf1c1d3d824ec2583bb7035471a4d\transformed\transport-backend-cct-3.1.9\AndroidManifest.xml:28:9-34:19
+408            android:name="com.google.android.datatransport.runtime.backends.TransportBackendDiscovery"
+408-->[com.google.android.datatransport:transport-backend-cct:3.1.9] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\7ffcf1c1d3d824ec2583bb7035471a4d\transformed\transport-backend-cct-3.1.9\AndroidManifest.xml:29:13-103
+409            android:exported="false" >
+409-->[com.google.android.datatransport:transport-backend-cct:3.1.9] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\7ffcf1c1d3d824ec2583bb7035471a4d\transformed\transport-backend-cct-3.1.9\AndroidManifest.xml:30:13-37
+410            <meta-data
+410-->[com.google.android.datatransport:transport-backend-cct:3.1.9] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\7ffcf1c1d3d824ec2583bb7035471a4d\transformed\transport-backend-cct-3.1.9\AndroidManifest.xml:31:13-33:39
+411                android:name="backend:com.google.android.datatransport.cct.CctBackendFactory"
+411-->[com.google.android.datatransport:transport-backend-cct:3.1.9] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\7ffcf1c1d3d824ec2583bb7035471a4d\transformed\transport-backend-cct-3.1.9\AndroidManifest.xml:32:17-94
+412                android:value="cct" />
+412-->[com.google.android.datatransport:transport-backend-cct:3.1.9] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\7ffcf1c1d3d824ec2583bb7035471a4d\transformed\transport-backend-cct-3.1.9\AndroidManifest.xml:33:17-36
+413        </service>
+414        <service
+414-->[com.google.android.datatransport:transport-runtime:3.1.9] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\a257e5fed3d5875ef09501d2d44bd555\transformed\transport-runtime-3.1.9\AndroidManifest.xml:26:9-30:19
+415            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService"
+415-->[com.google.android.datatransport:transport-runtime:3.1.9] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\a257e5fed3d5875ef09501d2d44bd555\transformed\transport-runtime-3.1.9\AndroidManifest.xml:27:13-117
+416            android:exported="false"
+416-->[com.google.android.datatransport:transport-runtime:3.1.9] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\a257e5fed3d5875ef09501d2d44bd555\transformed\transport-runtime-3.1.9\AndroidManifest.xml:28:13-37
+417            android:permission="android.permission.BIND_JOB_SERVICE" >
+417-->[com.google.android.datatransport:transport-runtime:3.1.9] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\a257e5fed3d5875ef09501d2d44bd555\transformed\transport-runtime-3.1.9\AndroidManifest.xml:29:13-69
+418        </service>
+419
+420        <receiver
+420-->[com.google.android.datatransport:transport-runtime:3.1.9] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\a257e5fed3d5875ef09501d2d44bd555\transformed\transport-runtime-3.1.9\AndroidManifest.xml:32:9-34:40
+421            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver"
+421-->[com.google.android.datatransport:transport-runtime:3.1.9] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\a257e5fed3d5875ef09501d2d44bd555\transformed\transport-runtime-3.1.9\AndroidManifest.xml:33:13-132
+422            android:exported="false" /> <!-- The activities will be merged into the manifest of the hosting app. -->
+422-->[com.google.android.datatransport:transport-runtime:3.1.9] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\a257e5fed3d5875ef09501d2d44bd555\transformed\transport-runtime-3.1.9\AndroidManifest.xml:34:13-37
+423        <activity
+423-->[com.google.android.play:core-common:2.0.3] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\11d052666c483a9ef0de5e5e0b1fd0ba\transformed\core-common-2.0.3\AndroidManifest.xml:14:9-18:65
+424            android:name="com.google.android.play.core.common.PlayCoreDialogWrapperActivity"
+424-->[com.google.android.play:core-common:2.0.3] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\11d052666c483a9ef0de5e5e0b1fd0ba\transformed\core-common-2.0.3\AndroidManifest.xml:15:13-93
+425            android:exported="false"
+425-->[com.google.android.play:core-common:2.0.3] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\11d052666c483a9ef0de5e5e0b1fd0ba\transformed\core-common-2.0.3\AndroidManifest.xml:16:13-37
+426            android:stateNotNeeded="true"
+426-->[com.google.android.play:core-common:2.0.3] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\11d052666c483a9ef0de5e5e0b1fd0ba\transformed\core-common-2.0.3\AndroidManifest.xml:17:13-42
+427            android:theme="@style/Theme.PlayCore.Transparent" />
+427-->[com.google.android.play:core-common:2.0.3] C:\Users\ezpro\.gradle\caches\8.11.1\transforms\11d052666c483a9ef0de5e5e0b1fd0ba\transformed\core-common-2.0.3\AndroidManifest.xml:18:13-62
+428    </application>
+429
+430</manifest>
