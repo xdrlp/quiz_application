@@ -250,9 +250,7 @@ class _AuthGateState extends State<AuthGate> {
     // Precache frequently-used large assets to avoid frame drops / black flashes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       try {
-        precacheImage(const AssetImage('assets/images/background.png'), context);
-        precacheImage(const AssetImage('assets/images/starter_elements.png'), context);
-        precacheImage(const AssetImage('assets/images/create_account_button.png'), context);
+        // Removed precache for missing assets: background.png, starter_elements.png, create_account_button.png
       } catch (_) {
         // ignore precache failures
       }
