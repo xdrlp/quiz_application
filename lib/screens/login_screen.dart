@@ -244,6 +244,9 @@ class _LoginScreenState extends State<LoginScreen> {
         leading: Icons.check_circle_outline,
         duration: const Duration(milliseconds: 500),
       );
+      // Ensure navigation to home so user isn't stuck on the login screen
+      // in environments where auth state events may be delayed/blocked.
+      Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
     }
   }
 

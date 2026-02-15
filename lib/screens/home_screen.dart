@@ -475,10 +475,18 @@ class _HomeScreenState extends State<HomeScreen> {
                                 } else if (item is AttemptModel) {
                                   final a = item;
                                   QuizModel? quiz;
+                                  // Prefer cached quizzes (user's own), otherwise
+                                  // try provider cache (may be loaded on demand).
                                   try {
                                     quiz = quizzes.firstWhere((qz) => qz.id == a.quizId);
                                   } catch (_) {
-                                    quiz = null;
+                                    quiz = quizProvider.quizCache[a.quizId];
+                                  }
+                                  // If still missing, request it asynchronously once.
+                                  if (quiz == null) {
+                                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                                      quizProvider.ensureQuizCached(a.quizId);
+                                    });
                                   }
                                   title = quiz?.title ?? 'Unknown Quiz';
                                   ago = _relativeTime(a.submittedAt ?? a.startedAt);

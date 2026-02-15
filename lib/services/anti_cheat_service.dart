@@ -216,6 +216,15 @@ class AntiCheatService {
   // Detect app switching/minimizing
   void _handleAppPaused() {
     if (_isQuizActive && _currentAttemptId != null) {
+      // Ignore duplicate rapid pause events (some devices/platforms emit
+      // multiple lifecycle callbacks when the app is backgrounded). If we
+      // already recorded a pause timestamp for this backgrounding, skip
+      // additional logs until resume.
+      if (_pausedAt != null) {
+        // ignore: avoid_print
+        print('[AntiCheat] Ignoring duplicate pause event (already paused at $_pausedAt)');
+        return;
+      }
       // Record when the app was paused and log an immediate (warning)
       // violation. This ensures quick interactions with the system UI
       // (e.g. opening the recent-apps sidebar) generate a visible warning.
@@ -749,8 +758,16 @@ class AntiCheatService {
     }
 
     // Log to Firestore asynchronously; don't block the UI notification.
-    // Fire-and-forget the logging call.
-    _firestoreService.logViolation(violation);
+    // Avoid sending debounced duplicate events to Firestore to reduce noise
+    // (we still persist raw samples locally for diagnostics).
+    if (shouldIncrement) {
+      // Fire-and-forget the logging call for meaningful violations only.
+      _firestoreService.logViolation(violation);
+    } else {
+      // Debug: record that we skipped remote logging due to debounce
+      // ignore: avoid_print
+      print('[AntiCheat] Skipped remote logging for debounced violation type=$type');
+    }
   }
 
   Future<String?> _buildAccessibilityNarrative(DateTime? since) async {

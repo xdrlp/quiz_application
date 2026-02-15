@@ -689,7 +689,22 @@ class _TakeQuizPageState extends State<TakeQuizPage>
       totalViolations: 0,
     );
 
-    final id = await _firestore.createAttempt(attempt);
+    String id;
+    try {
+      id = await _firestore.createAttempt(attempt);
+    } catch (e) {
+      // Show an error and abort starting the attempt instead of crashing.
+      // ignore: avoid_print
+      print('[TakeQuizPage] createAttempt failed: $e');
+      if (mounted) {
+        SnackBarUtils.showThemedSnackBar(
+          ScaffoldMessenger.of(context),
+          'Unable to start attempt: ${e.toString()}',
+          leading: Icons.error_outline,
+        );
+      }
+      return;
+    }
     setState(() {
       _attemptId = id;
       _currentQuestionIndex = 0;

@@ -170,7 +170,9 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
     setState(() => _loading = true);
     try {
       _quizzes = await FirestoreService().getQuizzesByTeacher(uid);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Failed to load quizzes: $e');
+    }
     if (mounted) setState(() => _loading = false);
   }
 
@@ -419,7 +421,20 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
   @override
   void initState() {
     super.initState();
-    _load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      if (auth.currentUser != null) {
+        _load();
+      } else {
+        void listener() {
+          if (auth.currentUser != null) {
+            auth.removeListener(listener);
+            _load();
+          }
+        }
+        auth.addListener(listener);
+      }
+    });
   }
 
   @override

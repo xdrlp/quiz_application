@@ -238,7 +238,29 @@ class StarterScreen extends StatelessWidget {
               );
 
               final Widget footer = GestureDetector(
-                onTap: () {},
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text('Browser Compatibility Notice'),
+                        content: const Text(
+                          'For the best experience with Quiz Guard, please ensure:\n\n'
+                          '• Allow cookies and site data for this site in your browser settings\n'
+                          '• Disable ad blockers or privacy extensions temporarily\n'
+                          '• Allow third-party cookies if prompted\n\n'
+                          'This helps the app connect to our secure servers for quiz access.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
                   child: Row(
@@ -257,7 +279,7 @@ class StarterScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Learn more about Quiz Guard',
+                        'Browser Settings for Best Experience',
                         style: TextStyle(
                           fontSize: _kFooterTextFontSize,
                           color: const Color.fromARGB(

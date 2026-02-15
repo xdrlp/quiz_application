@@ -9,6 +9,8 @@ class QuizProvider with ChangeNotifier {
 
   List<QuizModel> _userQuizzes = [];
   List<AttemptModel> _userAttempts = []; // Add this
+  // Cache for quizzes referenced by attempts or elsewhere
+  final Map<String, QuizModel?> _quizCache = {};
   QuizModel? _currentQuiz;
   List<QuestionModel> _currentQuizQuestions = [];
   AttemptModel? _currentAttempt;
@@ -17,6 +19,7 @@ class QuizProvider with ChangeNotifier {
 
   List<QuizModel> get userQuizzes => _userQuizzes;
   List<AttemptModel> get userAttempts => _userAttempts; // Add this
+  Map<String, QuizModel?> get quizCache => _quizCache;
   QuizModel? get currentQuiz => _currentQuiz;
   List<QuestionModel> get currentQuizQuestions => _currentQuizQuestions;
   AttemptModel? get currentAttempt => _currentAttempt;
@@ -96,6 +99,21 @@ class QuizProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
       return false;
+    }
+  }
+
+  /// Ensure a quiz is cached locally. Returns the quiz if found or null.
+  Future<QuizModel?> ensureQuizCached(String quizId) async {
+    if (_quizCache.containsKey(quizId)) return _quizCache[quizId];
+    try {
+      final q = await _firestoreService.getQuiz(quizId);
+      _quizCache[quizId] = q;
+      notifyListeners();
+      return q;
+    } catch (e) {
+      _quizCache[quizId] = null;
+      notifyListeners();
+      return null;
     }
   }
 

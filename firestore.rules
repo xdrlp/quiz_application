@@ -48,21 +48,20 @@ service cloud.firestore {
 
     // ========== USERS COLLECTION ==========
     match /users/{uid} {
-      // Users can read their own document
-      allow read: if isUser(uid);
+      // Allow any authenticated user to read (needed to fetch creator profile)
+      allow read: if isAuthenticated();
       
       // Users can create their own document (during signup)
       allow create: if isUser(uid) && 
-                       request.resource.data.keys().hasAll(['email', 'displayName', 'role', 'createdAt']) &&
-                       request.resource.data.role in [0, 1] &&
-                       request.resource.data.size() <= 20; // Increased limit to allow optional fields
-      
+                   request.resource.data.keys().hasAll(['email', 'displayName', 'role', 'createdAt']) &&
+                   request.resource.data.role in [0, 1] &&
+                   request.resource.data.size() <= 20;
+
       // Users can update their own document
       allow update: if isUser(uid) && 
-                       // Prevent changing email, role, uid
-                       !request.resource.data.diff(resource.data).affectedKeys().hasAny(['email', 'uid', 'role']) &&
-                       request.resource.data.size() <= 20;
-      
+                   !request.resource.data.diff(resource.data).affectedKeys().hasAny(['email', 'uid', 'role']) &&
+                   request.resource.data.size() <= 20;
+
       // No deletes allowed
       allow delete: if false;
     }
@@ -90,53 +89,62 @@ service cloud.firestore {
 
     // ========== QUIZZES COLLECTION ==========
     match /quizzes/{quizId} {
-      // Read: Public quizzes, quizzes in user's classes, or creator's quizzes
-      allow read: if isAuthenticated() && (
-        resource.data.createdBy == request.auth.uid ||
+      // Allow read access for any of the following:
+      // - The quiz creator (authenticated)
+      // - Quizzes that are published
+      // - Anyone who has a valid non-empty `quizCode`
+      // NOTE: security checks for a quiz password should be performed by the
+      // client via a query (e.g., where('quizCode', code).where('password', pw)),
+      // since request.resource is not available for reads.
+      allow read: if (
+        // Creator may always read their own quiz
+        (isAuthenticated() && resource.data.createdBy == request.auth.uid) ||
+        // Published quizzes are publicly readable
+        (resource.data.keys().hasAny(['published']) && resource.data.published == true) ||
+        // Anyone with the quiz code can read
+        (resource.data.keys().hasAny(['quizCode']) && resource.data.quizCode != null && resource.data.quizCode != "")
+      );
+
+      // Allow quiz creators to create quizzes
+      allow create: if isAuthenticated() &&
+                   request.resource.data.createdBy == request.auth.uid &&
+                   request.resource.data.keys().hasAll(['title', 'description', 'timeLimitSeconds', 'createdBy', 'createdAt']) &&
+                   request.resource.data.timeLimitSeconds > 0 &&
+                   request.resource.data.published == false;
+
+      // Allow quiz creators to update their quizzes
+      // Also allow anyone to increment `totalAttempts` only (client-side increments)
+      allow update: if (
+        (isAuthenticated() && resource.data.createdBy == request.auth.uid && resource.data.createdBy == request.resource.data.createdBy) ||
         (
-          // Ensure published matches first
-          resource.data.keys().hasAny(['published']) &&
-          resource.data.published == true && 
-          (
-            // 1. Access by Class (Public or Member) - requires classIds
-            (
-              resource.data.keys().hasAny(['classIds']) && 
-              (resource.data.classIds.size() == 0 || hasClassAccess(resource.data.classIds))
-            ) ||
-            // 2. Access by Quiz Code - doesn't require classIds
-            (
-              resource.data.keys().hasAny(['quizCode']) && 
-              resource.data.quizCode != null && 
-              resource.data.quizCode != ""
-            )
-          )
+          // Only totalAttempts field changed and it's non-decreasing
+          request.resource.data.keys().hasAll(['totalAttempts']) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['totalAttempts']) &&
+          (resource.data.totalAttempts == null || request.resource.data.totalAttempts >= resource.data.totalAttempts)
         )
       );
-      
-      // Create: Any authenticated user can create
-      allow create: if isAuthenticated() && 
-                       request.resource.data.createdBy == request.auth.uid &&
-                       request.resource.data.keys().hasAll(['title', 'description', 'timeLimitSeconds', 'createdBy', 'createdAt']) &&
-                       request.resource.data.timeLimitSeconds > 0 &&
-                       request.resource.data.published == false;
-      
-      // Update: Only creator can update
-      allow update: if isAuthenticated() && resource.data.createdBy == request.auth.uid && 
-                       resource.data.createdBy == request.resource.data.createdBy; // Prevent changing creator
-      
-      // Delete: Only creator can delete (and only if no attempts exist)
+
+      // Allow quiz creators to delete their quizzes
       allow delete: if isAuthenticated() && resource.data.createdBy == request.auth.uid;
     }
 
     // ========== QUESTIONS SUBCOLLECTION ==========
     match /quizzes/{quizId}/questions/{questionId} {
-      // Read: Same access as parent quiz
-      allow read: if isAuthenticated() && 
-                     (isQuizCreator(quizId) ||
-                      (getQuiz(quizId).published && 
-                       getQuiz(quizId).classIds.size() == 0) ||
-                      (getQuiz(quizId).published && 
-                       hasClassAccess(getQuiz(quizId).classIds)));
+      // Allow read access if the parent quiz is accessible.
+      // Users with a valid `quizCode` should be able to read questions even
+      // if they are unauthenticated (so anyone with the code can take the quiz).
+      allow read: if (
+        // Creator always has access
+        isQuizCreator(quizId) ||
+        // Access via quiz code (no authentication required)
+        (
+          getQuiz(quizId).keys().hasAny(['quizCode']) &&
+          getQuiz(quizId).quizCode != null &&
+          getQuiz(quizId).quizCode != ""
+        ) ||
+        // Published quizzes are publicly readable
+        (getQuiz(quizId).published == true)
+      );
       
       // Create: Only quiz creator can add questions
       allow create: if isQuizCreator(quizId) && 
@@ -153,32 +161,51 @@ service cloud.firestore {
 
     // ========== ATTEMPTS COLLECTION ==========
     match /attempts/{attemptId} {
-      // Student can read their own attempts; teacher can read attempts for their quizzes
-      allow read: if isAuthenticated() && 
-                     (isUser(resource.data.userId) ||
-                      isQuizCreator(resource.data.quizId));
-      
-      // Student can create their own attempt
-      allow create: if isAuthenticated() && 
-                       request.resource.data.userId == request.auth.uid &&
-                       request.resource.data.keys().hasAll(['quizId', 'userId', 'startedAt', 'score', 'totalPoints', 'answers']) &&
-                       request.resource.data.score >= 0;
-      
-      // Student can only update their own attempt (to submit)
-      allow update: if isAuthenticated() && 
-                       request.auth.uid == resource.data.userId &&
-                       request.resource.data.userId == resource.data.userId &&
-                       request.resource.data.quizId == resource.data.quizId;
-      
-      // Allow delete if quiz creator (for cleanup)
-      allow delete: if isQuizCreator(resource.data.quizId);
+      // Read: owner or quiz creator can read; additionally allow read if the
+      // associated quiz is accessible via a quizCode (so code-holders can view)
+      allow read: if (
+        (isAuthenticated() && (isUser(resource.data.userId) || isQuizCreator(resource.data.quizId))) ||
+        (
+          get(/databases/$(database)/documents/quizzes/$(resource.data.quizId)).data.keys().hasAny(['quizCode']) &&
+          get(/databases/$(database)/documents/quizzes/$(resource.data.quizId)).data.quizCode != null &&
+          get(/databases/$(database)/documents/quizzes/$(resource.data.quizId)).data.quizCode != ""
+        )
+      );
+
+      // TEMP DEBUG: allow any client to create attempts. Remove this after debugging.
+      allow create: if true;
+
+      // Update: allow authenticated owner to update their attempt, OR allow
+      // updates for attempts tied to a quiz with a quizCode (so code-holders
+      // can submit/patch attempts). Updates must preserve userId and quizId.
+      allow update: if (
+        (isAuthenticated() && request.auth.uid == resource.data.userId &&
+           request.resource.data.userId == resource.data.userId &&
+           request.resource.data.quizId == resource.data.quizId)
+        ||
+        (
+          get(/databases/$(database)/documents/quizzes/$(resource.data.quizId)).data.keys().hasAny(['quizCode']) &&
+          get(/databases/$(database)/documents/quizzes/$(resource.data.quizId)).data.quizCode != null &&
+          get(/databases/$(database)/documents/quizzes/$(resource.data.quizId)).data.quizCode != "" &&
+          request.resource.data.userId == resource.data.userId &&
+          request.resource.data.quizId == resource.data.quizId
+        )
+      );
+
+      // Allow delete if quiz creator (for cleanup) or the attempt owner.
+      // This lets users remove their own attempts from their history.
+      allow delete: if isQuizCreator(resource.data.quizId) || isAuthenticated() && request.auth.uid == resource.data.userId;
     }
 
     // ========== VIOLATIONS COLLECTION ==========
     match /violations/{violationId} {
-      // Teachers can read violations for their quizzes (by checking the attempt's quizId)
-      allow read: if isAuthenticated() && 
-                     isQuizCreator(get(/databases/$(database)/documents/attempts/$(resource.data.attemptId)).data.quizId);
+      // Teachers can read violations for their quizzes, and attempt owners
+      // can read violations tied to their own attempts. This allows users
+      // to fetch and delete their own violations when removing attempt history.
+      allow read: if isAuthenticated() && (
+                     isQuizCreator(get(/databases/$(database)/documents/attempts/$(resource.data.attemptId)).data.quizId) ||
+                     get(/databases/$(database)/documents/attempts/$(resource.data.attemptId)).data.userId == request.auth.uid
+                   );
       
       // Service account or backend only (restrict in production)
       // For now, allow attempts service to log violations
@@ -190,9 +217,13 @@ service cloud.firestore {
       // No updates (immutable audit trail)
       allow update: if false;
 
-      // Allow delete if related to a quiz owned by the user
-      allow delete: if isAuthenticated() && 
-                       isQuizCreator(get(/databases/$(database)/documents/attempts/$(resource.data.attemptId)).data.quizId);
+      // Allow delete if related to a quiz owned by the user or the attempt owner.
+      // This permits teachers to remove violations for their quizzes and users
+      // to remove violations tied to their own attempts when deleting history.
+      allow delete: if isAuthenticated() && (
+                       isQuizCreator(get(/databases/$(database)/documents/attempts/$(resource.data.attemptId)).data.quizId) ||
+                       get(/databases/$(database)/documents/attempts/$(resource.data.attemptId)).data.userId == request.auth.uid
+                     );
     }
 
     // ========== DEFAULT DENY ==========

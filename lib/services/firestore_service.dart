@@ -4,6 +4,7 @@ import 'package:quiz_application/models/quiz_model.dart';
 import 'package:quiz_application/models/question_model.dart';
 import 'package:quiz_application/models/attempt_model.dart';
 import 'package:quiz_application/models/violation_model.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -32,10 +33,6 @@ class FirestoreService {
       final doc = await _firestore.collection(usersCollection).doc(uid).get();
       return doc.exists ? UserModel.fromFirestore(doc) : null;
     } on FirebaseException catch (e) {
-      // Permission denied or other Firestore-specific errors should not
-      // crash the app. Return null so callers can handle a missing profile.
-      // Caller may log or surface a user-friendly message.
-      // ignore: avoid_print
       print('Firestore.getUser error: ${e.code} ${e.message}');
       return null;
     } catch (e) {
@@ -102,14 +99,13 @@ class FirestoreService {
     }
   }
 
-  Future<QuizModel?> getQuizByCode(String quizCode) async {
+  Future<QuizModel?> getQuizByCode(String quizCode, {String? password}) async {
     try {
-      final querySnapshot = await _firestore
-          .collection(quizzesCollection)
-          .where('quizCode', isEqualTo: quizCode)
-          .where('published', isEqualTo: true)
-          .limit(1)
-          .get();
+      var query = _firestore.collection(quizzesCollection).where('quizCode', isEqualTo: quizCode);
+      if (password != null && password.isNotEmpty) {
+        query = query.where('password', isEqualTo: password);
+      }
+      final querySnapshot = await query.limit(1).get();
       return querySnapshot.docs.isNotEmpty
           ? QuizModel.fromFirestore(querySnapshot.docs.first)
           : null;
@@ -214,9 +210,17 @@ class FirestoreService {
   // ====== ATTEMPT OPERATIONS ======
   Future<String> createAttempt(AttemptModel attempt) async {
     try {
+      final data = attempt.copyWith(id: '').toFirestore();
+      // Debugging: print attempt data and current auth UID to help troubleshoot
+      try {
+        // ignore: avoid_print
+        print('[FirestoreService] createAttempt data: ' + data.toString());
+        // ignore: avoid_print
+        print('[FirestoreService] currentAuthUid: ' + (FirebaseAuth.instance.currentUser?.uid ?? 'null'));
+      } catch (_) {}
       final docRef = await _firestore
           .collection(attemptsCollection)
-          .add(attempt.copyWith(id: '').toFirestore());
+          .add(data);
       
       // Increment the attempt count on the quiz document transactionally or simply with FieldValue.increment
       await _firestore.collection(quizzesCollection).doc(attempt.quizId).update({
@@ -312,10 +316,22 @@ class FirestoreService {
           .where('attemptId', isEqualTo: attemptId)
           .get();
       for (var vDoc in violSnap.docs) {
-        await vDoc.reference.delete();
+        try {
+          await vDoc.reference.delete();
+        } catch (e) {
+          // Log and continue so one failing violation delete doesn't
+          // prevent removing the attempt itself. This helps diagnose
+          // permission issues per-document.
+          print('Violation delete failed for ${vDoc.id}: $e');
+        }
       }
       // Delete the attempt itself
-      await _firestore.collection(attemptsCollection).doc(attemptId).delete();
+      try {
+        await _firestore.collection(attemptsCollection).doc(attemptId).delete();
+      } catch (e) {
+        print('Attempt delete failed for $attemptId: $e');
+        rethrow;
+      }
     } catch (e) {
       rethrow;
     }
@@ -396,6 +412,12 @@ class FirestoreService {
 
       // Finally delete the quiz document itself
       await _firestore.collection(quizzesCollection).doc(quizId).delete();
+
+      // NOTE: Skipping post-delete read verification because Firestore
+      // security rules may deny reads for deleted documents and that can
+      // surface confusing permission-denied errors in client logs.
+      // If extra verification is required, perform it from a backend
+      // privileged environment or check via a callable function.
     } catch (e) {
       rethrow;
     }

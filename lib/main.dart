@@ -56,6 +56,8 @@ void main() async {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       );
+      // Set auth persistence to session storage to avoid tracking prevention blocks
+      await fb_auth.FirebaseAuth.instance.setPersistence(fb_auth.Persistence.SESSION);
     } else {
       // Native platforms read their config from google-services.json / plist.
       await Firebase.initializeApp();
@@ -188,15 +190,49 @@ class MyApp extends StatelessWidget {
         routes: {
           '/splash': (context) => const SplashScreen(),
           '/login': (context) => const LoginScreen(),
-          '/home': (context) => const HomeScreen(),
+          // Helper to guard routes that require authentication.
+          '/home': (context) {
+            final user = fb_auth.FirebaseAuth.instance.currentUser;
+            if (user == null) return const StarterScreen();
+            return const HomeScreen();
+          },
           '/create_quiz': (context) => const CreateQuizScreen(),
           '/find_quiz': (context) => const FindQuizScreen(),
-          '/edit_quiz': (context) => const EditQuizScreen(),
-          '/my_quizzes': (context) => const MyQuizzesScreen(),
-          '/profile': (context) => const ProfileScreen(),
-          '/settings': (context) => const SettingsScreen(),
-          '/quiz_history': (context) => const QuizHistoryScreen(),
+          '/edit_quiz': (context) {
+            final user = fb_auth.FirebaseAuth.instance.currentUser;
+            if (user == null) return const StarterScreen();
+            return const EditQuizScreen();
+          },
+          '/my_quizzes': (context) {
+            final user = fb_auth.FirebaseAuth.instance.currentUser;
+            if (user == null) return const StarterScreen();
+            return const MyQuizzesScreen();
+          },
+          '/profile': (context) {
+            final user = fb_auth.FirebaseAuth.instance.currentUser;
+            if (user == null) return const StarterScreen();
+            return const ProfileScreen();
+          },
+          '/settings': (context) {
+            final user = fb_auth.FirebaseAuth.instance.currentUser;
+            if (user == null) return const StarterScreen();
+            return const SettingsScreen();
+          },
+          '/quiz_history': (context) {
+            final user = fb_auth.FirebaseAuth.instance.currentUser;
+            if (user == null) return const StarterScreen();
+            return const QuizHistoryScreen();
+          },
           '/attempt_detail': (context) {
+            final user = fb_auth.FirebaseAuth.instance.currentUser;
+            if (user == null) return const StarterScreen();
+            final args = ModalRoute.of(context)!.settings.arguments;
+            final attemptId = args is String ? args : '';
+            return AttemptDetailScreen(attemptId: attemptId);
+          },
+          '/attempt_review': (context) {
+            final user = fb_auth.FirebaseAuth.instance.currentUser;
+            if (user == null) return const StarterScreen();
             final args = ModalRoute.of(context)!.settings.arguments;
             final attemptId = args is String ? args : '';
             return AttemptDetailScreen(attemptId: attemptId);

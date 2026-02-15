@@ -85,9 +85,19 @@ class NotificationService {
   }
 
   Future<void> saveTokenToFirestore() async {
-    String? token = await _messaging.getToken();
-    if (token != null) {
-      await _saveTokenToFirestoreInternal(token);
+    try {
+      String? token = await _messaging.getToken();
+      if (token != null) {
+        await _saveTokenToFirestoreInternal(token);
+      }
+    } on FirebaseException catch (e) {
+      // Permission blocked or other FCM error — log and continue without
+      // failing the calling flow (e.g., login/signup).
+      debugPrint('FCM getToken failed: ${e.code} ${e.message}');
+      return;
+    } catch (e) {
+      debugPrint('FCM getToken unexpected error: $e');
+      return;
     }
   }
 
